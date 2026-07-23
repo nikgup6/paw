@@ -1,0 +1,275 @@
+[
+  {
+    "id": "purpose",
+    "text": "What is the purpose of the dog?",
+    "sub": "Every dog has unique strengths and personality traits. Choosing the role that matters most to you helps us recommend breeds that naturally fit your lifestyle and expectations.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Family Companion",
+        "desc": "Friendly, affectionate and loving breeds that enjoy spending time with the entire family.",
+        "val": "family"
+      },
+      {
+        "icon": "",
+        "label": "Home Guardian",
+        "desc": "Confident and loyal breeds that naturally stay alert and protective of their loved ones.",
+        "val": "guard"
+      },
+      {
+        "icon": "",
+        "label": "Exercise & Adventure Partner",
+        "desc": "Energetic breeds that enjoy walks, runs, travel and outdoor activities with you.",
+        "val": "active"
+      },
+      {
+        "icon": "",
+        "label": "Emotional Support & Comfort",
+        "desc": "Gentle and emotionally connected breeds that bring warmth, companionship and calmness.",
+        "val": "therapy"
+      },
+      {
+        "icon": "",
+        "label": "Companion for Seniors",
+        "desc": "Calm, easygoing and loving breeds that are comfortable in peaceful home environments.",
+        "val": "seniors"
+      },
+      {
+        "icon": "",
+        "label": "I already love a specific breed.",
+        "desc": "Skip the quiz and jump straight to exploring every breed in our database.",
+        "val": "breed"
+      }
+    ],
+    "cols": 2,
+    "multi": true
+  },
+  {
+    "id": "home",
+    "text": "What type of home do you live in?",
+    "sub": "Your living space helps us understand how comfortably different dog breeds can adapt to your daily environment, movement space and lifestyle.",
+    "options": [
+      {
+        "icon": "",
+        "label": "1BHK Apartment (under 600 sq ft)",
+        "desc": "Compact and cozy homes that are ideal for smaller companion breeds that enjoy indoor living.",
+        "val": "apt-1bhk"
+      },
+      {
+        "icon": "",
+        "label": "2BHK Apartment (600 to 1,000 sq ft)",
+        "desc": "Balanced apartment spaces suitable for many small and medium-sized family-friendly breeds.",
+        "val": "apt-2bhk"
+      },
+      {
+        "icon": "",
+        "label": "3BHK / 4BHK Apartment (1,000 to 2,000 sq ft)",
+        "desc": "Spacious apartments that comfortably support active and medium-to-large companion breeds.",
+        "val": "apt-3bhk"
+      },
+      {
+        "icon": "",
+        "label": "Independent house, no yard",
+        "desc": "Comfortable indoor home environments with larger movement space for a variety of breeds.",
+        "val": "house-no-yard"
+      },
+      {
+        "icon": "",
+        "label": "Independent house with yard",
+        "desc": "Excellent setup for energetic and playful breeds that enjoy outdoor activity and open areas.",
+        "val": "house-yard"
+      }
+    ],
+    "cols": 2,
+    "multi": false
+  },
+  {
+    "id": "city",
+    "type": "city",
+    "text": "Which city do you live in?",
+    "sub": "Heat is the single biggest health risk for dogs in India, and humid heat is far harder on them than dry heat. Your city tells us exactly which breeds can cope.",
+    "placeholder": "Type your city…",
+    "options": [],
+    "multi": false
+  },
+  {
+    "id": "experience",
+    "text": "How familiar are you with caring for dogs?",
+    "sub": "Understanding your comfort level with dogs helps us recommend breeds that suit your experience and daily routine.",
+    "options": [
+      {
+        "icon": "",
+        "label": "First-Time Dog Parent",
+        "desc": "Perfect for discovering friendly and beginner-friendly breeds with easier care routines.",
+        "val": "none"
+      },
+      {
+        "icon": "",
+        "label": "Some Experience",
+        "desc": "You already understand basic care, companionship and everyday dog routines.",
+        "val": "some"
+      },
+      {
+        "icon": "",
+        "label": "Experienced Dog Owner",
+        "desc": "Comfortable with training, handling and caring for a wide range of dog personalities.",
+        "val": "experienced"
+      }
+    ],
+    "cols": 3,
+    "multi": false
+  },
+  {
+    "id": "activity",
+    "text": "How active is your daily lifestyle?",
+    "sub": "Dogs have different energy levels. Matching your activity style with the right breed creates a happier experience for both you and your companion.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Relaxed Lifestyle",
+        "desc": "Comfortable indoor routines with lighter physical activity and shorter walks.",
+        "val": "relaxed"
+      },
+      {
+        "icon": "",
+        "label": "Moderately Active",
+        "desc": "Enjoys regular walks, occasional outings and balanced daily activity.",
+        "val": "moderate"
+      },
+      {
+        "icon": "",
+        "label": "Highly Active",
+        "desc": "Energetic lifestyle with outdoor activities, workouts, running or adventure trips.",
+        "val": "high"
+      }
+    ],
+    "cols": 3,
+    "multi": true
+  },
+  {
+    "id": "budget",
+    "text": "What monthly care budget feels comfortable for you?",
+    "sub": "Different breeds have different grooming, nutrition and healthcare needs. We will suggest breeds that comfortably fit your preferred care style.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Under Rs.5,000",
+        "desc": "Suitable for many loving and low-maintenance companion breeds.",
+        "val": "under5k"
+      },
+      {
+        "icon": "",
+        "label": "Rs.5,000 to Rs.10,000",
+        "desc": "Comfortable for most popular family and companion breeds.",
+        "val": "5k-10k"
+      },
+      {
+        "icon": "",
+        "label": "Rs.10,000 to Rs.20,000",
+        "desc": "Ideal for premium breeds with regular grooming and detailed care.",
+        "val": "10k-20k"
+      },
+      {
+        "icon": "",
+        "label": "Above Rs.20,000",
+        "desc": "Perfect for giant or luxury breeds with premium lifestyle needs.",
+        "val": "above20k"
+      }
+    ],
+    "cols": 2,
+    "multi": false
+  },
+  {
+    "id": "family",
+    "text": "Who lives at home with you?",
+    "sub": "Your home environment helps us recommend breeds that naturally fit your family structure and lifestyle.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Young Children",
+        "desc": "Ideal for playful, patient and family-friendly companion breeds.",
+        "val": "kids"
+      },
+      {
+        "icon": "",
+        "label": "Senior Family Members",
+        "desc": "Comfortable with calm and easygoing breeds suited for peaceful homes.",
+        "val": "seniors"
+      },
+      {
+        "icon": "",
+        "label": "Both Children & Seniors",
+        "desc": "Best matched with gentle and adaptable breeds that suit all age groups.",
+        "val": "both"
+      },
+      {
+        "icon": "",
+        "label": "Adults Only",
+        "desc": "Flexible home setup that supports a wide variety of dog personalities.",
+        "val": "adults"
+      }
+    ],
+    "cols": 2,
+    "multi": false
+  },
+  {
+    "id": "shedding",
+    "text": "What kind of grooming and shedding level do you prefer?",
+    "sub": "Different breeds shed differently. Choosing your preference helps us match breeds that fit your comfort and maintenance style.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Comfortable With Shedding",
+        "desc": "You are comfortable with regular brushing and routine home cleaning.",
+        "val": "fine"
+      },
+      {
+        "icon": "",
+        "label": "Moderate Shedding Preferred",
+        "desc": "Balanced option with manageable grooming and moderate coat maintenance.",
+        "val": "moderate"
+      },
+      {
+        "icon": "",
+        "label": "Low Shedding Preferred",
+        "desc": "Great for cleaner indoor spaces and lower grooming maintenance.",
+        "val": "low"
+      }
+    ],
+    "cols": 3,
+    "multi": false
+  },
+  {
+    "id": "hair",
+    "text": "Do you have a preferred coat or hair length?",
+    "sub": "Coat length affects appearance, grooming effort and maintenance routines. Choose the style you personally enjoy most.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Short Coat",
+        "desc": "Easy to maintain with a clean and sleek appearance.",
+        "val": "short"
+      },
+      {
+        "icon": "",
+        "label": "Medium Coat",
+        "desc": "Balanced appearance with manageable grooming requirements.",
+        "val": "medium"
+      },
+      {
+        "icon": "",
+        "label": "Long Coat",
+        "desc": "Elegant and fluffy appearance with regular grooming routines.",
+        "val": "long"
+      },
+      {
+        "icon": "",
+        "label": "No Preference",
+        "desc": "Open to all coat types and focused mainly on personality compatibility.",
+        "val": "any"
+      }
+    ],
+    "cols": 2,
+    "multi": true
+  }
+]
