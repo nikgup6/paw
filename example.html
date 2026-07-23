@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paw Buddy — Find Your Perfect Dog</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #FF6B2B;
+  --orange-light: #FF8F5E;
+  --orange-pale: #FFF0E8;
+  --cream: #FFFBF7;
+  --brown: #3D1F00;
+  --brown-mid: #7A4010;
+  --green: #2ECC71;
+  --red: #E74C3C;
+  --yellow: #F1C40F;
+  --blue: #3498DB;
+  --grey: #F5F0EB;
+  --text: #2C1A0E;
+  --text-soft: #8B6552;
+  --white: #FFFFFF;
+  --shadow: 0 8px 32px rgba(61,31,0,0.12);
+  --shadow-lg: 0 24px 64px rgba(61,31,0,0.18);
+  --radius: 20px;
+  --radius-sm: 12px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay {
+  position: fixed; inset:0;
+  background: rgba(61,31,0,0.55);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn .4s ease;
+}
+.modal-box {
+  background: var(--white);
+  border-radius: 28px;
+  padding: 48px 40px;
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp .5s cubic-bezier(.34,1.56,.64,1);
+}
+.modal-paw { font-size: 56px; margin-bottom: 16px; }
+.modal-box h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px; font-weight: 800;
+  color: var(--brown); margin-bottom: 12px;
+}
+.modal-box p { color: var(--text-soft); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+.modal-btns { display: flex; gap: 14px; justify-content: center; }
+.btn-yes, .btn-no {
+  padding: 14px 36px;
+  border-radius: 50px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 16px;
+  border: none; cursor: pointer;
+  transition: all .25s ease;
+}
+.btn-yes { background: var(--orange); color: white; }
+.btn-yes:hover { background: var(--orange-light); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,107,43,.35); }
+.btn-no { background: var(--grey); color: var(--text-soft); }
+.btn-no:hover { background: #EAE4DE; transform: translateY(-2px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FF6B2B 0%, #FF8F5E 40%, #FFB347 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 40px 20px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 70% 20%, rgba(255,255,255,.15) 0%, transparent 60%);
+}
+.hero-blobs {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.blob {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  animation: float 8s ease-in-out infinite;
+}
+.blob-1 { width:300px; height:300px; top:-80px; left:-80px; animation-delay: 0s; }
+.blob-2 { width:200px; height:200px; bottom:80px; right:-40px; animation-delay: -3s; }
+.blob-3 { width:150px; height:150px; top:50%; left:10%; animation-delay: -5s; }
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 50px;
+  padding: 8px 20px;
+  color: white; font-size: 13px; font-weight: 500;
+  margin-bottom: 28px;
+  animation: fadeInDown .6s ease .2s both;
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(42px, 8vw, 80px);
+  font-weight: 800; color: white;
+  line-height: 1.05; margin-bottom: 20px;
+  animation: fadeInDown .6s ease .3s both;
+}
+.hero h1 span { color: rgba(255,255,255,.75); }
+.hero p {
+  color: rgba(255,255,255,.88);
+  font-size: clamp(15px, 2.5vw, 18px);
+  max-width: 500px; line-height: 1.7;
+  margin-bottom: 40px;
+  animation: fadeInDown .6s ease .4s both;
+}
+.hero-cta {
+  background: white;
+  color: var(--orange);
+  padding: 18px 44px;
+  border-radius: 50px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 17px;
+  border: none; cursor: pointer;
+  box-shadow: 0 12px 40px rgba(0,0,0,.2);
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  animation: fadeInDown .6s ease .5s both;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.hero-cta:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 20px 56px rgba(0,0,0,.28); }
+.hero-stats {
+  display: flex; gap: 40px; margin-top: 60px;
+  animation: fadeInDown .6s ease .6s both;
+  flex-wrap: wrap; justify-content: center;
+}
+.stat { color: white; text-align: center; }
+.stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+.stat-label { font-size: 12px; opacity: .75; margin-top: 2px; }
+.scroll-hint {
+  position: absolute; bottom: 32px;
+  color: rgba(255,255,255,.6); font-size: 13px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+/* ── QUIZ SECTION ── */
+#quiz-section {
+  display: none;
+  min-height: 100vh;
+  padding: 60px 20px;
+  background: var(--cream);
+}
+.quiz-wrap { max-width: 680px; margin: 0 auto; }
+.quiz-header { text-align: center; margin-bottom: 48px; }
+.quiz-header h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px; font-weight: 800; color: var(--brown);
+}
+.quiz-header p { color: var(--text-soft); margin-top: 8px; font-size: 15px; }
+
+.progress-wrap { margin-bottom: 36px; }
+.progress-labels { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: var(--text-soft); }
+.progress-bar-bg { background: #EAE4DE; border-radius: 50px; height: 8px; overflow: hidden; }
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), var(--orange-light));
+  border-radius: 50px;
+  transition: width .5s cubic-bezier(.34,1.56,.64,1);
+}
+
+.question-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 40px;
+  box-shadow: var(--shadow);
+  animation: slideUp .4s cubic-bezier(.34,1.56,.64,1);
+}
+.q-num {
+  display: inline-block;
+  background: var(--orange-pale);
+  color: var(--orange);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 12px;
+  padding: 4px 12px; border-radius: 50px;
+  margin-bottom: 16px; letter-spacing: .08em;
+}
+.q-text {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(18px, 3.5vw, 24px);
+  font-weight: 700; color: var(--brown);
+  margin-bottom: 8px; line-height: 1.3;
+}
+.q-sub { color: var(--text-soft); font-size: 14px; margin-bottom: 28px; }
+
+.options-grid { display: grid; gap: 12px; }
+.options-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.options-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.option-btn {
+  padding: 16px 20px;
+  border: 2px solid #EAE4DE;
+  border-radius: var(--radius-sm);
+  background: white; color: var(--text);
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; text-align: left;
+  transition: all .2s ease;
+  display: flex; align-items: center; gap: 10px;
+  line-height: 1.4;
+}
+.option-btn .opt-icon { font-size: 22px; flex-shrink: 0; }
+.option-btn:hover { border-color: var(--orange); background: var(--orange-pale); color: var(--brown); }
+.option-btn.selected {
+  border-color: var(--orange);
+  background: var(--orange);
+  color: white;
+  transform: scale(1.02);
+  box-shadow: 0 4px 20px rgba(255,107,43,.3);
+}
+.option-btn.selected .opt-icon { filter: none; }
+
+.quiz-nav { display: flex; justify-content: space-between; margin-top: 28px; align-items: center; }
+.btn-back {
+  background: none; border: 2px solid #EAE4DE;
+  padding: 12px 24px; border-radius: 50px;
+  color: var(--text-soft); font-weight: 600;
+  cursor: pointer; font-size: 14px;
+  transition: all .2s ease;
+}
+.btn-back:hover { border-color: var(--orange); color: var(--orange); }
+.btn-next {
+  background: var(--orange); color: white;
+  padding: 14px 32px; border-radius: 50px;
+  border: none; font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 15px;
+  cursor: pointer;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-next:hover:not(:disabled) { background: var(--orange-light); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,107,43,.35); }
+.btn-next:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* ── RESULTS ── */
+#results-section { display: none; padding: 60px 20px; background: var(--cream); }
+.results-wrap { max-width: 900px; margin: 0 auto; }
+.results-header { text-align: center; margin-bottom: 48px; }
+.results-header h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px,5vw,42px); font-weight: 800; color: var(--brown);
+}
+.results-header p { color: var(--text-soft); margin-top: 8px; }
+
+.top-match {
+  background: linear-gradient(135deg, var(--orange) 0%, #FF8F5E 100%);
+  border-radius: 28px; padding: 36px 40px;
+  color: white; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 32px;
+  box-shadow: 0 16px 48px rgba(255,107,43,.3);
+  animation: slideUp .5s cubic-bezier(.34,1.56,.64,1);
+  flex-wrap: wrap;
+}
+.top-match-img {
+  width: 120px; height: 120px; border-radius: 20px;
+  object-fit: cover; border: 4px solid rgba(255,255,255,.3);
+  flex-shrink: 0;
+  background: rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px;
+}
+.top-match-info { flex: 1; min-width: 200px; }
+.top-badge {
+  display: inline-block;
+  background: rgba(255,255,255,.25);
+  padding: 4px 14px; border-radius: 50px;
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  margin-bottom: 10px;
+}
+.top-match-info h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 30px; font-weight: 800; margin-bottom: 8px;
+}
+.top-match-info .reason {
+  font-size: 14px; opacity: .9; line-height: 1.6; margin-bottom: 16px;
+}
+.match-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.match-tag {
+  background: rgba(255,255,255,.2);
+  padding: 4px 12px; border-radius: 50px;
+  font-size: 12px; font-weight: 500;
+}
+.match-score {
+  font-family: 'Syne', sans-serif;
+  font-size: 48px; font-weight: 800;
+  text-align: center; flex-shrink: 0;
+}
+.match-score span { font-size: 16px; opacity: .7; display: block; }
+
+.breeds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 32px; }
+
+.breed-card {
+  background: white; border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow);
+  cursor: pointer; transition: all .3s ease;
+  animation: slideUp .5s cubic-bezier(.34,1.56,.64,1);
+  border: 2px solid transparent;
+}
+.breed-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--orange); }
+.breed-card.selected-compare { border-color: var(--blue); box-shadow: 0 8px 32px rgba(52,152,219,.2); }
+
+.breed-card-img {
+  height: 140px; background: var(--orange-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 72px; position: relative;
+}
+.breed-rank {
+  position: absolute; top: 12px; left: 12px;
+  background: var(--orange); color: white;
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 12px; padding: 4px 10px; border-radius: 50px;
+}
+.breed-card-body { padding: 20px; }
+.breed-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 800;
+  color: var(--brown); margin-bottom: 6px;
+}
+.breed-reason { font-size: 12px; color: var(--text-soft); line-height: 1.5; margin-bottom: 14px; }
+.breed-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.pill {
+  padding: 3px 10px; border-radius: 50px;
+  font-size: 11px; font-weight: 600;
+}
+.pill-orange { background: var(--orange-pale); color: var(--orange); }
+.pill-green  { background: #E8FAF0; color: #27AE60; }
+.pill-red    { background: #FDEAEA; color: var(--red); }
+.pill-blue   { background: #EBF5FB; color: var(--blue); }
+.pill-yellow { background: #FFFBEA; color: #D4AC0D; }
+
+.breed-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mini-stat { font-size: 11px; color: var(--text-soft); }
+.mini-stat strong { display: block; color: var(--text); font-size: 12px; }
+
+.breed-card-actions { padding: 0 20px 20px; display: flex; gap: 8px; }
+.btn-details, .btn-compare {
+  flex: 1; padding: 10px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  border: none; transition: all .2s ease;
+}
+.btn-details { background: var(--orange); color: white; }
+.btn-details:hover { background: var(--orange-light); }
+.btn-compare { background: var(--grey); color: var(--text-soft); }
+.btn-compare:hover { background: #EBF5FB; color: var(--blue); }
+.btn-compare.active { background: var(--blue); color: white; }
+
+/* ── COMPARE BAR ── */
+.compare-bar {
+  display: none;
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--brown);
+  color: white; padding: 16px 28px;
+  border-radius: 50px; box-shadow: var(--shadow-lg);
+  z-index: 500; align-items: center; gap: 16px;
+  font-size: 14px; white-space: nowrap;
+  animation: slideUp .3s ease;
+}
+.compare-bar.show { display: flex; }
+.btn-do-compare {
+  background: var(--orange); color: white;
+  padding: 8px 20px; border-radius: 50px;
+  border: none; font-weight: 700; cursor: pointer;
+  font-size: 13px; transition: all .2s;
+}
+.btn-do-compare:hover { background: var(--orange-light); }
+
+/* ── CUSTOM BREED SEARCH ── */
+.custom-breed-section {
+  background: white; border-radius: var(--radius);
+  padding: 32px; margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.custom-breed-section h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px; font-weight: 800;
+  color: var(--brown); margin-bottom: 8px;
+}
+.custom-breed-section p { color: var(--text-soft); font-size: 14px; margin-bottom: 20px; }
+.custom-search-wrap { display: flex; gap: 12px; flex-wrap: wrap; }
+.custom-breed-input {
+  flex: 1; min-width: 200px;
+  padding: 14px 20px; border-radius: 50px;
+  border: 2px solid #EAE4DE;
+  font-size: 15px; font-family: 'DM Sans', sans-serif;
+  outline: none; transition: border-color .2s;
+}
+.custom-breed-input:focus { border-color: var(--orange); }
+.btn-search-breed {
+  background: var(--orange); color: white;
+  padding: 14px 28px; border-radius: 50px;
+  border: none; font-weight: 700; cursor: pointer;
+  font-size: 14px; transition: all .25s;
+  white-space: nowrap;
+}
+.btn-search-breed:hover { background: var(--orange-light); transform: translateY(-2px); }
+.custom-result { margin-top: 20px; display: none; }
+.custom-result-inner {
+  background: var(--orange-pale);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+}
+.custom-result-inner h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 800;
+  color: var(--brown); margin-bottom: 16px;
+}
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pros, .cons { }
+.pros h5 { color: #27AE60; font-weight: 700; margin-bottom: 8px; font-size: 13px; }
+.cons h5 { color: var(--red); font-weight: 700; margin-bottom: 8px; font-size: 13px; }
+.pros ul, .cons ul { list-style: none; }
+.pros ul li::before { content: '✓ '; color: #27AE60; font-weight: 700; }
+.cons ul li::before { content: '✗ '; color: var(--red); font-weight: 700; }
+.pros ul li, .cons ul li { font-size: 13px; margin-bottom: 6px; line-height: 1.5; color: var(--text); }
+
+/* ── SHARE ── */
+.share-section {
+  background: white; border-radius: var(--radius);
+  padding: 32px; text-align: center;
+  box-shadow: var(--shadow);
+}
+.share-section h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px; font-weight: 800;
+  color: var(--brown); margin-bottom: 8px;
+}
+.share-section p { color: var(--text-soft); font-size: 14px; margin-bottom: 24px; }
+.share-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-share {
+  padding: 12px 24px; border-radius: 50px;
+  border: none; font-weight: 700; font-size: 14px;
+  cursor: pointer; transition: all .25s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-whatsapp { background: #25D366; color: white; }
+.btn-whatsapp:hover { background: #1ebe5d; transform: translateY(-2px); }
+.btn-png { background: var(--orange); color: white; }
+.btn-png:hover { background: var(--orange-light); transform: translateY(-2px); }
+.btn-restart { background: var(--grey); color: var(--text-soft); }
+.btn-restart:hover { background: #EAE4DE; transform: translateY(-2px); }
+
+/* ── DETAIL MODAL ── */
+.detail-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(61,31,0,.6);
+  backdrop-filter: blur(8px);
+  z-index: 900;
+  overflow-y: auto;
+  padding: 40px 20px;
+}
+.detail-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+.detail-box {
+  background: white; border-radius: 28px;
+  max-width: 680px; width: 100%;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp .4s cubic-bezier(.34,1.56,.64,1);
+}
+.detail-header {
+  background: linear-gradient(135deg, var(--orange), var(--orange-light));
+  padding: 36px 40px;
+  color: white; position: relative;
+}
+.detail-header h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 800; margin-bottom: 8px;
+}
+.detail-header .breed-emoji { font-size: 64px; margin-bottom: 12px; display: block; }
+.btn-close-detail {
+  position: absolute; top: 20px; right: 20px;
+  background: rgba(255,255,255,.25); color: white;
+  border: none; width: 36px; height: 36px;
+  border-radius: 50%; cursor: pointer;
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.btn-close-detail:hover { background: rgba(255,255,255,.4); }
+.detail-body { padding: 36px 40px; }
+.detail-section { margin-bottom: 24px; }
+.detail-section h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: var(--orange); text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: 10px;
+}
+.detail-section p, .detail-section li { font-size: 14px; line-height: 1.7; color: var(--text); }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-item {
+  background: var(--grey); border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.detail-item .di-label { font-size: 11px; color: var(--text-soft); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.detail-item .di-val { font-size: 14px; font-weight: 600; color: var(--brown); }
+.cost-breakdown {
+  background: var(--orange-pale); border-radius: var(--radius-sm);
+  padding: 16px 20px;
+}
+.cost-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px dashed rgba(255,107,43,.2); }
+.cost-row:last-child { border-bottom: none; font-weight: 700; color: var(--orange); }
+
+/* ── COMPARE VIEW ── */
+#compare-section {
+  display: none; padding: 60px 20px;
+  background: var(--cream);
+}
+.compare-wrap { max-width: 900px; margin: 0 auto; }
+.compare-header { text-align: center; margin-bottom: 40px; }
+.compare-header h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px; font-weight: 800; color: var(--brown);
+}
+.compare-table-wrap { overflow-x: auto; }
+.compare-table { width: 100%; border-collapse: collapse; }
+.compare-table th {
+  background: var(--orange); color: white;
+  padding: 16px 20px; font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 14px; text-align: left;
+}
+.compare-table th:first-child { background: var(--brown); }
+.compare-table td {
+  padding: 14px 20px; border-bottom: 1px solid #EAE4DE;
+  font-size: 13px; line-height: 1.5; vertical-align: top;
+}
+.compare-table tr:nth-child(even) td { background: var(--grey); }
+.compare-table td:first-child { font-weight: 700; color: var(--text-soft); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.btn-back-results {
+  background: var(--brown); color: white;
+  padding: 14px 32px; border-radius: 50px;
+  border: none; font-family: 'Syne', sans-serif;
+  font-weight: 700; cursor: pointer;
+  margin-top: 32px; transition: all .25s;
+}
+.btn-back-results:hover { background: var(--brown-mid); }
+
+/* ── ADMIN PAGE ── */
+#admin-section {
+  display: none; min-height: 100vh;
+  background: var(--cream); padding: 60px 20px;
+}
+.admin-wrap { max-width: 480px; margin: 0 auto; text-align: center; }
+.admin-wrap h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--brown); margin-bottom: 8px; }
+.admin-wrap p { color: var(--text-soft); margin-bottom: 40px; }
+.admin-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+.admin-card {
+  background: white; border-radius: var(--radius);
+  padding: 32px 24px; box-shadow: var(--shadow); text-align: center;
+}
+.admin-card .ac-num {
+  font-family: 'Syne', sans-serif; font-size: 56px; font-weight: 800;
+}
+.admin-card.yes-card .ac-num { color: var(--green); }
+.admin-card.no-card .ac-num { color: var(--red); }
+.admin-card .ac-label { font-size: 13px; color: var(--text-soft); margin-top: 4px; }
+.admin-rate { font-size: 18px; font-weight: 700; color: var(--brown); margin-bottom: 24px; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--brown);
+  color: rgba(255,255,255,.7);
+  text-align: center; padding: 40px 20px;
+}
+footer .footer-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 22px; color: white;
+  margin-bottom: 8px;
+}
+footer p { font-size: 13px; margin-bottom: 16px; }
+footer a { color: var(--orange); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+.footer-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; font-size: 13px; }
+
+/* ── SHARE CARD (hidden canvas area) ── */
+#share-card {
+  position: fixed; left: -9999px; top: 0;
+  width: 480px; background: white;
+  font-family: 'Syne', sans-serif;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+@keyframes fadeInDown { from { opacity:0; transform: translateY(-20px) } to { opacity:1; transform: translateY(0) } }
+@keyframes slideUp { from { opacity:0; transform: translateY(40px) } to { opacity:1; transform: translateY(0) } }
+@keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-20px) } }
+@keyframes bounce { 0%,100% { transform: translateY(0) } 50% { transform: translateY(8px) } }
+@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.6 } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .options-grid.cols-2, .options-grid.cols-3 { grid-template-columns: 1fr; }
+  .question-card { padding: 28px 24px; }
+  .top-match { flex-direction: column; text-align: center; }
+  .breeds-grid { grid-template-columns: 1fr; }
+  .pros-cons { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .admin-cards { grid-template-columns: 1fr; }
+  .modal-btns { flex-direction: column; }
+  .detail-body { padding: 24px 20px; }
+  .detail-header { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ENTRY MODAL -->
+<div class="modal-overlay" id="entry-modal">
+  <div class="modal-box">
+    <div class="modal-paw">🐾</div>
+    <h2>Welcome to Paw Buddy!</h2>
+    <p>India's first dog breed advisor built for your lifestyle. Would you like a dog breed recommended based on your lifestyle?</p>
+    <div class="modal-btns">
+      <button class="btn-yes" onclick="recordResponse('yes')">🐶 Yes, let's go!</button>
+      <button class="btn-no" onclick="recordResponse('no')">Maybe later</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero-section">
+  <div class="hero-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+  <div class="hero-badge">🐾 India's First Dog Lifestyle Advisor</div>
+  <h1>Find Your<br><span>Perfect Dog</span></h1>
+  <p>Answer 9 quick questions about your lifestyle and we'll match you with the top 5 dog breeds perfect for you — including India-specific advice.</p>
+  <button class="hero-cta" onclick="startQuiz()">Find My Breed 🐶</button>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">23</div><div class="stat-label">Breeds Analysed</div></div>
+    <div class="stat"><div class="stat-num">9</div><div class="stat-label">Quiz Questions</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">India-Specific</div></div>
+  </div>
+  <div class="scroll-hint">↓ scroll to learn more</div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz-section">
+  <div class="quiz-wrap">
+    <div class="quiz-header">
+      <h2>Tell us about your lifestyle 🏠</h2>
+      <p>This helps us find the most compatible dog for you</p>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="q-progress-label">Question 1 of 9</span>
+        <span id="q-progress-pct">11%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill" style="width:11%"></div>
+      </div>
+    </div>
+    <div id="question-area"></div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results-section">
+  <div class="results-wrap">
+    <div class="results-header">
+      <h2>Your Top 5 Matches 🎉</h2>
+      <p>Based on your lifestyle — here are the best dog breeds for you</p>
+    </div>
+    <div id="top-match-area"></div>
+    <div class="breeds-grid" id="breeds-grid"></div>
+
+    <!-- CUSTOM BREED SEARCH -->
+    <div class="custom-breed-section">
+      <h3>🔍 Have a breed in mind?</h3>
+      <p>Type any breed name and we'll tell you the pros & cons based on YOUR specific lifestyle answers</p>
+      <div class="custom-search-wrap">
+        <input type="text" class="custom-breed-input" id="custom-breed-input" placeholder="e.g. Husky, Dalmatian, Rottweiler..." />
+        <button class="btn-search-breed" onclick="searchCustomBreed()">Check This Breed</button>
+      </div>
+      <div class="custom-result" id="custom-result"></div>
+    </div>
+
+    <!-- SHARE -->
+    <div class="share-section">
+      <h3>Share your results 📲</h3>
+      <p>Let your friends know what breed suits you!</p>
+      <div class="share-btns">
+        <button class="btn-share btn-whatsapp" onclick="shareWhatsApp()">💬 Share on WhatsApp</button>
+        <button class="btn-share btn-png" onclick="downloadPNG()">📸 Download as Image</button>
+        <button class="btn-share btn-restart" onclick="restart()">🔄 Retake Quiz</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE BAR -->
+<div class="compare-bar" id="compare-bar">
+  <span id="compare-count">0 breeds selected</span>
+  <button class="btn-do-compare" onclick="showCompare()">Compare Now →</button>
+  <button style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:18px" onclick="clearCompare()">×</button>
+</div>
+
+<!-- COMPARE SECTION -->
+<section id="compare-section">
+  <div class="compare-wrap">
+    <div class="compare-header">
+      <h2>Breed Comparison ⚖️</h2>
+    </div>
+    <div class="compare-table-wrap">
+      <table class="compare-table" id="compare-table"></table>
+    </div>
+    <button class="btn-back-results" onclick="backToResults()">← Back to Results</button>
+  </div>
+</section>
+
+<!-- DETAIL MODAL -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-box" id="detail-box"></div>
+</div>
+
+<!-- ADMIN (hidden) -->
+<section id="admin-section">
+  <div class="admin-wrap">
+    <h2>🔒 Paw Buddy Admin</h2>
+    <p>Entry survey responses</p>
+    <div class="admin-cards">
+      <div class="admin-card yes-card">
+        <div class="ac-num" id="admin-yes">0</div>
+        <div class="ac-label">Said YES 🐶</div>
+      </div>
+      <div class="admin-card no-card">
+        <div class="ac-num" id="admin-no">0</div>
+        <div class="ac-label">Said NO 😕</div>
+      </div>
+    </div>
+    <div class="admin-rate" id="admin-rate"></div>
+    <button class="btn-back-results" onclick="showHero()">← Back to Site</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="main-footer">
+  <div class="footer-logo">🐾 Paw Buddy</div>
+  <p>India's first dog breed lifestyle advisor</p>
+  <div class="footer-links">
+    <a href="mailto:vibhuvankonda@gmail.com">📧 Contact Us</a>
+    <a href="mailto:vibhuvankonda@gmail.com">Feedback</a>
+    <a href="#" onclick="showAdmin(); return false;">Admin</a>
+  </div>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────
+const breeds = [
+  { name:"Labrador Retriever", emoji:"🦮", size:"L", purpose:"Family/Sporting/Guide", energy:"High – 1–2 hrs", grooming:"Low", climate:"MEDIUM", apt:"No", house:"High", cost:"₹8,000–14,000", health:"Hip dysplasia, obesity, PRA", risk:"Low", time:"2–3 hrs", shedding:"High", hair:"Short", nutrition:"High-protein; lean meats, quality kibble", idealCities:"Bangalore, Pune, Hyderabad (Oct–Mar), Delhi", score:4, tags:["Family Dog","First-Timer OK","Medium Climate"] },
+  { name:"German Shepherd", emoji:"🐕", size:"L", purpose:"Guard/Working/Police", energy:"Very High – 2+ hrs", grooming:"Medium", climate:"MEDIUM", apt:"No", house:"High", cost:"₹10,000–18,000", health:"Hip dysplasia, bloat, skin allergies", risk:"Medium", time:"2–3 hrs", shedding:"High", hair:"Medium", nutrition:"High-protein kibble; working-dog diet", idealCities:"Bangalore, Pune, Delhi (Oct–Mar)", score:3.5, tags:["Guard Dog","Experienced Owners","Medium Climate"] },
+  { name:"Golden Retriever", emoji:"🐕‍🦺", size:"L", purpose:"Family/Therapy/Service", energy:"High – 1–2 hrs", grooming:"High", climate:"COLD-MEDIUM", apt:"No", house:"High", cost:"₹10,000–18,000", health:"Hip dysplasia, cancer, skin allergies", risk:"Low", time:"2–3 hrs", shedding:"High", hair:"Long", nutrition:"Balanced; omega-3 for coat; antioxidants", idealCities:"Bangalore, Pune, Shimla, Dehradun", score:3, tags:["Family Dog","Gentle","Needs AC in South India"] },
+  { name:"Beagle", emoji:"🐩", size:"S-M", purpose:"Companion/Scent Hound", energy:"Medium-High – 1–1.5 hrs", grooming:"Low", climate:"MEDIUM", apt:"Yes", house:"Medium", cost:"₹5,000–8,000", health:"Ear infections, epilepsy, obesity", risk:"Low", time:"1.5–2 hrs", shedding:"Medium", hair:"Short", nutrition:"High-protein; strict portion control", idealCities:"Hyderabad, Bangalore, Pune, Mumbai, Delhi", score:4.5, tags:["Apartment OK","First-Timer OK","Budget Friendly"] },
+  { name:"Pomeranian", emoji:"🦊", size:"XS", purpose:"Companion/Toy", energy:"Low-Medium – 30 min", grooming:"High", climate:"COLD", apt:"Yes", house:"Low", cost:"₹4,000–8,000", health:"Tracheal collapse, dental disease", risk:"Low-Medium", time:"1–1.5 hrs", shedding:"Medium-High", hair:"Long", nutrition:"Small-breed kibble; calcium-rich", idealCities:"Shimla, Dehradun, Darjeeling, Delhi (Oct–Feb)", score:2.5, tags:["Apartment OK","Cold Climate Only","Needs Full AC in South India"] },
+  { name:"Indian Pariah Dog", emoji:"🐕", size:"M", purpose:"Companion/Watch Dog", energy:"Medium – 45 min–1 hr", grooming:"Low", climate:"HOT", apt:"Yes", house:"Medium", cost:"₹2,000–5,000", health:"Extremely healthy; minimal issues", risk:"Low", time:"1–1.5 hrs", shedding:"Low", hair:"Short", nutrition:"Flexible; home-cooked rice/dal/protein works", idealCities:"ALL Indian cities — truly universal", score:5, tags:["Best for India","Budget Friendly","Any Climate","First-Timer OK"] },
+  { name:"Pug", emoji:"🐾", size:"S", purpose:"Companion/Toy", energy:"Low – 20–30 min", grooming:"Low-Medium", climate:"COLD-MEDIUM", apt:"Yes", house:"Low", cost:"₹4,000–8,000", health:"BOAS, eye problems, obesity", risk:"Low", time:"1–1.5 hrs", shedding:"Low-Medium", hair:"Short", nutrition:"Low-calorie; measured portions", idealCities:"Bangalore (AC), Shimla, Pune (AC)", score:2, tags:["Apartment OK","Needs Full AC","Flat-Faced Risk in Heat"] },
+  { name:"Shih Tzu", emoji:"🐩", size:"XS-S", purpose:"Companion/Toy", energy:"Low – 20–30 min", grooming:"High", climate:"MEDIUM", apt:"Yes", house:"Low", cost:"₹4,000–8,000", health:"Brachycephalic issues, dental problems", risk:"Low", time:"1–1.5 hrs", shedding:"Low", hair:"Long", nutrition:"Small-breed kibble; dental health focus", idealCities:"Bangalore, Pune, Delhi (Oct–Mar)", score:2.5, tags:["Apartment OK","High Grooming","Hypoallergenic-Friendly"] },
+  { name:"Indian Spitz", emoji:"🐕", size:"S-M", purpose:"Companion/Watch Dog", energy:"Medium – 45 min–1 hr", grooming:"Medium", climate:"MEDIUM-HOT", apt:"Yes", house:"Low-Medium", cost:"₹2,500–5,000", health:"Generally healthy; minor issues", risk:"Low", time:"1–1.5 hrs", shedding:"Medium", hair:"Medium", nutrition:"Flexible; home-cooked or quality kibble", idealCities:"Hyderabad, Bangalore, Mumbai, Chennai, Delhi", score:4.5, tags:["Apartment OK","Budget Friendly","Any Indian City","First-Timer OK"] },
+  { name:"Doberman Pinscher", emoji:"🐕", size:"L", purpose:"Guard/Working/Protection", energy:"Very High – 2+ hrs", grooming:"Low", climate:"MEDIUM-HOT", apt:"No", house:"High", cost:"₹10,000–18,000", health:"DCM, von Willebrand disease, hip dysplasia", risk:"Medium", time:"2–3 hrs", shedding:"Low", hair:"Short", nutrition:"High-protein; cardiac supplements", idealCities:"Hyderabad, Bangalore, Pune, Chennai", score:4, tags:["Guard Dog","Experienced Owners Only","Low Grooming"] },
+  { name:"Rottweiler", emoji:"🐕", size:"XL", purpose:"Guard/Working/Police", energy:"High – 1.5–2 hrs", grooming:"Low", climate:"MEDIUM", apt:"No", house:"High", cost:"₹12,000–20,000", health:"Hip dysplasia, osteosarcoma, bloat", risk:"High", time:"2–3 hrs", shedding:"Medium", hair:"Short", nutrition:"High-protein; large-breed kibble; joint support", idealCities:"Bangalore, Pune, Delhi (Oct–Mar)", score:2.5, tags:["Guard Dog","Experienced Owners Only","Large Space Needed"] },
+  { name:"Dachshund", emoji:"🐕", size:"S", purpose:"Companion/Scent Hound", energy:"Medium – 45 min–1 hr", grooming:"Low", climate:"MEDIUM", apt:"Yes", house:"Low", cost:"₹4,000–8,000", health:"IVDD (spinal), obesity, dental disease", risk:"Low-Medium", time:"1–1.5 hrs", shedding:"Low-Medium", hair:"Short", nutrition:"Small-breed; strict portion control; no stairs", idealCities:"Bangalore, Pune, Hyderabad (indoors), Mumbai", score:4, tags:["Apartment OK","No Stairs","Spinal Care Needed"] },
+  { name:"Cocker Spaniel", emoji:"🐩", size:"M", purpose:"Companion/Sporting", energy:"Medium – 1–1.5 hrs", grooming:"High", climate:"MEDIUM", apt:"Yes", house:"Medium", cost:"₹6,000–12,000", health:"Ear infections, hip dysplasia", risk:"Low", time:"1.5–2 hrs", shedding:"Medium", hair:"Long", nutrition:"Omega-3 for coat; ear-health diet", idealCities:"Bangalore, Pune, Hyderabad, Delhi (Oct–Mar)", score:4, tags:["Family Dog","First-Timer OK","Ear Care Needed"] },
+  { name:"Boxer", emoji:"🐕", size:"L", purpose:"Family/Guard/Working", energy:"High – 1.5–2 hrs", grooming:"Low", climate:"COLD-MEDIUM", apt:"No", house:"High", cost:"₹8,000–14,000", health:"Brachycephalic issues, heart disease, cancer", risk:"Low", time:"2–3 hrs", shedding:"Low", hair:"Short", nutrition:"High-protein; cardiac supplements; small meals", idealCities:"Bangalore (AC), Pune, Delhi (Oct–Mar)", score:2.5, tags:["Family Dog","Needs AC","Flat-Faced Risk"] },
+  { name:"Rajapalayam", emoji:"🐕", size:"L", purpose:"Guard/Hunting/Native", energy:"High – 1.5–2 hrs", grooming:"Low", climate:"HOT", apt:"No", house:"High", cost:"₹2,500–5,000", health:"Congenital deafness, skin issues", risk:"Medium-High", time:"2–2.5 hrs", shedding:"Low", hair:"Short", nutrition:"Lean protein; home food (rice, meat, dal)", idealCities:"Chennai, Hyderabad, Coimbatore, Madurai", score:3.5, tags:["Native Indian","Hot Climate","South India Only","Guard Dog"] },
+  { name:"Siberian Husky", emoji:"🐺", size:"M", purpose:"Working/Sled Dog", energy:"Very High – 2+ hrs", grooming:"High", climate:"COLD", apt:"No", house:"High", cost:"₹15,000–25,000", health:"Hip dysplasia, PRA, epilepsy", risk:"Low", time:"2.5–3 hrs", shedding:"Very High", hair:"Medium", nutrition:"High-protein, high-fat; active breed diet", idealCities:"Shimla, Manali, Srinagar, Darjeeling", score:2, tags:["Cold Climate Only","Hill Stations","Very High Grooming","Needs Full AC in South"] },
+  { name:"Great Dane", emoji:"🐕", size:"XL", purpose:"Family/Guard/Giant", energy:"Medium – 45 min–1 hr", grooming:"Low", climate:"MEDIUM", apt:"No", house:"High", cost:"₹15,000–30,000", health:"Bloat (severe risk), cardiomyopathy, hip dysplasia", risk:"Low", time:"1.5–2 hrs", shedding:"Low", hair:"Short", nutrition:"Giant-breed specific; multiple small meals (bloat prevention)", idealCities:"Bangalore, Pune, Chandigarh, Delhi (Oct–Mar)", score:2.5, tags:["Gentle Giant","Large Space Only","Bloat Risk"] },
+  { name:"Lhasa Apso", emoji:"🐩", size:"S", purpose:"Companion/Watch Dog", energy:"Low-Medium – 30–45 min", grooming:"High", climate:"MEDIUM", apt:"Yes", house:"Low", cost:"₹4,000–8,000", health:"Hip dysplasia, kidney disease, cherry eye", risk:"Low-Medium", time:"1–1.5 hrs", shedding:"Low", hair:"Long", nutrition:"Small-breed kibble; kidney-supportive diet", idealCities:"Bangalore, Shimla, Dehradun, Pune", score:3, tags:["Apartment OK","High Grooming","Low Shedding"] },
+  { name:"Mudhol Hound", emoji:"🐕", size:"M-L", purpose:"Hunting/Guard/Native", energy:"High – 1.5–2 hrs", grooming:"Low", climate:"HOT", apt:"No", house:"High", cost:"₹2,000–4,500", health:"Robust; occasional skin issues", risk:"Medium", time:"2–2.5 hrs", shedding:"Low", hair:"Short", nutrition:"Flexible; home-cooked protein, rice, vegetables", idealCities:"Hyderabad, Bangalore, Solapur, Hubli-Dharwad", score:4, tags:["Native Indian","Deccan Plateau","Budget Friendly","Low Maintenance"] },
+  { name:"Dalmatian", emoji:"🐕", size:"M-L", purpose:"Companion/Active Family", energy:"Very High – 2+ hrs", grooming:"Low", climate:"MEDIUM", apt:"No", house:"High", cost:"₹8,000–15,000", health:"Congenital deafness, urinary stones", risk:"Low", time:"2–3 hrs", shedding:"Medium", hair:"Short", nutrition:"Low-purine diet essential; fresh water always", idealCities:"Bangalore, Pune, Delhi (Oct–Mar), Chandigarh", score:3, tags:["Very Active","Special Diet Needed","Large Space Required"] },
+  { name:"Poodle (Standard)", emoji:"🐩", size:"M-L", purpose:"Companion/Hypoallergenic", energy:"High – 1.5–2 hrs", grooming:"Very High", climate:"MEDIUM", apt:"Yes (Mini/Toy)", house:"Medium", cost:"₹8,000–15,000", health:"Hip dysplasia, Addison's, bloat (Standard)", risk:"Low", time:"2–2.5 hrs", shedding:"Very Low", hair:"Medium", nutrition:"High-quality protein; omega-3 for coat", idealCities:"Bangalore, Pune, Hyderabad (with summer clips)", score:4, tags:["Hypoallergenic-Friendly","High Grooming","Family Dog"] },
+  { name:"French Bulldog", emoji:"🐾", size:"S", purpose:"Companion/Toy", energy:"Low – 20–30 min", grooming:"Low", climate:"COLD", apt:"Yes", house:"Low", cost:"₹8,000–18,000", health:"BOAS (severe), spinal disorders, heart defects", risk:"Low", time:"1–1.5 hrs", shedding:"Low", hair:"Short", nutrition:"Easily-digestible; small frequent meals; weight control", idealCities:"Bangalore (strict AC), Delhi (Oct–Mar)", score:1.5, tags:["Apartment OK","High Vet Cost","Strictly Needs AC","Flat-Faced Risk"] },
+  { name:"Saint Bernard", emoji:"🐻", size:"XL", purpose:"Family/Rescue/Giant", energy:"Low-Medium – 30–45 min", grooming:"High", climate:"COLD", apt:"No", house:"High", cost:"₹20,000–40,000", health:"Bloat (severe), hip dysplasia, cardiomyopathy", risk:"Low", time:"1.5–2 hrs", shedding:"High", hair:"Long", nutrition:"Giant-breed specific; multiple small meals; joint supplements", idealCities:"Shimla, Manali, Srinagar, Darjeeling", score:1, tags:["Hill Stations Only","Very Expensive","Not for Most of India"] },
+];
+
+// ─────────────────────────────────────────────────────────────
+// QUESTIONS (9 total)
+// ─────────────────────────────────────────────────────────────
+const questions = [
+  {
+    id:"purpose", text:"What is the main purpose of getting a dog?", sub:"Choose what matters most to you",
+    options:[
+      {icon:"👨‍👩‍👧", label:"Family companion", val:"family"},
+      {icon:"🛡️", label:"Guard & security", val:"guard"},
+      {icon:"🏃", label:"Exercise & activity partner", val:"active"},
+      {icon:"❤️", label:"Emotional support / therapy", val:"therapy"},
+      {icon:"👴", label:"Companion for elderly", val:"elderly"},
+      {icon:"🐕", label:"I just love a specific breed", val:"breed"},
+    ], cols:2
+  },
+  {
+    id:"home", text:"What type of home do you live in?", sub:"Be honest — it affects the breed's happiness",
+    options:[
+      {icon:"🏢", label:"Apartment (under 600 sqft)", val:"apt-small"},
+      {icon:"🏠", label:"Apartment (600–1200 sqft)", val:"apt-mid"},
+      {icon:"🏡", label:"Independent house, no yard", val:"house-no-yard"},
+      {icon:"🌿", label:"Independent house with yard", val:"house-yard"},
+    ], cols:2
+  },
+  {
+    id:"city", text:"Which city are you in?", sub:"This affects climate matching for your dog",
+    options:[
+      {icon:"🌡️", label:"Hyderabad / Chennai / Mumbai (Hot)", val:"hot"},
+      {icon:"🌤️", label:"Bangalore / Pune / Chandigarh (Medium)", val:"medium"},
+      {icon:"❄️", label:"Delhi / Kolkata (Mixed seasons)", val:"mixed"},
+      {icon:"🏔️", label:"Shimla / Manali / Dehradun / Darjeeling (Cool/Cold)", val:"cold"},
+    ], cols:2
+  },
+  {
+    id:"experience", text:"How much experience do you have with dogs?", sub:"Honest answer helps us match correctly",
+    options:[
+      {icon:"🌱", label:"First-time owner — never had a dog", val:"none"},
+      {icon:"📖", label:"Some experience — had a dog before", val:"some"},
+      {icon:"⭐", label:"Experienced — trained dogs before", val:"experienced"},
+    ], cols:3
+  },
+  {
+    id:"activity", text:"How active is your daily lifestyle?", sub:"Your energy level = your dog's energy level",
+    options:[
+      {icon:"🛋️", label:"Low — mostly indoors, desk job", val:"low"},
+      {icon:"🚶", label:"Moderate — daily walks, occasional runs", val:"moderate"},
+      {icon:"🏋️", label:"High — daily runs, gym, very active", val:"high"},
+    ], cols:3
+  },
+  {
+    id:"budget", text:"What's your monthly budget for your dog?", sub:"Includes food, grooming, vet visits, supplies",
+    options:[
+      {icon:"💚", label:"Under ₹5,000", val:"low"},
+      {icon:"💛", label:"₹5,000 – ₹10,000", val:"mid"},
+      {icon:"🧡", label:"₹10,000 – ₹20,000", val:"high"},
+      {icon:"❤️", label:"Above ₹20,000", val:"premium"},
+    ], cols:2
+  },
+  {
+    id:"family", text:"Who lives at home with you?", sub:"Important for matching safe, gentle breeds",
+    options:[
+      {icon:"👶", label:"Young children (under 10)", val:"kids"},
+      {icon:"👴", label:"Elderly family members", val:"elderly"},
+      {icon:"👨‍👩‍👧‍👦", label:"Both kids and elderly", val:"both"},
+      {icon:"🧑", label:"Adults only", val:"adults"},
+    ], cols:2
+  },
+  {
+    id:"shedding", text:"How do you feel about dog shedding?", sub:"Hair on clothes, sofas, and floors",
+    options:[
+      {icon:"✅", label:"Fine with it — I'll vacuum often", val:"fine"},
+      {icon:"😐", label:"Okay with moderate shedding", val:"moderate"},
+      {icon:"❌", label:"Prefer low/no shedding", val:"low"},
+    ], cols:3
+  },
+  {
+    id:"hair", text:"Do you have a hair length preference?", sub:"This is your personal choice!",
+    options:[
+      {icon:"✂️", label:"Short — clean, minimal grooming", val:"Short"},
+      {icon:"🌊", label:"Medium — balanced look", val:"Medium"},
+      {icon:"💇", label:"Long — fluffy, glamorous", val:"Long"},
+      {icon:"💜", label:"No preference", val:"any"},
+    ], cols:2
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let answers = {};
+let currentQ = 0;
+let topBreeds = [];
+let compareList = [];
+let adminData = {yes:0, no:0};
+
+// Load admin data from localStorage
+try {
+  const saved = localStorage.getItem('pb_admin');
+  if(saved) adminData = JSON.parse(saved);
+} catch(e){}
+
+// ─────────────────────────────────────────────────────────────
+// ENTRY MODAL
+// ─────────────────────────────────────────────────────────────
+function recordResponse(val) {
+  adminData[val]++;
+  try { localStorage.setItem('pb_admin', JSON.stringify(adminData)); } catch(e){}
+  document.getElementById('entry-modal').style.display = 'none';
+  if(val === 'yes') { startQuiz(); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────────
+function showSection(id) {
+  ['hero-section','quiz-section','results-section','compare-section','admin-section']
+    .forEach(s => document.getElementById(s).style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  document.getElementById('main-footer').style.display = id === 'quiz-section' ? 'none' : 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showHero() { showSection('hero-section'); }
+function startQuiz() {
+  currentQ = 0; answers = {};
+  showSection('quiz-section');
+  renderQuestion();
+}
+function restart() { startQuiz(); }
+
+// ─────────────────────────────────────────────────────────────
+// QUIZ RENDER
+// ─────────────────────────────────────────────────────────────
+function renderQuestion() {
+  const q = questions[currentQ];
+  const pct = Math.round(((currentQ+1)/questions.length)*100);
+  document.getElementById('q-progress-label').textContent = `Question ${currentQ+1} of ${questions.length}`;
+  document.getElementById('q-progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  const area = document.getElementById('question-area');
+  area.innerHTML = `
+    <div class="question-card">
+      <div class="q-num">Q${currentQ+1} / ${questions.length}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="q-sub">${q.sub}</div>
+      <div class="options-grid ${q.cols===3?'cols-3':q.cols===2?'cols-2':''}" id="options-wrap"></div>
+      <div class="quiz-nav">
+        <button class="btn-back" onclick="prevQ()" ${currentQ===0?'style="visibility:hidden"':''}>← Back</button>
+        <button class="btn-next" id="btn-next" onclick="nextQ()" disabled>
+          ${currentQ===questions.length-1?'See My Results 🎉':'Next →'}
+        </button>
+      </div>
+    </div>`;
+
+  const wrap = document.getElementById('options-wrap');
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    if(answers[q.id] === opt.val) btn.classList.add('selected');
+    btn.innerHTML = `<span class="opt-icon">${opt.icon}</span><span>${opt.label}</span>`;
+    btn.onclick = () => selectOption(q.id, opt.val, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function selectOption(qId, val, btn) {
+  answers[qId] = val;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQ() {
+  if(!answers[questions[currentQ].id]) return;
+  if(currentQ < questions.length-1) { currentQ++; renderQuestion(); }
+  else { showResults(); }
+}
+
+function prevQ() {
+  if(currentQ > 0) { currentQ--; renderQuestion(); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// SCORING
+// ─────────────────────────────────────────────────────────────
+function scoreBreed(b) {
+  let score = 0;
+
+  // Purpose match
+  const purposeMap = {
+    family:   ['Family Dog','Companion'],
+    guard:    ['Guard Dog','Working'],
+    active:   ['Sporting','Hunting','Working'],
+    therapy:  ['Family Dog','Therapy'],
+    elderly:  ['Companion','Toy'],
+    breed:    [],
+  };
+  const purp = answers.purpose || 'family';
+  const purposeKw = purposeMap[purp] || [];
+  if(purposeKw.some(kw => b.purpose.includes(kw))) score += 25;
+
+  // Home type
+  const home = answers.home || 'apt-mid';
+  if((home==='apt-small'||home==='apt-mid') && b.apt==='Yes') score += 20;
+  if((home==='house-yard') && b.house==='High') score += 15;
+  if((home==='apt-small'||home==='apt-mid') && b.apt==='No') score -= 15;
+
+  // Climate
+  const city = answers.city || 'medium';
+  const climateScore = {
+    hot:    {HOT:25, MEDIUM:15, 'COLD-MEDIUM':5,  'MEDIUM-HOT':22, COLD:-5},
+    medium: {MEDIUM:25,'MEDIUM-HOT':20,'COLD-MEDIUM':20,HOT:10,COLD:5},
+    mixed:  {MEDIUM:22,'COLD-MEDIUM':22,HOT:10,COLD:15,'MEDIUM-HOT':18},
+    cold:   {COLD:25,'COLD-MEDIUM':20,MEDIUM:15,HOT:-5,'MEDIUM-HOT':10},
+  };
+  score += (climateScore[city]?.[b.climate] ?? 0);
+
+  // Experience
+  const exp = answers.experience || 'none';
+  if(exp==='none' && b.risk==='Low') score += 15;
+  if(exp==='none' && b.risk==='High') score -= 20;
+  if(exp==='experienced') score += 5;
+
+  // Activity
+  const act = answers.activity || 'moderate';
+  const energyMap = {
+    low:      {Low:20,'Low-Medium':15,Medium:5,'Medium-High':-5,High:-10,'Very High':-15},
+    moderate: {Low:5,'Low-Medium':12,Medium:20,'Medium-High':18,High:10,'Very High':5},
+    high:     {Low:-5,'Low-Medium':5,Medium:10,'Medium-High':18,High:20,'Very High':25},
+  };
+  const eLvl = b.energy.split('–')[0].trim().split(' ')[0];
+  score += (energyMap[act]?.[eLvl] ?? 5);
+
+  // Budget
+  const budget = answers.budget || 'mid';
+  const costMin = parseInt((b.cost||'5000').replace(/[^0-9]/g,'').slice(0,5));
+  if(budget==='low' && costMin<=5000) score += 20;
+  else if(budget==='low' && costMin>10000) score -= 15;
+  else if(budget==='mid' && costMin<=10000) score += 20;
+  else if(budget==='high' && costMin<=20000) score += 20;
+  else if(budget==='premium') score += 10;
+
+  // Family
+  const fam = answers.family || 'adults';
+  if((fam==='kids'||fam==='both') && b.risk==='Low') score += 20;
+  if((fam==='kids'||fam==='both') && b.risk==='High') score -= 25;
+  if((fam==='elderly'||fam==='both') && b.risk==='Low') score += 15;
+  if(fam==='adults') score += 5;
+
+  // Shedding
+  const shed = answers.shedding || 'moderate';
+  if(shed==='low') {
+    if(b.shedding==='Low'||b.shedding==='Very Low') score += 15;
+    if(b.shedding==='High'||b.shedding==='Very High') score -= 15;
+  } else if(shed==='moderate') {
+    if(b.shedding==='Medium'||b.shedding==='Low') score += 10;
+  } else {
+    score += 5;
+  }
+
+  // Hair preference
+  const hair = answers.hair || 'any';
+  if(hair !== 'any' && b.hair === hair) score += 15;
+  if(hair !== 'any' && b.hair !== hair) score -= 5;
+
+  // India suitability bonus
+  score += (b.score * 3);
+
+  return Math.max(0, Math.round(score));
+}
+
+function generateReason(b) {
+  const reasons = [];
+  const city = answers.city;
+  const home = answers.home;
+  const exp = answers.experience;
+  const purp = answers.purpose;
+  const act = answers.activity;
+  const fam = answers.family;
+
+  if(b.hair === answers.hair) reasons.push(`${b.hair} coat matches your preference`);
+  if(b.apt==='Yes' && (home==='apt-small'||home==='apt-mid')) reasons.push('Apartment-friendly');
+  if(city==='hot' && (b.climate.includes('HOT')||b.climate.includes('MEDIUM'))) reasons.push('Climate suits your city');
+  if(city==='cold' && b.climate.includes('COLD')) reasons.push('Perfect for your cool climate');
+  if(exp==='none' && b.risk==='Low') reasons.push('Great for first-time owners');
+  if((fam==='kids'||fam==='both') && b.risk==='Low') reasons.push('Safe with children');
+  if((fam==='elderly'||fam==='both') && b.risk==='Low') reasons.push('Gentle with elderly');
+  if(purp==='guard' && b.purpose.includes('Guard')) reasons.push('Excellent guard dog');
+  if(purp==='family' && b.purpose.includes('Family')) reasons.push('Perfect family companion');
+  if(act==='low' && b.energy.includes('Low')) reasons.push('Matches your calm lifestyle');
+  if(act==='high' && (b.energy.includes('High')||b.energy.includes('Very High'))) reasons.push('Matches your active lifestyle');
+  if(answers.shedding==='low' && (b.shedding==='Low'||b.shedding==='Very Low')) reasons.push('Low shedding – minimal cleanup');
+  if(answers.budget==='low' && parseInt((b.cost||'').replace(/[^0-9]/g,'').slice(0,5))<=5000) reasons.push('Fits your budget perfectly');
+
+  return reasons.length > 0 ? reasons.slice(0,3).join(' · ') : `Scored well across all your lifestyle criteria`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHOW RESULTS
+// ─────────────────────────────────────────────────────────────
+function showResults() {
+  const scored = breeds.map(b => ({...b, matchScore: scoreBreed(b), reason: generateReason(b)}));
+  scored.sort((a,b) => b.matchScore - a.matchScore);
+  topBreeds = scored.slice(0,5);
+  compareList = [];
+
+  showSection('results-section');
+  renderTopMatch();
+  renderBreedCards();
+}
+
+function renderTopMatch() {
+  const b = topBreeds[0];
+  const pct = Math.min(99, Math.round((b.matchScore / 180)*100));
+  document.getElementById('top-match-area').innerHTML = `
+    <div class="top-match">
+      <div class="top-match-img">${b.emoji}</div>
+      <div class="top-match-info">
+        <div class="top-badge">🏆 YOUR BEST MATCH</div>
+        <h3>${b.name}</h3>
+        <div class="reason">${b.reason}</div>
+        <div class="match-tags">
+          ${b.tags.map(t=>`<span class="match-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="match-score">${pct}%<span>lifestyle match</span></div>
+    </div>`;
+}
+
+function renderBreedCards() {
+  const grid = document.getElementById('breeds-grid');
+  grid.innerHTML = '';
+  topBreeds.forEach((b, i) => {
+    if(i===0) return; // top match shown separately
+    const card = document.createElement('div');
+    card.className = 'breed-card';
+    card.id = `card-${b.name.replace(/\s/g,'_')}`;
+    const pct = Math.min(99, Math.round((b.matchScore/180)*100));
+    card.innerHTML = `
+      <div class="breed-card-img">
+        <span class="breed-rank">#${i+1} Match</span>
+        <span>${b.emoji}</span>
+      </div>
+      <div class="breed-card-body">
+        <div class="breed-name">${b.name}</div>
+        <div class="breed-reason">${b.reason}</div>
+        <div class="breed-pills">
+          <span class="pill pill-orange">${b.hair} Hair</span>
+          <span class="pill ${b.shedding.includes('High')?'pill-red':'pill-green'}">Shed: ${b.shedding.split(' ')[0]}</span>
+          <span class="pill pill-blue">${b.size}</span>
+          <span class="pill pill-yellow">${pct}% match</span>
+        </div>
+        <div class="breed-mini-stats">
+          <div class="mini-stat"><strong>${b.cost}</strong>Monthly Cost</div>
+          <div class="mini-stat"><strong>${b.risk}</strong>Family Risk</div>
+          <div class="mini-stat"><strong>${b.time}</strong>Daily Time</div>
+          <div class="mini-stat"><strong>${b.grooming}</strong>Grooming</div>
+        </div>
+      </div>
+      <div class="breed-card-actions">
+        <button class="btn-details" onclick="showDetail('${b.name}')">Full Profile</button>
+        <button class="btn-compare" id="cmp-${b.name.replace(/\s/g,'_')}" onclick="toggleCompare('${b.name}')">+ Compare</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// DETAIL MODAL
+// ─────────────────────────────────────────────────────────────
+function showDetail(name) {
+  const b = breeds.find(x=>x.name===name);
+  if(!b) return;
+  const costParts = b.cost.split('–');
+  const overlay = document.getElementById('detail-overlay');
+  document.getElementById('detail-box').innerHTML = `
+    <div class="detail-header">
+      <button class="btn-close-detail" onclick="closeDetail()">×</button>
+      <span class="breed-emoji">${b.emoji}</span>
+      <h3>${b.name}</h3>
+      <div class="match-tags">
+        ${b.tags.map(t=>`<span class="match-tag" style="background:rgba(255,255,255,.2);padding:4px 12px;border-radius:50px;font-size:12px">${t}</span>`).join('')}
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section">
+        <h4>Quick Stats</h4>
+        <div class="detail-grid">
+          <div class="detail-item"><div class="di-label">Size</div><div class="di-val">${b.size}</div></div>
+          <div class="detail-item"><div class="di-label">Hair Length</div><div class="di-val">${b.hair}</div></div>
+          <div class="detail-item"><div class="di-label">Shedding</div><div class="di-val">${b.shedding}</div></div>
+          <div class="detail-item"><div class="di-label">Grooming</div><div class="di-val">${b.grooming}</div></div>
+          <div class="detail-item"><div class="di-label">Energy Level</div><div class="di-val">${b.energy}</div></div>
+          <div class="detail-item"><div class="di-label">Daily Time Needed</div><div class="di-val">${b.time}</div></div>
+          <div class="detail-item"><div class="di-label">Family Risk</div><div class="di-val">${b.risk}</div></div>
+          <div class="detail-item"><div class="di-label">Apartment Friendly</div><div class="di-val">${b.apt}</div></div>
+          <div class="detail-item"><div class="di-label">Climate Suitability</div><div class="di-val">${b.climate}</div></div>
+          <div class="detail-item"><div class="di-label">India Score</div><div class="di-val">${'⭐'.repeat(Math.round(b.score))}</div></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Monthly Cost Breakdown</h4>
+        <div class="cost-breakdown">
+          <div class="cost-row"><span>Total Estimate</span><span>${b.cost}/month</span></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Ideal Indian Cities</h4>
+        <p>${b.idealCities}</p>
+      </div>
+      <div class="detail-section">
+        <h4>Common Health Issues</h4>
+        <p>${b.health}</p>
+      </div>
+      <div class="detail-section">
+        <h4>Nutrition & Diet</h4>
+        <p>${b.nutrition}</p>
+      </div>
+      <div class="detail-section">
+        <h4>Purpose</h4>
+        <p>${b.purpose}</p>
+      </div>
+    </div>`;
+  overlay.classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('open');
+}
+document.getElementById('detail-overlay').addEventListener('click', function(e){
+  if(e.target === this) closeDetail();
+});
+
+// ─────────────────────────────────────────────────────────────
+// COMPARE
+// ─────────────────────────────────────────────────────────────
+function toggleCompare(name) {
+  const idx = compareList.indexOf(name);
+  const btn = document.getElementById(`cmp-${name.replace(/\s/g,'_')}`);
+  if(idx === -1) {
+    if(compareList.length >= 3) { alert('You can compare up to 3 breeds at a time.'); return; }
+    compareList.push(name);
+    if(btn) { btn.textContent = '✓ Selected'; btn.classList.add('active'); }
+  } else {
+    compareList.splice(idx,1);
+    if(btn) { btn.textContent = '+ Compare'; btn.classList.remove('active'); }
+  }
+  updateCompareBar();
+}
+
+function updateCompareBar() {
+  const bar = document.getElementById('compare-bar');
+  if(compareList.length >= 2) {
+    bar.classList.add('show');
+    document.getElementById('compare-count').textContent = `${compareList.length} breeds selected`;
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function clearCompare() {
+  compareList = [];
+  document.querySelectorAll('.btn-compare').forEach(b => { b.textContent = '+ Compare'; b.classList.remove('active'); });
+  updateCompareBar();
+}
+
+function showCompare() {
+  const breedsToCompare = compareList.map(n => breeds.find(b=>b.name===n)).filter(Boolean);
+  const fields = [
+    ['Size','size'],['Hair Length','hair'],['Shedding','shedding'],['Grooming','grooming'],
+    ['Energy Level','energy'],['Climate Suitability','climate'],['Apartment Friendly','apt'],
+    ['House Needed','house'],['Monthly Cost','cost'],['Family Risk','risk'],
+    ['Daily Time','time'],['Ideal Cities','idealCities'],['Common Health Issues','health'],
+    ['Nutrition','nutrition'],['India Score','score'],
+  ];
+  let html = `<thead><tr><th>Feature</th>${breedsToCompare.map(b=>`<th>${b.emoji} ${b.name}</th>`).join('')}</tr></thead><tbody>`;
+  fields.forEach(([label,key]) => {
+    html += `<tr><td>${label}</td>${breedsToCompare.map(b => `<td>${key==='score'?'⭐'.repeat(Math.round(b[key])):b[key]||'—'}</td>`).join('')}</tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('compare-table').innerHTML = html;
+  document.getElementById('compare-bar').classList.remove('show');
+  showSection('compare-section');
+}
+
+function backToResults() {
+  showSection('results-section');
+  document.getElementById('compare-bar').classList.remove('show');
+}
+
+// ─────────────────────────────────────────────────────────────
+// CUSTOM BREED SEARCH
+// ─────────────────────────────────────────────────────────────
+function searchCustomBreed() {
+  const val = document.getElementById('custom-breed-input').value.trim().toLowerCase();
+  const b = breeds.find(x => x.name.toLowerCase().includes(val));
+  const resultDiv = document.getElementById('custom-result');
+
+  if(!b) {
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `<div class="custom-result-inner"><p style="color:var(--text-soft)">We don't have data on that breed yet. Try one of our 23 breeds like Labrador, Beagle, Husky, Indian Pariah Dog, etc.</p></div>`;
+    return;
+  }
+
+  const pros = [], cons = [];
+  const city = answers.city||'medium';
+  const home = answers.home||'apt-mid';
+  const exp = answers.experience||'none';
+  const fam = answers.family||'adults';
+  const act = answers.activity||'moderate';
+  const shed = answers.shedding||'moderate';
+
+  // Pros
+  if(b.apt==='Yes' && (home==='apt-small'||home==='apt-mid')) pros.push('Suitable for your apartment');
+  if(city==='hot' && b.climate.includes('HOT')) pros.push('Thrives in your hot climate');
+  if(city==='medium' && b.climate.includes('MEDIUM')) pros.push('Comfortable in your city\'s climate');
+  if(city==='cold' && b.climate.includes('COLD')) pros.push('Perfect for your cool climate');
+  if(exp==='none' && b.risk==='Low') pros.push('Good for first-time owners');
+  if((fam==='kids'||fam==='both') && b.risk==='Low') pros.push('Safe and gentle with children');
+  if((fam==='elderly'||fam==='both') && b.risk==='Low') pros.push('Patient with elderly family members');
+  if(act==='high' && b.energy.includes('High')) pros.push('Matches your active lifestyle');
+  if(shed==='low' && (b.shedding.includes('Low')||b.shedding.includes('Very Low'))) pros.push('Low shedding — easy cleanup');
+  if(b.grooming==='Low') pros.push('Low grooming maintenance');
+  if(b.score >= 4) pros.push(`Excellent India suitability score (${b.score}/5)`);
+  if(pros.length === 0) pros.push(`Good temperament: ${b.risk} family risk`, `Purpose fits: ${b.purpose}`);
+
+  // Cons
+  if(b.apt==='No' && (home==='apt-small'||home==='apt-mid')) cons.push('NOT suitable for your apartment — needs open space');
+  if(city==='hot' && b.climate==='COLD') cons.push('POOR climate match — not suited for your hot city');
+  if(city==='hot' && b.climate.includes('COLD') && !b.climate.includes('MEDIUM')) cons.push('Needs dedicated 24/7 AC in your city');
+  if(exp==='none' && b.risk==='High') cons.push('NOT recommended for first-time owners — high aggression risk');
+  if((fam==='kids'||fam==='both') && b.risk==='High') cons.push('High risk around children without professional training');
+  if(act==='low' && (b.energy.includes('Very High')||b.energy.includes('High'))) cons.push('Very high exercise need may not match your lifestyle');
+  if(shed==='low' && (b.shedding.includes('High')||b.shedding.includes('Very High'))) cons.push('Heavy shedding — lots of hair cleanup');
+  if(b.grooming==='High'||b.grooming==='Very High') cons.push('High grooming cost and time commitment');
+  if(b.score <= 2) cons.push(`Low India suitability score (${b.score}/5) — difficult to maintain in India`);
+  if(cons.length === 0) cons.push('Ensure adequate exercise time daily', 'Regular vet checkups important');
+
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <div class="custom-result-inner">
+      <h4>${b.emoji} ${b.name} — Based on YOUR Lifestyle</h4>
+      <div class="pros-cons">
+        <div class="pros"><h5>✅ PROS for you</h5><ul>${pros.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+        <div class="cons"><h5>❌ CONS for you</h5><ul>${cons.map(c=>`<li>${c}</li>`).join('')}</ul></div>
+      </div>
+    </div>`;
+}
+
+document.getElementById('custom-breed-input').addEventListener('keydown', e => {
+  if(e.key==='Enter') searchCustomBreed();
+});
+
+// ─────────────────────────────────────────────────────────────
+// SHARE
+// ─────────────────────────────────────────────────────────────
+function shareWhatsApp() {
+  const top = topBreeds[0];
+  const others = topBreeds.slice(1,4).map(b=>b.name).join(', ');
+  const txt = `🐾 I just found my perfect dog match on Paw Buddy!\n\n🏆 #1 Match: ${top.name} ${top.emoji}\n🐶 Also great: ${others}\n\nFind YOUR perfect dog breed → https://pawbuddy.in\n\n#PawBuddy #DogBreed #IndiasDogAdvisor`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
+}
+
+function downloadPNG() {
+  const top = topBreeds[0];
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080; canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+
+  // Background gradient
+  const grd = ctx.createLinearGradient(0,0,1080,1080);
+  grd.addColorStop(0,'#FF6B2B'); grd.addColorStop(1,'#FFB347');
+  ctx.fillStyle = grd; ctx.fillRect(0,0,1080,1080);
+
+  // White card
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  roundRect(ctx, 80, 80, 920, 920, 40);
+
+  // Brand
+  ctx.fillStyle = '#FF6B2B';
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🐾 PAW BUDDY', 540, 170);
+
+  // Title
+  ctx.fillStyle = '#3D1F00';
+  ctx.font = 'bold 52px sans-serif';
+  ctx.fillText('My Perfect Dog Match!', 540, 260);
+
+  // Big emoji
+  ctx.font = '180px sans-serif';
+  ctx.fillText(top.emoji, 540, 480);
+
+  // Breed name
+  ctx.fillStyle = '#FF6B2B';
+  ctx.font = 'bold 64px sans-serif';
+  ctx.fillText(top.name, 540, 580);
+
+  // Reason
+  ctx.fillStyle = '#7A4010';
+  ctx.font = '28px sans-serif';
+  const reason = top.reason.split('·')[0].trim();
+  ctx.fillText(reason, 540, 640);
+
+  // Top 5 list
+  ctx.fillStyle = '#3D1F00';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText('My Top 5:', 540, 710);
+  ctx.font = '22px sans-serif';
+  ctx.fillStyle = '#7A4010';
+  topBreeds.forEach((b,i) => {
+    ctx.fillText(`${i+1}. ${b.name} ${b.emoji}`, 540, 750+(i*36));
+  });
+
+  // Footer
+  ctx.fillStyle = '#FF6B2B';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText('Find your match at pawbuddy.in', 540, 960);
+
+  const link = document.createElement('a');
+  link.download = 'my-paw-buddy-match.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ─────────────────────────────────────────────────────────────
+// ADMIN
+// ─────────────────────────────────────────────────────────────
+function showAdmin() {
+  document.getElementById('admin-yes').textContent = adminData.yes;
+  document.getElementById('admin-no').textContent = adminData.no;
+  const total = adminData.yes + adminData.no;
+  const rate = total > 0 ? Math.round((adminData.yes/total)*100) : 0;
+  document.getElementById('admin-rate').textContent = total > 0
+    ? `${rate}% of visitors said YES (${total} total responses)`
+    : 'No responses yet';
+  showSection('admin-section');
+  document.getElementById('main-footer').style.display = 'block';
+}
+
+// Check for admin URL
+if(window.location.hash === '#admin') showAdmin();
+</script>
+</body>
+</html>
