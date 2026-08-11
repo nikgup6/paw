@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import allBreeds from '../../constants/breeds.json';
+import { useBreedList } from '../../context/BreedsContext';
 import BreedProfileModal from '../BreedProfileModal';
 import { AuthContext } from '../../context/AuthContext';
 
@@ -35,6 +35,7 @@ const lifestyles = [
 ];
 
 const LifestyleVisualizer = () => {
+  const allBreeds = useBreedList();
   const [activeTab, setActiveTab] = useState(lifestyles[0].id);
   const [selectedBreed, setSelectedBreed] = useState(null);
   const { user } = useContext(AuthContext);

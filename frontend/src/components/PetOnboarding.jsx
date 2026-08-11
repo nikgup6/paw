@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
-import breedsData from '../constants/breeds.json';
+import { useBreedList } from '../context/BreedsContext';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const PetOnboarding = ({ onComplete, onCancel }) => {
+  const breedsData = useBreedList();
   const { user } = useContext(AuthContext);
   const [step, setStep] = useState(1);
   

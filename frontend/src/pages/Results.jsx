@@ -1,18 +1,97 @@
 import { useState, useEffect, useContext, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import breedsData from '../constants/breeds.json';
+import { useBreeds } from '../context/BreedsContext';
 import BreedCard from '../components/BreedCard';
 import FeedbackModal from '../components/FeedbackModal';
 import { AuthContext } from '../context/AuthContext';
-import { buildLivingConditions, computeMatches, generateProsCons, generatePersonalizedReason } from '../utils/breedUtils';
+import { buildLivingConditions, computeMatches, computeReadiness, generateProsCons, generatePersonalizedReason } from '../utils/breedUtils';
 import { clearQuizState } from '../utils/quizState';
+import { isSoftCta, saveProgress, showsBreederCta, showsPrepCapture, track } from '../utils/analytics';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from '../components/WhatsAppButton';
+import BreederDirectory from '../components/BreederDirectory';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+/* What the page offers someone who isn't buying yet.
+
+   Defined at module level so it isn't a fresh component type on every render.
+   Two shapes: "Planning Ahead" is three to six months out and worth staying in
+   touch with, so we trade a prep guide for an email. "Just Researching" hasn't
+   decided anything — they get the reading and nothing else. Neither sees a
+   breeder. Showing a "buy now" button to someone who just told us they haven't
+   decided is how a recommendation engine starts reading as a sales funnel. */
+const PrepPanel = ({ readinessCode, topBreed, onSubmitEmail }) => {
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  const cold = readinessCode === 'researching';
+
+  const submit = () => {
+    const value = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(value)) return;
+    onSubmitEmail(value);
+    setSent(true);
+  };
+
+  return (
+    <div style={{
+      margin: '30px auto 0', maxWidth: '760px', padding: '24px',
+      background: 'white', borderRadius: '20px', border: '1px solid #EFE6DC',
+      boxShadow: '0 8px 24px -18px rgba(61,41,28,.5)', fontFamily: "'Poppins', sans-serif",
+    }}>
+      <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', margin: '0 0 6px', fontSize: '20px' }}>
+        {cold ? 'Your Starter Kit' : 'Your 90-day prep guide'}
+      </h3>
+      <p style={{ color: 'var(--text-soft, #7a6a5c)', fontSize: '14px', margin: '0 0 16px', lineHeight: 1.6 }}>
+        {cold
+          ? `No rush — nobody should pick a dog on a deadline. Here is what to work through before you decide on a ${topBreed || 'breed'}.`
+          : `You have time, which is the best position to be in. Here is what to sort out before your ${topBreed || 'puppy'} comes home.`}
+      </p>
+
+      <ul style={{ margin: '0 0 18px', paddingLeft: '18px', color: 'var(--brown)', fontSize: '14px', lineHeight: 1.9 }}>
+        <li>What a puppy actually costs in the first year — food, vaccines, sterilisation, emergencies.</li>
+        <li>The questions that separate an ethical breeder from a mediator.</li>
+        <li>The Indian vaccination and deworming schedule, and when each dose is due.</li>
+        <li>What your home needs before day one, and what can wait.</li>
+      </ul>
+
+      {cold ? (
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <Link to="/explore" style={{ padding: '11px 20px', borderRadius: '50px', background: 'var(--orange)', color: 'white', fontWeight: 700, textDecoration: 'none', fontSize: '14px' }}>
+            Read about the breeds
+          </Link>
+          <Link to="/app" style={{ padding: '11px 20px', borderRadius: '50px', border: '1px solid #E3D9CE', color: 'var(--brown)', fontWeight: 700, textDecoration: 'none', fontSize: '14px' }}>
+            Health tracker
+          </Link>
+        </div>
+      ) : sent ? (
+        <p style={{ margin: 0, color: '#1B8046', fontSize: '14px', fontWeight: 700 }}>
+          Sent. Check your inbox — we will not email you about anything else.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            placeholder="you@example.com"
+            style={{ flex: '1 1 220px', padding: '12px 14px', borderRadius: '12px', border: '2px solid #EAE4DE', fontFamily: 'inherit', fontSize: '14px', color: 'var(--brown)', outline: 'none' }}
+          />
+          <button
+            onClick={submit}
+            style={{ padding: '12px 22px', borderRadius: '50px', border: 'none', background: 'var(--orange)', color: 'white', fontWeight: 700, fontFamily: 'inherit', fontSize: '14px', cursor: 'pointer' }}
+          >
+            Send it to me
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 
 const Results = () => {
@@ -27,10 +106,16 @@ const Results = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const { user } = useContext(AuthContext);
+  /* Breeds are fetched now, not bundled. Scoring must wait for them —
+     computeMatches against an empty catalogue returns an empty ranking. */
+  const { breeds: breedsData, loading: breedsLoading } = useBreeds();
   const navigate = useNavigate();
   const compareRef = useRef(null);
+  const viewedRef = useRef(false);   // results_viewed is logged once per visit
 
   useEffect(() => {
+    if (breedsLoading) return;          // catalogue still arriving
+
     const savedState = localStorage.getItem('pb_quiz_state');
     if (!savedState) {
       navigate('/quiz');
@@ -53,13 +138,32 @@ const Results = () => {
         const scoredBreeds = computeMatches(parsedAnswers, breedsData);
         const breeds = scoredBreeds.slice(0, 5);
         setTopBreeds(breeds);
-        
-        // Save to DB
-        await axios.post(`${API_URL}/api/quiz/submit`, {
-          user_id: user?.id || null,
-          answers: parsedAnswers,
-          top_breeds: breeds.map(b => b.name)
-        });
+
+        /* The top breed isn't known until the scoring runs, so results_viewed
+           is fired here rather than on mount — otherwise the event carries no
+           breed, which is half of what makes it worth logging.
+
+           Guarded because this effect re-runs when `user` resolves from null
+           to the signed-in account, which happens on a normal page load. */
+        if (!viewedRef.current) {
+          viewedRef.current = true;
+          const viewed = computeReadiness(parsedAnswers);
+          track('results_viewed', { top_breed: breeds[0]?.name, readiness_code: viewed.code });
+          // top_breed is the exact breed-database name, so lead data can be
+          // joined to breed data later without fuzzy matching.
+          saveProgress({ top_breed: breeds[0]?.name, readiness_code: viewed.code, status: 'completed' });
+
+          /* Inside the guard, deliberately. This effect re-runs when `user`
+             resolves from null to the signed-in account — which happens on an
+             ordinary page load, in production, not just under StrictMode. Left
+             outside, every results view wrote two quiz_results rows and the
+             "Quizzes Taken" figure counted roughly double. */
+          await axios.post(`${API_URL}/api/quiz/submit`, {
+            user_id: user?.id || null,
+            answers: parsedAnswers,
+            top_breeds: breeds.map(b => b.name)
+          });
+        }
         
         setTimeout(() => setLoading(false), 1500);
       } catch (error) {
@@ -69,7 +173,7 @@ const Results = () => {
     };
 
     fetchResults();
-  }, [navigate, user]);
+  }, [navigate, user, breedsLoading, breedsData]);
 
   useEffect(() => {
     if (modalType || showFeedback) {
@@ -110,7 +214,28 @@ const Results = () => {
   // Hyper-personalised justification built from the user's own quiz answers
   const generateReason = (b) => generatePersonalizedReason(b, answers);
 
+  // Q3 city, used to pick which verified breeder network to show.
+  const quizCity = (Array.isArray(answers?.city) ? answers.city[0] : answers?.city) || null;
+
+  /* The last question decides how hard this page sells:
+
+       ready_now / ready_soon  → breeder CTA, ready_soon worded softer
+       planning                → prep-guide email capture, NO breeder CTA
+       researching             → Starter Kit only, NO breeder CTA
+
+     Someone buying inside three months wants a breeder's number; someone
+     still reading wants reading, and pushing a breeder at them wastes the
+     breeder's time and the reader's goodwill in one move. */
+  const readiness = computeReadiness(answers);
+  const canConnect = showsBreederCta(readiness.code);
+  const softCta = isSoftCta(readiness.code);
+  const prepCapture = showsPrepCapture(readiness.code);
+
   const handleAction = (type, breed) => {
+    if (type === 'buy') {
+      if (!canConnect) return;      // no breeder path for a cold lead, ever
+      track('breeder_cta_clicked', { breed: breed?.name, city: quizCity, readiness_code: readiness.code });
+    }
     setSelectedBreed(breed);
     setModalType(type);
     if (type === 'compare') {
@@ -134,31 +259,18 @@ const Results = () => {
     setSearchQuery('');
   };
 
-  const submitBuyRequest = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const name = formData.get('name');
-    const mobile = formData.get('mobile');
-    const intent = formData.get('intent');
-
-    // Open WhatsApp with a pre-filled, per-user/per-breed message. Synchronous
-    // so pop-up blockers don't intercept it.
-    const link = buildWhatsAppEnquiryLink(name, selectedBreed.name, intent);
-    setWaLink(link);
-    window.open(link, '_blank', 'noopener,noreferrer');
-
-    // Best-effort lead capture — never blocks the WhatsApp hand-off.
+  /** Logged when the user opens a breeder's WhatsApp chat. Best effort only. */
+  const logBreederContact = (breeder) => {
+    track('contact_submitted', { breeder_id: breeder?.id, breeder_name: breeder?.name, readiness_code: readiness.code });
     axios.post(`${API_URL}/api/buy`, {
       user_id: user?.id || null,
-      user_name: name,
-      mobile: mobile || 'Via WhatsApp',
-      city: user?.city || 'Not Provided',
-      breed_name: selectedBreed.name,
-      intent,
+      user_name: user?.name || 'Guest',
+      mobile: user?.mobile || 'Via breeder WhatsApp',
+      city: quizCity || user?.city || 'Not Provided',
+      breed_name: selectedBreed?.name,
+      intent: `Contacted breeder: ${breeder.name} (${breeder.city})`,
       status: "NEW"
     }).catch(() => { /* best effort */ });
-
-    setModalType('buy_success');
   };
 
   const downloadPDF = async () => {
@@ -295,7 +407,25 @@ const Results = () => {
                 ))}
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-                <button onClick={() => handleAction('buy', topBreeds[0])} style={{ flex: '1 1 100px', padding: '12px', background: 'white', color: 'var(--orange)', border: 'none', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>Buy</button>
+                {canConnect && (
+                  <button
+                    onClick={() => handleAction('buy', topBreeds[0])}
+                    style={{
+                      flex: '1 1 100px', padding: '12px', borderRadius: '50px',
+                      fontWeight: softCta ? 700 : 800, cursor: 'pointer',
+                      fontFamily: "'Poppins', sans-serif",
+                      /* A cool lead still gets the door, just not a shove
+                         through it — same control, quieter treatment. */
+                      background: softCta ? 'rgba(255,255,255,0.15)' : 'white',
+                      color: softCta ? 'white' : 'var(--orange)',
+                      border: softCta ? '1px solid rgba(255,255,255,0.4)' : 'none',
+                      backdropFilter: softCta ? 'blur(5px)' : undefined,
+                      boxShadow: softCta ? undefined : '0 4px 15px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    {softCta ? 'See breeders' : 'Buy'}
+                  </button>
+                )}
                 <button onClick={() => handleAction('compare', topBreeds[0])} style={{ flex: '1 1 100px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", backdropFilter: 'blur(5px)' }}>Compare</button>
                 <button onClick={() => handleAction('full_profile', topBreeds[0])} style={{ flex: '1 1 100px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", backdropFilter: 'blur(5px)' }}>Full Profile</button>
               </div>
@@ -310,6 +440,7 @@ const Results = () => {
               breed={breed} 
               rank={index + 2} 
               reason={generateReason(breed)}
+              hideBuyButton={!canConnect}
               onBuy={(b) => handleAction('buy', b)}
               onCompare={(b) => handleAction('compare', b)}
               onFullProfile={(b) => handleAction('full_profile', b)}
@@ -317,6 +448,19 @@ const Results = () => {
             />
           ))}
         </div>
+        {/* Cool and cold leads get something to take away instead of a hard
+            sell. Hot and warm don't need it — they have the breeder list. */}
+        {(prepCapture || readiness.code === 'researching') && (
+          <PrepPanel
+            readinessCode={readiness.code}
+            topBreed={topBreeds[0]?.name}
+            onSubmitEmail={(email) => {
+              track('prep_guide_requested', { email, readiness_code: readiness.code, top_breed: topBreeds[0]?.name });
+              saveProgress({ email });
+            }}
+          />
+        )}
+
         <div id="end-of-recommendations" style={{ height: '1px' }}></div>
 
         <div id="retake-quiz-section" style={{ marginTop: '40px', textAlign: 'center', padding: 'clamp(22px, 4vw, 30px)', background: '#fff9f5', borderRadius: '20px', border: '2px dashed var(--orange)', opacity: 0.9 }}>
@@ -385,7 +529,7 @@ const Results = () => {
       {/* Modals */}
       {modalType && (
         <div onClick={closeAction} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, fontFamily: "'Poppins', sans-serif", padding: '20px' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: modalType === 'image_preview' ? 'transparent' : 'white', padding: modalType === 'image_preview' ? '0' : '30px', borderRadius: '20px', width: '100%', maxWidth: modalType === 'compare' ? '900px' : (modalType === 'full_profile' ? '800px' : '500px'), maxHeight: '90dvh', overflowY: 'auto', position: 'relative' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: modalType === 'image_preview' ? 'transparent' : 'white', padding: modalType === 'image_preview' ? '0' : '30px', borderRadius: '20px', width: '100%', maxWidth: modalType === 'compare' ? '900px' : (modalType === 'full_profile' ? '800px' : (modalType === 'buy' ? '900px' : '500px')), maxHeight: '90dvh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={closeAction} style={{ position: 'absolute', top: modalType === 'image_preview' ? '-40px' : '20px', right: modalType === 'image_preview' ? '0' : '20px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '35px', height: '35px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>×</button>
             
             {modalType === 'image_preview' && selectedBreed && (
@@ -395,22 +539,13 @@ const Results = () => {
               </div>
             )}
             
-            {modalType === 'buy' && (
-              <>
-                <h3 style={{ marginBottom: '10px', color: 'var(--orange)' }}>Interest in {selectedBreed.name}</h3>
-                <p style={{ marginBottom: '20px', color: 'var(--text-soft)', fontSize: '14px', background: '#ffe0b2', padding: '10px', borderRadius: '8px' }}>The breeder is only available at Hyderabad currently.</p>
-                <form onSubmit={submitBuyRequest} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <input name="name" defaultValue={user?.name || ''} placeholder="Your Name" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
-                  <input name="mobile" defaultValue={user?.mobile || ''} placeholder="Mobile Number" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
-                  <select name="intent" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }}>
-                    <option value="">Select Intent</option>
-                    <option value="Ready to buy immediately">Ready to buy immediately</option>
-                    <option value="Looking to buy next month">Looking to buy next month</option>
-                    <option value="Just inquiring">Just inquiring</option>
-                  </select>
-                  <WhatsAppButton type="submit" style={{ marginTop: '10px' }} />
-                </form>
-              </>
+            {modalType === 'buy' && selectedBreed && (
+              <BreederDirectory
+                userCity={quizCity}
+                breedName={selectedBreed.name}
+                topBreeds={topBreeds.map((b) => b.name)}
+                onContact={logBreederContact}
+              />
             )}
 
             {modalType === 'buy_success' && (
@@ -530,9 +665,16 @@ const Results = () => {
                       <p style={{ fontSize: '14px', margin: 0, color: 'var(--text-soft)' }}>{selectedBreed.health}</p>
                     </div>
                   </div>
-                  <div style={{ marginTop: '20px' }}>
-                    <button onClick={() => setModalType('buy')} style={{ padding: '12px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", width: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>Request to Buy</button>
-                  </div>
+                  {canConnect && (
+                    <div style={{ marginTop: '20px' }}>
+                      <button
+                        onClick={() => handleAction('buy', selectedBreed)}
+                        style={{ padding: '12px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", width: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
+                      >
+                        {softCta ? 'See breeders for this breed' : 'Request to Buy'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

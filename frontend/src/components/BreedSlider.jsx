@@ -10,7 +10,7 @@ const describeBreed = (b) => {
   return `A ${sizeWord} ${role} with ${energy} energy — happiest with ${(b.time || 'about an hour').toLowerCase()} of engagement every day.`;
 };
 
-const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile }) => {
+const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile, onCompare }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,7 +97,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '10px 0' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px 0' }}>
 
       {/* Side navigation arrows — click to glide to the prev/next breed profile */}
       <button
@@ -116,7 +116,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
       </button>
 
       {/* Search Header Options */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', zIndex: 10, padding: '0 10px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', zIndex: 10, padding: '0 10px' }}>
         <button 
           onClick={onClose}
           style={{
@@ -230,23 +230,23 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
               >
-                <div style={{ background: 'white', padding: '20px', borderRadius: '18px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
                   <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Breed Group</div>
                   <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
                     {activeBreed.purpose || 'Companion'}
                   </strong>
                 </div>
 
-                <div style={{ background: 'white', padding: '20px', borderRadius: '18px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
                   <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Energy Needs</div>
                   <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
                     {activeBreed.energy.split('–')[0] || 'Moderate'}
                   </strong>
                 </div>
 
-                <div style={{ background: 'white', padding: '20px', borderRadius: '18px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
                   <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Climate Compatibility</div>
                   <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
                     {activeBreed.climate.split('\n')[0] || 'Medium Climate'}
@@ -271,14 +271,14 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
               }}
               exit={{ scale: reducedMotion ? 1 : 0.94, opacity: 0, x: reducedMotion ? 0 : direction * -50, transition: { duration: 0.35, ease: 'easeIn' } }}
               style={{
-                width: 'clamp(230px, 35vw, 310px)',
+                height: 'clamp(190px, 30vh, 300px)', // cap by viewport height so the action row stays on-screen
                 aspectRatio: '0.75',
                 overflow: 'hidden',
                 borderRadius: '160px 160px 24px 24px', // Premium arched frame morph
-                border: '8px solid white',
+                border: '7px solid white',
                 boxShadow: 'var(--shadow-lg)',
                 background: '#FCFAF7',
-                marginBottom: '20px'
+                marginBottom: '10px'
               }}
             >
               <img 
@@ -304,23 +304,23 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
               >
-                <div style={{ background: 'white', padding: '20px', borderRadius: '18px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
                   <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Adult Weight</div>
                   <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
                     {activeBreed.size.split('(')[1]?.split(',')[0] || '10-25 kg'}
                   </strong>
                 </div>
 
-                <div style={{ background: 'white', padding: '20px', borderRadius: '18px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
                   <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Grooming Level</div>
                   <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
                     {activeBreed.grooming.split('–')[0] || 'Low'}
                   </strong>
                 </div>
 
-                <div style={{ background: 'white', padding: '20px', borderRadius: '18px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
                   <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Owner Experience</div>
                   <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
                     {activeBreed.experienceLevel || 'First-timer OK'}
@@ -335,9 +335,9 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
       {/* Bottom section showing description and action CTA */}
       <div 
         style={{ 
-          display: 'flex', flexDirection: 'column', alignItems: 'center', 
-          maxWidth: '650px', margin: '15px auto 0', textCenter: 'center', 
-          zIndex: 2, padding: '0 20px' 
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          maxWidth: '650px', margin: '6px auto 0', textCenter: 'center',
+          zIndex: 2, padding: '0 20px'
         }}
       >
         <AnimatePresence mode="wait">
@@ -357,36 +357,47 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
                 </div>
               )}
 
-              <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '26px', marginBottom: '8px' }}>
+              <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '24px', marginBottom: '6px' }}>
                 {activeBreed.name}
               </h2>
-              <p style={{ color: 'var(--text-soft)', fontSize: '14px', lineHeight: 1.6, marginBottom: isResults && activeBreed.warnings?.length ? '10px' : '20px', fontFamily: "'Poppins', sans-serif" }}>
+              <p style={{ color: 'var(--text-soft)', fontSize: '13.5px', lineHeight: 1.5, marginBottom: isResults && activeBreed.warnings?.length ? '8px' : '14px', fontFamily: "'Poppins', sans-serif" }}>
                 {isResults ? generatePersonalizedReason(activeBreed, answers) : describeBreed(activeBreed)}
               </p>
 
               {isResults && activeBreed.warnings?.length > 0 && (
-                <p style={{ color: '#9a6b1f', background: '#fdf3e0', border: '1px solid #f3ddb2', borderRadius: '12px', padding: '8px 14px', fontSize: '12.5px', lineHeight: 1.5, marginBottom: '18px', fontFamily: "'Poppins', sans-serif", display: 'inline-block' }}>
+                <p style={{ color: '#9a6b1f', background: '#fdf3e0', border: '1px solid #f3ddb2', borderRadius: '12px', padding: '7px 14px', fontSize: '12.5px', lineHeight: 1.5, marginBottom: '12px', fontFamily: "'Poppins', sans-serif", display: 'inline-block' }}>
                   ⚠ {activeBreed.warnings[0]}
                 </p>
               )}
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => onFullProfile && onFullProfile(activeBreed)}
                   style={{
-                    padding: '12px 28px', fontSize: '14px', borderRadius: '50px',
-                    background: 'white', color: 'var(--orange)', border: '2px solid var(--orange)',
+                    padding: '11px 22px', fontSize: '14px', borderRadius: '50px',
+                    background: 'white', color: 'var(--brown)', border: '2px solid #EAE4DE',
                     cursor: 'pointer', fontFamily: "'Poppins', sans-serif", fontWeight: 'bold',
-                    boxShadow: '0 4px 14px rgba(208, 92, 25, 0.12)'
+                    boxShadow: 'var(--shadow)'
                   }}
                 >
                   Full Profile
                 </button>
                 <button
+                  onClick={() => onCompare && onCompare(activeBreed)}
+                  style={{
+                    padding: '11px 22px', fontSize: '14px', borderRadius: '50px',
+                    background: 'white', color: 'var(--orange)', border: '2px solid var(--orange)',
+                    cursor: 'pointer', fontFamily: "'Poppins', sans-serif", fontWeight: 'bold',
+                    boxShadow: '0 4px 14px rgba(208, 92, 25, 0.12)'
+                  }}
+                >
+                  ⚖ Compare
+                </button>
+                <button
                   onClick={() => onBuy(activeBreed)}
                   className="hero-btn"
                   style={{
-                    padding: '12px 35px', fontSize: '14px', boxShadow: '0 6px 20px rgba(208, 92, 25, 0.25)',
+                    padding: '11px 30px', fontSize: '14px', boxShadow: '0 6px 20px rgba(208, 92, 25, 0.25)',
                     fontFamily: "'Poppins', sans-serif", fontWeight: 'bold'
                   }}
                 >
@@ -399,7 +410,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
       </div>
 
       {/* Position indicator (navigation is via the side arrows) */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10, marginTop: '18px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10, marginTop: '8px' }}>
         <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '13px', fontWeight: 600, color: 'var(--text-soft)', letterSpacing: '0.06em' }} aria-live="polite">
           {currentIndex + 1} / {breeds.length}
         </span>
@@ -453,14 +464,14 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
             grid-gap: 20px !important;
             justify-items: center;
           }
-          div[style*="flex-direction: column; gap: 20px"] {
+          div[style*="flex-direction: column; gap: 12px"] {
             flex-direction: row !important;
             flex-wrap: wrap;
             justify-content: center;
             gap: 10px !important;
           }
-          div[style*="background: white; padding: 20px"] {
-            padding: 12px 15px !important;
+          div[style*="background: white; padding: 13px 16px"] {
+            padding: 10px 13px !important;
             flex: 1 1 120px;
             text-align: center;
           }

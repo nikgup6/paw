@@ -19,12 +19,13 @@ import Reveal from '../components/home/Reveal';
 import AuthModal from '../components/AuthModal';
 import BreedSlider from '../components/BreedSlider';
 import BreedProfileModal from '../components/BreedProfileModal';
+import BreedModal from '../components/BreedModal';
 import RecommendationResults from '../components/RecommendationResults';
 import AboutModal from '../components/AboutModal';
 import CitySelect from '../components/CitySelect';
 
 // Constants & Utilities
-import breedsData from '../constants/breeds.json';
+import { useBreeds } from '../context/BreedsContext';
 import questionsData from '../constants/questions.json';
 import { computeMatches } from '../utils/breedUtils';
 import { parsePrompt } from '../utils/matchmaker';
@@ -33,6 +34,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const Home = () => {
+  const { breeds: breedsData, loading: breedsLoading } = useBreeds();
   const { user, logout, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,8 +64,10 @@ const Home = () => {
   const [resultsAnswers, setResultsAnswers] = useState(null);
   const [resultsSource, setResultsSource] = useState(null); // 'quiz' | 'ai' | null (explore)
   const [profileBreed, setProfileBreed] = useState(null);
+  const [profileView, setProfileView] = useState('profile'); // 'profile' | 'buy'
+  const [compareBreed, setCompareBreed] = useState(null); // seeds the Compare overlay
 
-  // Lock scroll on the single-screen views; let the hero and the Top-5 grid scroll
+  // Lock scroll on the single-screen views; let the hero and the Top-5 grid scroll.
   useEffect(() => {
     const lock = isLoading || subView === 'friend_dashboard' || subView === 'breed_slider';
     document.body.style.overflow = lock ? 'hidden' : 'auto';
@@ -207,8 +211,9 @@ const Home = () => {
   };
 
   const handleBuy = (breed) => {
-    // Full Profile modal carries the buy-request flow (form → breeder contact)
+    // "Buy" jumps straight to the verified breeder network for this breed.
     setProfileBreed(breed);
+    setProfileView('buy');
   };
 
   return (
@@ -296,7 +301,9 @@ const Home = () => {
             >
               <HeroSection
                 onSelectFriendPath={() => handleFriendPathClick('menu')}
-                onExplore={openExploreSlider}
+                /* Existing owners go straight to the product area: dashboard,
+                   dog profiles and Health Records all live under /app now. */
+                onDogOwner={() => navigate('/app')}
               />
               <Reveal><HowItWorks /></Reveal>
               <Reveal><TrustSection /></Reveal>
@@ -369,7 +376,9 @@ const Home = () => {
                             </div>
                           </div>
 
-                          {/* Option 2: Explore */}
+                          {/* Option 2: Explore — "Already a dog owner?" now lives on
+                              the hero, beside the main CTA, so this slot keeps the
+                              breed matrix reachable from inside the dashboard too. */}
                           <div
                             onClick={openExploreSlider}
                             className="hover-lift journey-card"
@@ -562,11 +571,14 @@ const Home = () => {
                 user={user}
                 onBack={() => openDashboard('menu')}
                 onBuy={handleBuy}
-                onFullProfile={(breed) => setProfileBreed(breed)}
+                onFullProfile={(breed) => { setProfileBreed(breed); setProfileView('profile'); }}
                 onRetake={() => openDashboard('inline_quiz')}
               />
             </motion.div>
           )}
+
+          {/* "Already a dog owner?" now routes to /app — the dashboard, dog
+              profiles and Health Records module live there. */}
 
           {subView === 'breed_slider' && (
             <motion.div
@@ -575,16 +587,19 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.6 }}
-              style={{ paddingTop: '90px', paddingBottom: '30px', minHeight: '100dvh' }}
+              /* Bound to the viewport so the slider fits without page scroll —
+                 the action row (Full Profile / Compare / Buy) stays on-screen. */
+              style={{ height: '100dvh', paddingTop: '82px', paddingBottom: '14px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
             >
-              <div className="container" style={{ maxWidth: '1100px', margin: '0 auto' }}>
+              <div className="container" style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
                 <BreedSlider
                   breeds={sliderBreeds}
                   answers={resultsAnswers}
                   isResults={false}
                   onClose={() => { setSubView('friend_dashboard'); setDashboardTab('menu'); }}
                   onBuy={handleBuy}
-                  onFullProfile={(breed) => setProfileBreed(breed)}
+                  onFullProfile={(breed) => { setProfileBreed(breed); setProfileView('profile'); }}
+                  onCompare={(breed) => setCompareBreed(breed)}
                 />
               </div>
             </motion.div>
@@ -601,9 +616,25 @@ const Home = () => {
         {/* Full Profile modal for slider breeds (pros/cons intact) */}
         {profileBreed && (
           <BreedProfileModal
+            key={`${profileBreed.name}-${profileView}`}
             breed={profileBreed}
             user={user}
-            onClose={() => setProfileBreed(null)}
+            answers={resultsAnswers}
+            topBreeds={sliderBreeds.map((b) => b.name)}
+            initialView={profileView}
+            onClose={() => { setProfileBreed(null); setProfileView('profile'); }}
+          />
+        )}
+
+        {/* Compare overlay — reuses the Explore compare view, seeded with the
+            breed the user was viewing in the slider. */}
+        {compareBreed && (
+          <BreedModal
+            breed={compareBreed}
+            modalType="compare"
+            user={user}
+            onClose={() => setCompareBreed(null)}
+            setModalType={(t) => { if (!t) setCompareBreed(null); }}
           />
         )}
 

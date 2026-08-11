@@ -1,12 +1,19 @@
+import logging
+import secrets
+import uuid
+from datetime import datetime
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from app.models.user import UserCreate, UserInDB, UserResponse
-from app.auth.security import get_password_hash, verify_password, create_access_token
-from app.database.connection import get_database
-from typing import Optional
-from datetime import datetime
-import uuid
 
+from app.auth.dependencies import ADMIN_ROLE
+from app.auth.security import get_password_hash, create_access_token
+from app.config.settings import ENV_FILE, settings
+from app.database.connection import get_database
+from app.models.user import UserCreate, UserInDB, UserResponse
+
+logger = logging.getLogger(__name__)
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
@@ -35,9 +42,22 @@ async def register(user: UserCreate):
 
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """Sign in with a mobile number.
+
+    Ordinary accounts are identified by mobile alone. That is the product's
+    existing design — neither form collects a password, and every account ever
+    created was given the same placeholder string, so "verifying" it would
+    check a value that is compiled into the public JS bundle. Turning that on
+    would add no security and would lock out anyone whose hash predates it.
+
+    The ADMIN account is different, because it can read every user's record.
+    It requires the real secret from ADMIN_PASSWORD (backend/.env), and if that
+    isn't configured the account cannot sign in at all — an unprotected admin
+    login is worse than no admin login.
+    """
     db = get_database()
     users_collection = db["users"]
-    
+
     # We use username field of OAuth2 to accept mobile
     user = await users_collection.find_one({"mobile": form_data.username})
     if not user:
@@ -46,6 +66,30 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Incorrect mobile",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        
+
+    if user.get("role") == ADMIN_ROLE:
+        expected = settings.ADMIN_PASSWORD
+        if not expected:
+            logger.error(
+                "Admin sign-in refused: ADMIN_PASSWORD is not set in %s. The admin "
+                "account is the only one that can read every user's record, so it "
+                "is failed closed rather than left open.", ENV_FILE)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Administrator sign-in is not configured on this server.",
+            )
+        # compare_digest: a plain == leaks the length of the matching prefix
+        # through timing, which is the one thing worth being careful about on
+        # the single credential that guards everyone's data.
+        if not secrets.compare_digest(str(form_data.password or ""), str(expected)):
+            logger.warning("Failed admin sign-in attempt for mobile %s", form_data.username)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                # The code lets the client know to show a password field; the
+                # message never reveals whether the mobile itself was right.
+                detail="admin_password_required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
     access_token = create_access_token(data={"sub": user["id"], "role": user["role"]})
     return {"access_token": access_token, "token_type": "bearer", "user": UserResponse(**user)}

@@ -2,12 +2,25 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import questionsData from '../constants/questions.json';
 import CitySelect from '../components/CitySelect';
+import { READINESS_LEVELS } from '../utils/breedUtils';
+import { rememberReadiness, saveProgress, track } from '../utils/analytics';
 import {
   loadQuizState,
   saveQuizState,
   clearQuizState,
   shouldResetQuiz,
 } from '../utils/quizState';
+
+/* The answer sheet is kept in localStorage so a refresh doesn't lose it, and
+   mirrored to the server after every answer so a CLOSED TAB doesn't either.
+   The two are independent on purpose: localStorage is for the person coming
+   back, the server copy is for us seeing that they left. */
+
+const TIMELINE_QUESTION = 'timeline';
+
+/** Answers are stored per question as an array (multi-select) or a raw string
+    (free text). Events and the progress row want the plain value. */
+const flatten = (value) => (Array.isArray(value) ? (value.length === 1 ? value[0] : value) : value);
 
 const Quiz = () => {
   const navigate = useNavigate();
@@ -50,7 +63,40 @@ const Quiz = () => {
       return;
     }
     saveQuizState({ currentQ, answers });
+
+    /* Mirrored to the server on every answer, deliberately un-debounced. A
+       debounce would drop exactly the write we care about most — the one
+       interrupted by the tab closing. */
+    const flat = Object.fromEntries(
+      Object.entries(answers).map(([id, value]) => [id, flatten(value)]));
+    saveProgress({
+      answers: flat,
+      current_question: currentQ,
+      city: flatten(answers.city) || undefined,
+    });
   }, [currentQ, answers]);
+
+  /* One quiz_started per visit. The ref is what makes it once — StrictMode
+     double-invokes mount effects in dev, and an empty dep array alone would
+     log the start twice. */
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    track('quiz_started');
+  }, []);
+
+  /* One question_viewed per question actually shown. Guarded by a ref rather
+     than by the effect's own deps: going Back and Next again re-renders the
+     same question, and counting that as a second view would understate the
+     drop-off at every question people revisit. */
+  const viewedRef = useRef(new Set());
+  useEffect(() => {
+    const question = questionsData[currentQ];
+    if (!question || viewedRef.current.has(question.id)) return;
+    viewedRef.current.add(question.id);
+    track('question_viewed', { q_index: currentQ, q_id: question.id });
+  }, [currentQ]);
 
   const handleOptionSelect = (qId, val) => {
     // "I already love a specific breed." aborts the quiz → Explore breeds
@@ -75,12 +121,42 @@ const Quiz = () => {
     });
   };
 
+  /* Fired on Next, not on selection. Toggling an option and then quitting is
+     not an answered question — it's a drop-off, and the whole value of the
+     viewed-vs-answered gap is that it says so. */
   const handleNext = () => {
+    const question = questionsData[currentQ];
+    const answer = flatten(answers[question.id]);
+    track('question_answered', { q_index: currentQ, q_id: question.id, answer });
+
+    /* The option's value IS the readiness code — no label→code lookup, so
+       rewording an option can never silently break the mapping. `rank` and
+       `label` come from the one place they're defined. */
+    if (question.id === TIMELINE_QUESTION) {
+      const level = READINESS_LEVELS[answer];
+      const chosen = question.options.find((o) => o.val === answer);
+      rememberReadiness(answer);
+      track('timeline_selected', {
+        value: chosen?.label || answer,
+        readiness_code: answer,
+        readiness_rank: level?.rank,
+      });
+      saveProgress({
+        // Stored as the wording the person actually read, not the code —
+        // the code is already in its own column.
+        purchase_timeline: chosen?.label || answer,
+        readiness_code: answer,
+      });
+    }
+
     if (currentQ < questionsData.length - 1) {
       setCurrentQ(prev => prev + 1);
-    } else {
-      navigate('/results');
+      return;
     }
+
+    track('quiz_completed');
+    saveProgress({ status: 'completed', current_question: currentQ });
+    navigate('/results');
   };
 
   const handleBack = () => {

@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
 import BreedCard from '../components/BreedCard';
 import BreedModal from '../components/BreedModal';
-import breedsData from '../constants/breeds.json';
+import { useBreedList } from '../context/BreedsContext';
 
 const Explore = () => {
+  const breedsData = useBreedList();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   

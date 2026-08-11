@@ -3,9 +3,10 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import BreedCard from '../BreedCard';
 import BreedModal from '../BreedModal';
-import breedsData from '../../constants/breeds.json';
+import { useBreedList } from '../../context/BreedsContext';
 
 const FeaturedPuppies = ({ user }) => {
+  const breedsData = useBreedList();
   const navigate = useNavigate();
   const [selectedBreed, setSelectedBreed] = useState(null);
   const [modalType, setModalType] = useState(null);

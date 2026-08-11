@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import breedsData from '../constants/breeds.json';
+import { useBreedList } from '../context/BreedsContext';
 import { buildLivingConditions } from '../utils/breedUtils';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from './WhatsAppButton';
+import BreederDirectory from './BreederDirectory';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
+  const breedsData = useBreedList();
   const navigate = useNavigate();
   const [compareList, setCompareList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,39 +57,24 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
     }
   };
 
-  const submitBuyRequest = (e) => {
-    e.preventDefault();
-    // Login removed — the enquiry no longer requires an account.
-    const form = new FormData(e.target);
-    const name = form.get('name');
-    const mobile = form.get('mobile');
-    const intent = form.get('intent');
-
-    // Open WhatsApp with a pre-filled, per-user/per-breed message. Fire this
-    // synchronously in the click so pop-up blockers don't stop it.
-    const link = buildWhatsAppEnquiryLink(name, breed.name, intent);
-    setWaLink(link);
-    window.open(link, '_blank', 'noopener,noreferrer');
-
-    // Best-effort lead capture — never blocks the WhatsApp hand-off.
+  /** Logged when the user opens a breeder's WhatsApp chat. Best effort only. */
+  const logBreederContact = (breeder) => {
     axios.post(`${API_URL}/api/buy`, {
       user_id: user?.id || null,
-      user_name: name,
-      mobile: mobile || 'Via WhatsApp',
+      user_name: user?.name || 'Guest',
+      mobile: user?.mobile || 'Via breeder WhatsApp',
       city: user?.city || 'Not Provided',
-      breed_name: breed.name,
-      intent,
+      breed_name: breed?.name,
+      intent: `Contacted breeder: ${breeder.name} (${breeder.city})`,
       status: "NEW"
     }).catch(() => { /* best effort */ });
-
-    setModalType('buy_success');
   };
 
   if (!modalType || (!breed && modalType !== 'buy_success')) return null;
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, fontFamily: "'Poppins', sans-serif", padding: '20px' }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: modalType === 'image_preview' ? 'transparent' : 'white', padding: modalType === 'image_preview' ? '0' : '30px', borderRadius: '20px', width: '100%', maxWidth: modalType === 'compare' ? '900px' : (modalType === 'full_profile' ? '800px' : '500px'), maxHeight: '90dvh', overflowY: 'auto', position: 'relative' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: modalType === 'image_preview' ? 'transparent' : 'white', padding: modalType === 'image_preview' ? '0' : '30px', borderRadius: '20px', width: '100%', maxWidth: modalType === 'compare' ? '900px' : (modalType === 'full_profile' ? '800px' : (modalType === 'buy' ? '900px' : '500px')), maxHeight: '90dvh', overflowY: 'auto', position: 'relative' }}>
         <button onClick={onClose} style={{ position: 'absolute', top: modalType === 'image_preview' ? '-40px' : '20px', right: modalType === 'image_preview' ? '0' : '20px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '35px', height: '35px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>×</button>
         
         {modalType === 'image_preview' && breed && (
@@ -111,21 +98,12 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
                 </button>
               </div>
             ) : (
-              <>
-                <h3 style={{ marginBottom: '10px', color: 'var(--orange)' }}>Interest in {breed.name}</h3>
-                <p style={{ marginBottom: '20px', color: 'var(--text-soft)', fontSize: '14px', background: '#ffe0b2', padding: '10px', borderRadius: '8px' }}>The breeder is only available at Hyderabad currently.</p>
-                <form onSubmit={submitBuyRequest} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <input name="name" defaultValue={user?.name || ''} placeholder="Your Name" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
-                  <input name="mobile" defaultValue={user?.mobile || ''} placeholder="Mobile Number" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
-                  <select name="intent" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }}>
-                    <option value="">Select Intent</option>
-                    <option value="Ready to buy immediately">Ready to buy immediately</option>
-                    <option value="Looking to buy next month">Looking to buy next month</option>
-                    <option value="Just inquiring">Just inquiring</option>
-                  </select>
-                  <WhatsAppButton type="submit" style={{ marginTop: '10px' }} />
-                </form>
-              </>
+              <BreederDirectory
+                userCity={user?.city || null}
+                breedName={breed.name}
+                topBreeds={[]}
+                onContact={logBreederContact}
+              />
             )}
           </>
         )}

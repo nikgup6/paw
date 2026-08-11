@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import AnimatedPaw from './AnimatedPaw';
 import HeroParticles from './HeroParticles';
 
-const HeroSection = ({ onSelectFriendPath, onExplore }) => {
+const HeroSection = ({ onSelectFriendPath, onDogOwner }) => {
   return (
     <section className="hero-section">
       <HeroParticles />
@@ -62,13 +62,13 @@ const HeroSection = ({ onSelectFriendPath, onExplore }) => {
             transition={{ duration: 0.8, delay: 0.9 }}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            onClick={onExplore}
+            onClick={onDogOwner}
             className="hero-btn hero-btn-secondary"
             style={{
               transition: 'transform 300ms cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 300ms cubic-bezier(0.25, 0.8, 0.25, 1)'
             }}
           >
-            Explore Breeds
+            Already a dog owner?
           </motion.button>
         </div>
       </div>
@@ -277,8 +277,8 @@ const HeroSection = ({ onSelectFriendPath, onExplore }) => {
         @media (max-width: 768px) {
           .hero-section {
             padding-top: clamp(88px, 14vh, 100px);
-            min-height: 90vh;
-            min-height: 90dvh;
+            min-height: 100vh;
+            min-height: 100dvh;
           }
 
           .hero-socials {

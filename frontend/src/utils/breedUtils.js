@@ -114,6 +114,36 @@ function resolveExperience(b, where) {
   return (risk === 'LOW' && energyBand <= 1 && !groomHeavy) ? 'BEGINNER_FRIENDLY' : 'DEMANDING';
 }
 
+/* ============================ READINESS GATE ============================== */
+/* Purchase-timeline lead tier. This is deliberately SEPARATE from breed
+   scoring — when a person plans to get a dog has nothing to do with WHICH
+   breed suits them. It classifies the lead, it does not rank breeds.
+   Mirror of the readiness_levels table in the schema; keep the two in sync so
+   labels live in one place. */
+export const READINESS_LEVELS = {
+  ready_now:   { rank: 1, label: 'Ready Now',        description: 'Bringing a dog home within a month' },
+  ready_soon:  { rank: 2, label: 'Ready Soon',       description: 'Bringing a dog home in 1-3 months' },
+  planning:    { rank: 3, label: 'Planning Ahead',   description: 'Bringing a dog home in 3-6 months' },
+  researching: { rank: 4, label: 'Just Researching', description: 'Still researching, no date yet' },
+};
+
+/**
+ * Reads the Q10 timeline answer and returns the lead tier.
+ * The answer value IS the readiness code (see questions.json), so no mapping
+ * is needed. Falls back to 'researching' — the least aggressive tier — if the
+ * question was skipped, so a missing answer never inflates lead quality.
+ *
+ * Write the returned `code` straight into quiz_progress.readiness_code.
+ */
+export function computeReadiness(answers) {
+  const raw = answers && answers.timeline;
+  const code = (Array.isArray(raw) ? raw[0] : raw);
+  const valid = code && Object.prototype.hasOwnProperty.call(READINESS_LEVELS, code)
+    ? code : 'researching';
+  const { rank, label, description } = READINESS_LEVELS[valid];
+  return { code: valid, rank, label, description };
+}
+
 /** Normalise the answer sheet into strict enums. Throws on anything unmapped. */
 export function normaliseAnswers(answers) {
   if (!answers || typeof answers !== 'object') fail('Missing quiz answers.');

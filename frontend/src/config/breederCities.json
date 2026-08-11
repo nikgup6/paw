@@ -1,0 +1,52 @@
+{
+  "_comment": [
+    "Which breeder network serves a user, based on the city they pick in Q3.",
+    "We have verified breeders in Hyderabad, Chennai, Bangalore and Pune.",
+    "Everyone else is routed to the nearest network AND told plainly that it is",
+    "not their own city — we never pretend a Delhi user has local breeders.",
+    "",
+    "EDITABLE: when a new city network goes live, add its sheet name to",
+    "`networks`, list the quiz-city names that count as local in `localCities`,",
+    "and move the surrounding cities into `nearest`. Anything unlisted falls to",
+    "`defaultCity`."
+  ],
+
+  "networks": ["Hyderabad", "Chennai", "Bangalore", "Pune"],
+  "defaultCity": "Hyderabad",
+
+  "_localComment": "Quiz-city names that ARE the network's own city (so no 'not your city' notice). The quiz says 'Bengaluru'; the breeder sheet is titled 'Bangalore'. Secunderabad is part of Hyderabad.",
+  "localCities": {
+    "Hyderabad": ["Hyderabad", "Secunderabad"],
+    "Chennai": ["Chennai"],
+    "Bangalore": ["Bengaluru", "Bangalore"],
+    "Pune": ["Pune"]
+  },
+
+  "_nearestComment": "Cities routed to each network by rough road proximity. Western Tamil Nadu (Salem, Coimbatore, Erode, Ooty) sits closer to Bengaluru than to Chennai, and Hosur is effectively a Bengaluru suburb. Nagpur is far eastern Maharashtra, so it goes to Hyderabad rather than Pune.",
+  "nearest": {
+    "Bangalore": [
+      "Mysuru", "Tumakuru", "Hassan", "Chikkamagaluru", "Davanagere", "Shivamogga",
+      "Hubballi", "Dharwad", "Belagavi", "Ballari", "Mangaluru", "Udupi",
+      "Hosur", "Salem", "Coimbatore", "Erode",
+      "Udhagamandalam (Ooty)", "Coonoor", "Yercaud"
+    ],
+    "Chennai": [
+      "Vellore", "Puducherry", "Madurai", "Tiruchirappalli", "Port Blair", "Kodaikanal",
+      "Kochi", "Thiruvananthapuram", "Kozhikode", "Thrissur", "Kollam", "Munnar",
+      "Nellore", "Tirupati"
+    ],
+    "Pune": [
+      "Mumbai", "Navi Mumbai", "Thane", "Nashik", "Kolhapur", "Satara", "Sangli",
+      "Solapur", "Aurangabad", "Panaji (Goa)",
+      "Surat", "Ahmedabad", "Vadodara", "Rajkot", "Bhavnagar",
+      "Indore", "Bhopal", "Gwalior", "Jabalpur",
+      "Jaipur", "Jodhpur", "Udaipur", "Ajmer", "Bikaner", "Jaisalmer", "Mount Abu",
+      "Delhi", "New Delhi", "Gurugram", "Noida", "Ghaziabad", "Faridabad", "Agra", "Meerut",
+      "Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Hisar", "Rohtak",
+      "Chandigarh", "Mohali", "Panchkula",
+      "Shimla", "Manali", "Dharamshala", "Dalhousie", "Kufri",
+      "Dehradun", "Mussoorie", "Nainital", "Almora",
+      "Srinagar", "Gulmarg", "Pahalgam", "Leh", "Kargil"
+    ]
+  }
+}

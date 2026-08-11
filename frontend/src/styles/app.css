@@ -1,0 +1,720 @@
+/* Paw Buddy app shell — the signed-in product area at /app.
+
+   Deliberately built from the same tokens as the marketing site (--orange,
+   --brown, --cream, Fredoka headings, Poppins body, 14-20px radii, the soft
+   brown shadows) so the module reads as the same product, just organised.
+   Nothing here restyles the landing page. */
+
+.pb-app {
+  min-height: 100dvh;
+  background: var(--cream);
+  font-family: 'Poppins', sans-serif;
+  color: var(--text);
+  display: flex;
+}
+
+/* The marketing stylesheet styles the bare `footer` tag for the site footer —
+   solid brown, white text, 40px padding. That rule also hit every <footer> used
+   semantically inside a card, painting a dark block across it. Neutralised here
+   rather than renaming the tags, so it can't catch the next component either.
+   `:where()` keeps this at zero specificity so component styles still win. */
+.pb-app :where(footer) {
+  background: none;
+  color: inherit;
+  text-align: inherit;
+  padding: 0;
+}
+
+/* ------------------------------- motion ----------------------------------- */
+/* One easing curve and two durations for the whole app, so nothing feels like it
+   belongs to a different product. Movement is small and fast — content settles
+   rather than performs. Anyone who has asked their OS for less motion gets none
+   of it (the media query at the end of this block). */
+
+:root {
+  --pb-ease: cubic-bezier(.22, .61, .36, 1);
+  --pb-fast: .18s;
+  --pb-slow: .32s;
+}
+
+@keyframes pb-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pb-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pb-pop {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Whole page entering — used by every routed page. */
+.pb-fade { animation: pb-fade-up var(--pb-slow) var(--pb-ease) both; }
+
+/* Cards settle in sequence rather than all at once; capped so a long list
+   doesn't leave the last card waiting. */
+.pb-page .pb-card { animation: pb-fade-up var(--pb-slow) var(--pb-ease) both; }
+.pb-page .pb-card:nth-of-type(2) { animation-delay: .04s; }
+.pb-page .pb-card:nth-of-type(3) { animation-delay: .08s; }
+.pb-page .pb-card:nth-of-type(4) { animation-delay: .12s; }
+.pb-page .pb-card:nth-of-type(n + 5) { animation-delay: .16s; }
+
+.pb-overlay { animation: pb-fade-in var(--pb-fast) var(--pb-ease) both; }
+.pb-overlay > .pb-modal { animation: pb-pop var(--pb-slow) var(--pb-ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-fade,
+  .pb-page .pb-card,
+  .pb-overlay,
+  .pb-overlay > .pb-modal { animation: none !important; }
+  .pb-app *, .pb-app *::before, .pb-app *::after { transition-duration: .01ms !important; }
+}
+
+/* ------------------------------- sidebar ---------------------------------- */
+
+.pb-side {
+  width: 244px;
+  flex: 0 0 244px;
+  background: var(--white);
+  border-right: 1px solid #EFE6DC;
+  padding: 18px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.pb-side__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 8px 2px;
+  text-decoration: none;
+}
+.pb-side__brand img { width: 30px; height: 30px; object-fit: contain; }
+.pb-side__brand span {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--brown);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.pb-side__group { display: flex; flex-direction: column; gap: 2px; }
+.pb-side__label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  padding: 10px 10px 6px;
+}
+
+.pb-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  color: var(--brown);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  background: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--pb-fast) var(--pb-ease), color var(--pb-fast) var(--pb-ease), transform var(--pb-fast) var(--pb-ease);
+}
+.pb-nav:hover { background: var(--orange-pale); color: var(--orange-strong); }
+.pb-nav:active { transform: scale(.985); }
+.pb-nav.is-active { background: var(--orange-pale); color: var(--orange-strong); font-weight: 700; }
+.pb-nav__icon { font-size: 15px; line-height: 1; flex-shrink: 0; }
+.pb-nav__avatar {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--orange-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.pb-nav__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pb-nav__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The caption under a nav item's name — used where the label is the dog's own
+   name and the destination needs saying out loud. */
+.pb-nav__cap {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+.pb-nav.is-active .pb-nav__cap { color: var(--orange-strong); opacity: .8; }
+
+.pb-nav.is-locked { color: var(--text-soft); cursor: not-allowed; opacity: .75; }
+.pb-nav.is-locked:hover { background: none; color: var(--text-soft); }
+
+.pb-soon {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 20px;
+  background: var(--grey);
+  color: var(--text-soft);
+}
+
+/* ------------------------------- main area -------------------------------- */
+
+.pb-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+
+.pb-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px clamp(16px, 3vw, 30px);
+  background: var(--white);
+  border-bottom: 1px solid #EFE6DC;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.pb-top__burger {
+  display: none;
+  border: 1px solid #E3D9CE;
+  background: var(--white);
+  border-radius: 10px;
+  padding: 7px 11px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--brown);
+}
+.pb-top__title {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--brown);
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pb-top__actions { display: flex; gap: 7px; flex-shrink: 0; }
+.pb-offline-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 50px;
+  background: #FFFBF4;
+  border: 1px solid #E9D8B8;
+  color: #9A6B1F;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.pb-btn.is-on { border-color: var(--orange); color: var(--orange-strong); background: var(--orange-pale); }
+
+.pb-page { padding: clamp(18px, 3vw, 30px); max-width: 1120px; width: 100%; }
+
+.pb-page__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.pb-page__title {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--brown);
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+.pb-page__sub { color: var(--text-soft); font-size: 13px; margin: 0; }
+
+/* --------------------------------- cards ---------------------------------- */
+
+.pb-card {
+  background: var(--white);
+  border: 1px solid #EFE6DC;
+  border-radius: 18px;
+  padding: 18px 20px;
+  transition: border-color var(--pb-slow) var(--pb-ease), box-shadow var(--pb-slow) var(--pb-ease);
+}
+.pb-card + .pb-card { margin-top: 16px; }
+.pb-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.pb-card__title {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--brown);
+  font-size: 16px;
+  margin: 0 0 2px;
+  font-weight: 600;
+}
+.pb-card__sub { color: var(--text-soft); font-size: 12.5px; margin: 0; }
+
+.pb-grid { display: grid; gap: 16px; }
+.pb-grid--2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.pb-grid--dogs { grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); }
+
+/* --------------------------------- stats ---------------------------------- */
+
+.pb-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; }
+.pb-stat {
+  background: var(--white);
+  border: 1px solid #EFE6DC;
+  border-radius: 14px;
+  padding: 14px 15px;
+  border-left: 4px solid #D8CCBE;
+}
+.pb-stat__value { font-family: 'Fredoka', sans-serif; color: var(--brown); font-size: 24px; font-weight: 600; line-height: 1.1; }
+.pb-stat__label { font-size: 11.5px; color: var(--text-soft); font-weight: 600; margin-top: 3px; }
+.pb-stat.is-good { border-left-color: #1E9E52; }
+.pb-stat.is-warn { border-left-color: #9A6B1F; }
+.pb-stat.is-bad { border-left-color: #C62828; }
+.pb-stat.is-brand { border-left-color: var(--orange); }
+
+/* --------------------------------- pills ---------------------------------- */
+
+.pb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 50px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.pb-pill.is-completed { background: #E7F6EC; color: #1B8046; }
+.pb-pill.is-upcoming { background: var(--orange-pale); color: var(--orange-strong); }
+.pb-pill.is-due-today { background: #FBEFD8; color: #9A6B1F; }
+.pb-pill.is-overdue { background: #FDECEC; color: #C62828; }
+.pb-pill.is-needs-review { background: #FBEFD8; color: #9A6B1F; }
+.pb-pill.is-neutral { background: var(--grey); color: var(--text-soft); }
+
+/* -------------------------------- buttons --------------------------------- */
+
+.pb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 17px;
+  border-radius: 11px;
+  border: 1px solid #E3D9CE;
+  background: var(--white);
+  color: var(--brown);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--pb-fast) var(--pb-ease), border-color var(--pb-fast) var(--pb-ease), color var(--pb-fast) var(--pb-ease), transform var(--pb-fast) var(--pb-ease), box-shadow var(--pb-fast) var(--pb-ease);
+}
+.pb-btn:active:not(:disabled) { transform: scale(.97); }
+.pb-btn:hover:not(:disabled) { border-color: var(--orange); color: var(--orange-strong); background: #FFFAF6; }
+.pb-btn:disabled { opacity: .5; cursor: not-allowed; }
+.pb-btn--primary { background: var(--orange); border-color: var(--orange); color: var(--white); }
+.pb-btn--primary:hover:not(:disabled) { background: var(--orange-strong); border-color: var(--orange-strong); color: var(--white); }
+.pb-btn--danger { color: #C62828; border-color: #F2C9C9; }
+.pb-btn--danger:hover:not(:disabled) { border-color: #E08A8A; background: #FFF5F5; color: #C62828; }
+.pb-btn--sm { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; }
+.pb-btn--block { width: 100%; }
+
+/* --------------------------------- forms ---------------------------------- */
+
+.pb-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pb-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pb-field--full { grid-column: 1 / -1; }
+.pb-field > span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-soft);
+}
+.pb-field input,
+.pb-field select,
+.pb-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border-radius: 11px;
+  border: 2px solid #EAE4DE;
+  background: var(--white);
+  color: var(--brown);
+  font-size: 14.5px;
+  font-family: inherit;
+  font-weight: 500;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.pb-field textarea { min-height: 80px; resize: vertical; }
+.pb-field input:focus,
+.pb-field select:focus,
+.pb-field textarea:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 4px rgba(227, 93, 24, .12);
+}
+.pb-field__hint { font-size: 11.5px; color: var(--text-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
+.pb-field__req { color: var(--orange-strong); }
+
+.pb-choices { display: flex; gap: 8px; flex-wrap: wrap; }
+.pb-choice {
+  flex: 1 1 auto;
+  min-width: 92px;
+  padding: 11px 10px;
+  border-radius: 11px;
+  border: 2px solid #EAE4DE;
+  background: var(--white);
+  color: var(--brown);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.pb-choice:hover { border-color: rgba(227, 93, 24, .5); }
+.pb-choice.is-on { border-color: var(--orange); background: var(--orange-pale); color: var(--orange-strong); }
+
+/* --------------------------- states + feedback ---------------------------- */
+
+.pb-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-soft);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.pb-empty__icon { font-size: 30px; display: block; margin-bottom: 8px; }
+.pb-empty strong { display: block; color: var(--brown); font-size: 15px; margin-bottom: 5px; }
+
+.pb-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 28px 16px;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+@keyframes pb-spin { to { transform: rotate(360deg); } }
+.pb-spin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 2px solid rgba(227, 93, 24, .25);
+  border-top-color: var(--orange);
+  animation: pb-spin .7s linear infinite;
+}
+.pb-spin--sm { width: 11px; height: 11px; vertical-align: -1px; }
+
+.pb-error {
+  margin: 10px 0 0;
+  padding: 10px 13px;
+  border-radius: 11px;
+  background: #FFF5F5;
+  border: 1px solid #F2C9C9;
+  color: #B23B3B;
+  font-size: 12.5px;
+}
+.pb-ok {
+  margin: 10px 0 0;
+  padding: 10px 13px;
+  border-radius: 11px;
+  background: #E7F6EC;
+  border: 1px solid #BFE5CD;
+  color: #1B8046;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* -------------------------------- overlays -------------------------------- */
+
+.pb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(35, 22, 14, .72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.pb-modal {
+  background: var(--white);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.pb-modal--wide { max-width: 860px; }
+.pb-modal__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 17px;
+  border-bottom: 1px solid #EFE6DC;
+  background: var(--cream);
+  position: sticky;
+  top: 0;
+}
+.pb-modal__bar span {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--brown);
+  font-weight: 600;
+  font-size: 15.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pb-modal__bar button {
+  border: none;
+  background: none;
+  color: var(--text-soft);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.pb-modal__bar button:hover { color: var(--brown); }
+.pb-modal__body { padding: 16px 17px 18px; }
+.pb-modal__actions { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 17px; flex-wrap: wrap; }
+
+/* -------------------------------- responsive ------------------------------ */
+
+.pb-scrim { display: none; }
+
+/* ------------------------- dog picker (modal copy) ------------------------ */
+/* The dashboard's picker is styled inside its own component <style> block, so
+   those rules only exist while the dashboard is mounted. This modal opens from
+   Health and Services too, where it would otherwise render unstyled — so the
+   stacked variant carries its own complete styling, scoped to --stack so it
+   can never alter the dashboard's horizontal version. */
+.pb-switch--stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+}
+.pb-switch--stack .pb-switch__dog {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 13px;
+  border: 2px solid #EFE6DC;
+  background: var(--white);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color var(--pb-fast) var(--pb-ease), background-color var(--pb-fast) var(--pb-ease);
+}
+.pb-switch--stack .pb-switch__dog:hover { background: var(--cream); }
+.pb-switch--stack .pb-switch__dog.is-on { border-color: var(--orange); background: var(--orange-pale); }
+.pb-switch--stack .pb-switch__avatar {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--orange-pale);
+  border: 1px solid #EFE6DC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+}
+.pb-switch--stack .pb-switch__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pb-switch--stack .pb-switch__meta { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.pb-switch--stack .pb-switch__meta strong {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--brown);
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pb-switch--stack .pb-switch__meta em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+/* Mobile navigation is rendered at every width and hidden here, rather than
+   mounted on a width check in JS — a resize can then never leave the app with
+   no navigation while React catches up. Desktop is the default; the bar and
+   the header only appear below the breakpoint. */
+.pb-mhead,
+.pb-tabbar { display: none; }
+
+/* ---------------------------- mobile & tablet ----------------------------- */
+/* 1024px so an iPad Pro in portrait (exactly 1024) gets the touch layout
+   rather than a desktop sidebar it has no room for. Everything at 1024 and
+   above is untouched. */
+@media (max-width: 1023.98px) {
+  /* The sidebar goes entirely — the bottom bar replaces it, and having both
+     would mean two ways to reach the same four places. */
+  .pb-side { display: none; }
+  .pb-scrim { display: none !important; }
+  .pb-top__burger { display: none; }
+
+  .pb-mhead {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    border-bottom: 1px solid #EFE6DC;
+    background: var(--white);
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    /* Above the content but below the tab bar and any modal. */
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  .pb-mhead:active { background: var(--cream); }
+  .pb-mhead__avatar {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    overflow: hidden;
+    background: var(--orange-pale);
+    border: 1px solid #EFE6DC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+  }
+  .pb-mhead__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pb-mhead__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+  .pb-mhead__text strong {
+    font-family: 'Fredoka', sans-serif;
+    color: var(--brown);
+    font-size: 15px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pb-mhead__text em {
+    font-style: normal;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+  }
+
+  .pb-tabbar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: var(--white);
+    border-top: 1px solid #EFE6DC;
+    box-shadow: 0 -6px 20px -14px rgba(61, 41, 28, .5);
+    /* The bar's own height sits above the iOS home indicator; the inset is
+       added as padding so the strip below stays part of the bar rather than a
+       gap the page shows through. */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pb-tabbar__item {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    /* 56px keeps every target comfortably past the 44px minimum even on a
+       320px-wide screen, where each tab is only 64px across. */
+    min-height: 56px;
+    padding: 7px 2px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-soft);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    transition: color var(--pb-fast) var(--pb-ease), background-color var(--pb-fast) var(--pb-ease);
+  }
+  .pb-tabbar__item > span:first-child { font-size: 18px; line-height: 1; }
+  .pb-tabbar__item > span:last-child {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Same active treatment as .pb-nav.is-active in the sidebar. */
+  .pb-tabbar__item.is-active { color: var(--orange-strong); background: var(--orange-pale); }
+  .pb-tabbar__item:active { background: var(--cream); }
+
+  /* Clears the bar so the last card in a scroll isn't sitting under it. The
+     safe-area inset is added on top for the same reason it is on the bar. */
+  .pb-main { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Very small screens (iPhone SE, 320px): the five labels stop fitting at
+   10px, so the bar leans on the icons and keeps the labels smaller rather
+   than letting them wrap and push the bar taller. */
+@media (max-width: 360px) {
+  .pb-tabbar__item { font-size: 9px; padding: 6px 1px; }
+  .pb-tabbar__item > span:first-child { font-size: 17px; }
+}
+
+@media (max-width: 620px) {
+  .pb-form-grid { grid-template-columns: 1fr; }
+  .pb-page { padding: 16px; }
+  .pb-top { flex-wrap: wrap; }
+  .pb-top__title { order: -1; flex: 1 1 auto; }
+  .pb-top__actions { flex: 1 1 100%; }
+  .pb-top__actions .pb-btn { flex: 1 1 auto; }
+  .pb-card { padding: 16px; border-radius: 16px; }
+  .pb-modal__actions { flex-direction: column-reverse; }
+  .pb-modal__actions .pb-btn { width: 100%; }
+}

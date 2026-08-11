@@ -3,13 +3,14 @@ import { motion } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import BreedCard from './BreedCard';
 import FeedbackModal from './FeedbackModal';
-import breedsData from '../constants/breeds.json';
+import { useBreedList } from '../context/BreedsContext';
 import { generatePersonalizedReason } from '../utils/breedUtils';
 
 /* Top-5 recommendation results — hero-card + grid, plus the full results
    toolkit (retake, breed lookup, share) ported from the standalone page.
    #1 breed gets a large orange hero card; #2–#5 stagger in below. */
 const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullProfile, onRetake }) => {
+  const breedsData = useBreedList();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
 

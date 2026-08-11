@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import FunnelReport from '../components/admin/FunnelReport';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -16,32 +17,87 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'users', 'buy_requests', 'leads', 'anonymous'
   const [cityFilter, setCityFilter] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [anonPage, setAnonPage] = useState(0);   // visitors table paging
+  const ANON_PER_PAGE = 25;
+  const [refreshedAt, setRefreshedAt] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
 
+  /* loadAll is stable (no deps) so it doesn't retrigger the mount effect; it
+     reads the current filter through a ref rather than closing over the value. */
+  const cityFilterRef = useRef('');
+  useEffect(() => { cityFilterRef.current = cityFilter; }, [cityFilter]);
+
+  // /api/admin/* is token-gated server-side; without this header the dashboard
+  // gets a 401 no matter what the browser thinks the role is.
+  const authHeader = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem('pb_token') || ''}` },
+  });
+
+  const handleFetchError = (error) => {
+    // A 401/403 means the stored token is gone or stale — the browser role flag
+    // alone no longer opens this page.
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      setAuthError('Your administrator session has expired. Please sign in again.');
+    } else {
+      console.error('Error fetching admin data:', error);
+    }
+  };
+
+  /* Everything on the page, in one pass. Runs on mount and on Refresh — NOT on
+     every keystroke in the city box, which is what it used to do: each letter
+     re-fetched all six endpoints, so typing "Bengaluru" fired ~54 requests and
+     pulled the whole 122-row visitor list nine times over. */
+  const loadAll = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setRefreshing(true);
+    try {
+      const auth = authHeader();
+      const city = cityFilterRef.current;
+      const [statsRes, usersRes, buyRes, leadsRes, feedbackRes, anonRes] = await Promise.all([
+        axios.get(`${API_URL}/api/admin/dashboard`, auth),
+        axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
+        axios.get(`${API_URL}/api/buy`),
+        axios.get(`${API_URL}/api/admin/leads`, auth),
+        axios.get(`${API_URL}/api/feedback`),
+        axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
+      ]);
+      setStats(statsRes.data);
+      setUsers(usersRes.data);
+      setBuyRequests(buyRes.data);
+      setLeads(leadsRes.data);
+      setFeedbacks(feedbackRes.data);
+      setAnonymousVisitors(anonRes.data);
+      setAuthError('');
+      setRefreshedAt(new Date());
+    } catch (error) {
+      handleFetchError(error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { loadAll({ silent: true }); }, [loadAll]);
+
+  /* The city box filters the USERS list and nothing else, so only that request
+     is repeated — debounced, so it fires when you stop typing rather than on
+     every letter. */
+  const firstFilterRun = useRef(true);
   useEffect(() => {
-    const fetchData = async () => {
+    if (firstFilterRun.current) { firstFilterRun.current = false; return; }
+    const timer = setTimeout(async () => {
       try {
-        const [statsRes, usersRes, buyRes, leadsRes, feedbackRes, anonRes] = await Promise.all([
-          axios.get(`${API_URL}/api/admin/dashboard`),
-          axios.get(`${API_URL}/api/admin/users${cityFilter ? `?city=${encodeURIComponent(cityFilter)}` : ''}`),
-          axios.get(`${API_URL}/api/buy`),
-          axios.get(`${API_URL}/api/admin/leads`),
-          axios.get(`${API_URL}/api/feedback`),
-          axios.get(`${API_URL}/api/admin/anonymous-visitors`)
-        ]);
-        setStats(statsRes.data);
-        setUsers(usersRes.data);
-        setBuyRequests(buyRes.data);
-        setLeads(leadsRes.data);
-        setFeedbacks(feedbackRes.data);
-        setAnonymousVisitors(anonRes.data);
+        const { data } = await axios.get(
+          `${API_URL}/api/admin/users${cityFilter ? `?city=${encodeURIComponent(cityFilter)}` : ''}`,
+          authHeader(),
+        );
+        setUsers(data);
       } catch (error) {
-        console.error("Error fetching admin data:", error);
-      } finally {
-        setLoading(false);
+        handleFetchError(error);
       }
-    };
-    fetchData();
+    }, 350);
+    return () => clearTimeout(timer);
   }, [cityFilter]);
 
   const data = [
@@ -76,11 +132,49 @@ const AdminDashboard = () => {
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', fontFamily: "'Fredoka', sans-serif" }}>
+
+        {authError && (
+          <div style={{ background: '#FFF5F5', border: '1px solid #F2C9C9', color: '#B23B3B',
+                        padding: '14px 18px', borderRadius: '14px', marginBottom: '20px',
+                        display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 700 }}>{authError}</span>
+            <button onClick={() => navigate('/login')}
+                    style={{ padding: '8px 18px', borderRadius: '50px', border: 'none',
+                             background: '#C62828', color: 'white', fontWeight: 700,
+                             fontFamily: 'inherit', cursor: 'pointer' }}>
+              Sign in
+            </button>
+          </div>
+        )}
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '20px' }}>
           <div>
             <h2 className="text-h2" style={{ color: 'var(--brown)', fontWeight: 800, margin: 0 }}>Dashboard</h2>
-            <p style={{ color: 'var(--text-soft)', margin: '5px 0 0 0' }}>Monitor Paw Buddy platform activity in real-time.</p>
+            {/* The page fetches once on mount, so left open it goes stale.
+                Saying when it was last read — and offering to read it again —
+                is the honest version of "real-time". */}
+            <p style={{ color: 'var(--text-soft)', margin: '5px 0 0 0', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <span>
+                Monitor Paw Buddy platform activity.
+                {refreshedAt && (
+                  <span style={{ marginLeft: '6px', fontSize: '13px' }}>
+                    Updated {refreshedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}.
+                  </span>
+                )}
+              </span>
+              <button
+                onClick={() => loadAll()}
+                disabled={refreshing}
+                style={{
+                  padding: '5px 14px', borderRadius: '50px', border: '1px solid #E3D9CE',
+                  background: 'white', color: 'var(--brown)', fontFamily: 'inherit',
+                  fontSize: '12.5px', fontWeight: 700,
+                  cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.6 : 1,
+                }}
+              >
+                {refreshing ? 'Refreshing…' : '↻ Refresh'}
+              </button>
+            </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button onClick={() => setActiveTab('overview')} style={{ padding: '8px 16px', borderRadius: '50px', border: 'none', background: activeTab === 'overview' ? 'var(--orange)' : 'white', color: activeTab === 'overview' ? 'white' : 'var(--text-soft)', fontWeight: 'bold', cursor: 'pointer', boxShadow: 'var(--shadow)', fontSize: '13px' }}>Overview</button>
@@ -92,6 +186,11 @@ const AdminDashboard = () => {
           </div>
         </div>
         
+        {/* The acquisition funnel sits above the existing tabs and has its own
+            date range — it answers a different question from the tables below
+            it, which are lifetime lists rather than a period report. */}
+        <FunnelReport />
+
         {activeTab === 'overview' && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '40px' }}>
@@ -284,7 +383,11 @@ const AdminDashboard = () => {
         {activeTab === 'anonymous' && (
           <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', minHeight: '500px' }}>
             <h3 style={{ marginBottom: '5px', color: 'var(--brown)' }}>Anonymous Visitors</h3>
-            <p style={{ color: 'var(--text-soft)', marginBottom: '20px' }}>Users who explored the site without logging in.</p>
+            <p style={{ color: 'var(--text-soft)', marginBottom: '20px' }}>
+              Users who explored the site without logging in. One row per visit —
+              showing {Math.min(anonPage * ANON_PER_PAGE + 1, anonymousVisitors.length)}–
+              {Math.min((anonPage + 1) * ANON_PER_PAGE, anonymousVisitors.length)} of {anonymousVisitors.length}.
+            </p>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '400px' }}>
                 <thead>
@@ -294,7 +397,7 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {anonymousVisitors.length > 0 ? anonymousVisitors.map((anon, i) => (
+                  {anonymousVisitors.length > 0 ? anonymousVisitors.slice(anonPage * ANON_PER_PAGE, (anonPage + 1) * ANON_PER_PAGE).map((anon, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                       <td style={{ padding: '15px 0', fontWeight: 500, fontFamily: 'monospace', fontSize: '13px', color: 'var(--text-soft)' }}>{anon.visitor_id}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-color)' }}>
@@ -307,6 +410,35 @@ const AdminDashboard = () => {
                 </tbody>
               </table>
             </div>
+
+            {anonymousVisitors.length > ANON_PER_PAGE && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '18px' }}>
+                <button
+                  onClick={() => setAnonPage((p) => Math.max(0, p - 1))}
+                  disabled={anonPage === 0}
+                  style={{ padding: '8px 16px', borderRadius: '50px', border: '1px solid #E3D9CE',
+                           background: 'white', cursor: anonPage === 0 ? 'not-allowed' : 'pointer',
+                           opacity: anonPage === 0 ? 0.5 : 1, fontFamily: 'inherit', fontWeight: 700 }}
+                >
+                  ← Previous
+                </button>
+                <span style={{ color: 'var(--text-soft)', fontSize: '13px' }}>
+                  Page {anonPage + 1} of {Math.ceil(anonymousVisitors.length / ANON_PER_PAGE)}
+                </span>
+                <button
+                  onClick={() => setAnonPage((p) =>
+                    Math.min(Math.ceil(anonymousVisitors.length / ANON_PER_PAGE) - 1, p + 1))}
+                  disabled={(anonPage + 1) * ANON_PER_PAGE >= anonymousVisitors.length}
+                  style={{ padding: '8px 16px', borderRadius: '50px', border: '1px solid #E3D9CE',
+                           background: 'white',
+                           cursor: (anonPage + 1) * ANON_PER_PAGE >= anonymousVisitors.length ? 'not-allowed' : 'pointer',
+                           opacity: (anonPage + 1) * ANON_PER_PAGE >= anonymousVisitors.length ? 0.5 : 1,
+                           fontFamily: 'inherit', fontWeight: 700 }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
         )}
 

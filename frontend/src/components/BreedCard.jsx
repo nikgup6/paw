@@ -1,4 +1,4 @@
-const BreedCard = ({ breed, rank, reason, onBuy, onCompare, onFullProfile, hideActionButtons, hideFullProfileButton, hideCompareButton, onImageClick }) => {
+const BreedCard = ({ breed, rank, reason, onBuy, onCompare, onFullProfile, hideActionButtons, hideBuyButton, hideFullProfileButton, hideCompareButton, onImageClick }) => {
   return (
     <div className="breed-card" onClick={() => onFullProfile && onFullProfile(breed)} style={{ cursor: 'pointer' }}>
       <div className="breed-card-img">
@@ -27,7 +27,9 @@ const BreedCard = ({ breed, rank, reason, onBuy, onCompare, onFullProfile, hideA
         </div>
         {!hideActionButtons && (
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button onClick={(e) => { e.stopPropagation(); onBuy && onBuy(breed); }} style={{ flex: 1, padding: '8px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>Buy</button>
+            {!hideBuyButton && (
+              <button onClick={(e) => { e.stopPropagation(); onBuy && onBuy(breed); }} style={{ flex: 1, padding: '8px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>Buy</button>
+            )}
             {!hideCompareButton && (
               <button onClick={(e) => { e.stopPropagation(); onCompare && onCompare(breed); }} style={{ flex: 1, padding: '8px', background: 'transparent', color: 'var(--orange)', border: '1px solid var(--orange)', borderRadius: '50px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>Compare</button>
             )}

@@ -271,5 +271,38 @@
     ],
     "cols": 2,
     "multi": true
+  },
+  {
+    "id": "timeline",
+    "text": "When are you planning to bring a dog home?",
+    "sub": "This is the last one. It tells us whether to introduce you to a breeder now or send you home with reading first — nobody benefits from being rushed.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Within the next month",
+        "desc": "You are ready now and want to meet available puppies as soon as possible.",
+        "val": "ready_now"
+      },
+      {
+        "icon": "",
+        "label": "1-3 months",
+        "desc": "You have decided to go ahead and are working out the timing.",
+        "val": "ready_soon"
+      },
+      {
+        "icon": "",
+        "label": "3-6 months",
+        "desc": "You are planning ahead and want to be properly prepared first.",
+        "val": "planning"
+      },
+      {
+        "icon": "",
+        "label": "Still researching",
+        "desc": "You are learning about breeds and have not decided anything yet.",
+        "val": "researching"
+      }
+    ],
+    "cols": 2,
+    "multi": false
   }
 ]

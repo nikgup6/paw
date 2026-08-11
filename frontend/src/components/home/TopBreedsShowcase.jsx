@@ -1,10 +1,11 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import allBreeds from '../../constants/breeds.json';
+import { useBreedList } from '../../context/BreedsContext';
 import BreedProfileModal from '../BreedProfileModal';
 import { AuthContext } from '../../context/AuthContext';
 
 const TopBreedsShowcase = () => {
+  const allBreeds = useBreedList();
   const [selectedBreed, setSelectedBreed] = useState(null);
   const { user } = useContext(AuthContext);
   const scrollRef = useRef(null);

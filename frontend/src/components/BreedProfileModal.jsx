@@ -4,11 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { buildLivingConditions, generateProsCons } from '../utils/breedUtils';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from './WhatsAppButton';
+import BreederDirectory from './BreederDirectory';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-const BreedProfileModal = ({ breed, user, onClose }) => {
-  const [view, setView] = useState('profile'); // 'profile', 'buy', 'success'
+/** Q3 answers are stored as arrays; the breeder directory wants the raw value. */
+export const answeredCity = (answers) =>
+  (Array.isArray(answers?.city) ? answers.city[0] : answers?.city) || null;
+
+const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], initialView = 'profile' }) => {
+  const [view, setView] = useState(initialView); // 'profile', 'buy', 'success'
   const [showAuthWarning, setShowAuthWarning] = useState(false);
   const [waLink, setWaLink] = useState('');
   const navigate = useNavigate();
@@ -16,9 +21,31 @@ const BreedProfileModal = ({ breed, user, onClose }) => {
   if (!breed) return null;
 
   const handleBuyClick = () => {
-    // Login removed — the buy/adoption request no longer requires an account.
-    // (The "Login Required" warning code below is kept but no longer triggered.)
+    // Buy now opens the verified breeder network for the user's city instead of
+    // the old intent form. The lead is logged silently so we keep the signal.
     setView('buy');
+    axios.post(`${API_URL}/api/buy`, {
+      user_id: user?.id || null,
+      user_name: user?.name || 'Guest',
+      mobile: user?.mobile || 'Via breeder WhatsApp',
+      city: answeredCity(answers) || user?.city || 'Not Provided',
+      breed_name: breed.name,
+      intent: 'Viewed breeder list',
+      status: 'NEW',
+    }).catch(() => { /* best effort — never blocks the user */ });
+  };
+
+  /** Fired when the user actually opens a breeder's WhatsApp chat. */
+  const logBreederContact = (breeder) => {
+    axios.post(`${API_URL}/api/buy`, {
+      user_id: user?.id || null,
+      user_name: user?.name || 'Guest',
+      mobile: user?.mobile || 'Via breeder WhatsApp',
+      city: answeredCity(answers) || user?.city || 'Not Provided',
+      breed_name: breed.name,
+      intent: `Contacted breeder: ${breeder.name} (${breeder.city})`,
+      status: 'NEW',
+    }).catch(() => { /* best effort */ });
   };
 
   const submitBuyRequest = (e) => {
@@ -81,22 +108,13 @@ const BreedProfileModal = ({ breed, user, onClose }) => {
         )}
 
         {view === 'buy' && (
-          <div>
-            <h3 style={{ marginBottom: '10px', color: 'var(--orange)' }}>Interest in {breed.name}</h3>
-            <p style={{ marginBottom: '20px', color: 'var(--text-soft)', fontSize: '14px', background: '#ffe0b2', padding: '10px', borderRadius: '8px' }}>The breeder is only available at Hyderabad currently.</p>
-            <form onSubmit={submitBuyRequest} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <input name="name" defaultValue={user?.name || ''} placeholder="Your Name" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
-              <input name="mobile" defaultValue={user?.mobile || ''} placeholder="Mobile Number" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
-              <select name="intent" required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }}>
-                <option value="">Select Intent</option>
-                <option value="Ready to buy immediately">Ready to buy immediately</option>
-                <option value="Looking to buy next month">Looking to buy next month</option>
-                <option value="Just inquiring">Just inquiring</option>
-              </select>
-              <WhatsAppButton type="submit" style={{ marginTop: '10px' }} />
-              <button type="button" onClick={() => setView('profile')} style={{ padding: '15px', background: 'transparent', color: 'var(--text-soft)', border: 'none', cursor: 'pointer', marginTop: '-5px', fontWeight: 600 }}>← Back to Profile</button>
-            </form>
-          </div>
+          <BreederDirectory
+            userCity={answeredCity(answers)}
+            breedName={breed.name}
+            topBreeds={topBreeds}
+            onBack={() => setView('profile')}
+            onContact={logBreederContact}
+          />
         )}
 
         {view === 'profile' && (
