@@ -1,14 +1,37 @@
 import logging
+import uuid
+from datetime import datetime
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.auth.dependencies import require_admin
+from app.auth.security import get_password_hash
 from app.config.settings import settings, ENV_FILE
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_database
 from app.database.indexes import ensure_indexes
 from app.routes import auth, breeds, quiz, admin, feedback, buy_requests, analytics, pets, matchmaker, vaccination, health_vault, dogs, funnel, owner_survey, care_tips, daily_care
 
 logger = logging.getLogger(__name__)
+
+
+async def _seed_admin(db):
+    """Ensure the admin account exists. Idempotent — no-op if already present."""
+    users_col = db["users"]
+    existing = await users_col.find_one({"mobile": "9999999999"})
+    if existing:
+        logger.info("Admin account already exists.")
+        return
+    await users_col.insert_one({
+        "id": str(uuid.uuid4()),
+        "name": "Admin",
+        "mobile": "9999999999",
+        "city": "AdminCity",
+        "email": "admin@pawbuddy.in",
+        "role": "ADMIN",
+        "pwd_hash": get_password_hash("admin123"),
+        "created_at": datetime.utcnow(),
+    })
+    logger.info("Admin account seeded (mobile: 9999999999).")
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -65,6 +88,9 @@ async def startup_db_client():
     from app.services import readiness
     await readiness.seed(get_database())
     await readiness.migrate_legacy_tiers(get_database())
+    # Ensure the admin account exists so the dashboard is never locked out.
+    # Idempotent — no-op if the admin is already in the database.
+    await _seed_admin(get_database())
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

@@ -58,7 +58,12 @@ async def quick_register(req: QuickRegisterRequest):
 
     existing = await users_collection.find_one({"mobile": req.mobile})
     if existing:
-        # Already registered — sign them in directly
+        # Already registered — sign them in directly.
+        # Sanitise email: old accounts may have a placeholder.local address that
+        # fails EmailStr validation; replace it with a valid one on the fly.
+        email = existing.get("email", "")
+        if not email or email.endswith("@placeholder.local"):
+            existing["email"] = f"{req.mobile}@pawbuddy.in"
         access_token = create_access_token(data={"sub": existing["id"], "role": existing.get("role", "USER")})
         return {"access_token": access_token, "token_type": "bearer", "user": UserResponse(**existing)}
 
@@ -68,7 +73,7 @@ async def quick_register(req: QuickRegisterRequest):
         name=req.name,
         mobile=req.mobile,
         city="",                          # not collected at this gate
-        email=req.email or f"{req.mobile}@placeholder.local",
+        email=req.email or f"{req.mobile}@pawbuddy.in",
         role="USER",
         pwd_hash=get_password_hash("PawBuddy@123"),
         created_at=datetime.utcnow(),
@@ -129,6 +134,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
                 detail="admin_password_required",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+    # Sanitise email: old accounts may have a placeholder.local address that
+    # fails EmailStr validation; replace it with a valid one on the fly.
+    email = user.get("email", "")
+    if not email or email.endswith("@placeholder.local"):
+        user["email"] = f"{form_data.username}@pawbuddy.in"
 
     access_token = create_access_token(data={"sub": user["id"], "role": user["role"]})
     return {"access_token": access_token, "token_type": "bearer", "user": UserResponse(**user)}

@@ -59,9 +59,9 @@ const AdminDashboard = () => {
       const [statsRes, usersRes, buyRes, leadsRes, feedbackRes, anonRes] = await Promise.all([
         axios.get(`${API_URL}/api/admin/dashboard`, auth),
         axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
-        axios.get(`${API_URL}/api/buy`),
+        axios.get(`${API_URL}/api/buy`, auth),
         axios.get(`${API_URL}/api/admin/leads`, auth),
-        axios.get(`${API_URL}/api/feedback`),
+        axios.get(`${API_URL}/api/feedback`, auth),
         axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
       ]);
       setStats(statsRes.data);
