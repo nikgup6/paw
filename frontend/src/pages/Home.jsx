@@ -17,7 +17,6 @@ import Reveal from '../components/home/Reveal';
 
 // New Revamped Components
 import AuthModal from '../components/AuthModal';
-import QuickLoginModal from '../components/QuickLoginModal';
 import BreedSlider from '../components/BreedSlider';
 import BreedProfileModal from '../components/BreedProfileModal';
 import BreedModal from '../components/BreedModal';
@@ -76,11 +75,6 @@ const Home = () => {
   // Auth modal gate state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingTab, setPendingTab] = useState('menu'); // dashboard tab to open after login
-
-  // Post-quiz / post-matchmaker login gate — shown when results are ready
-  // but the user isn't signed in yet
-  const [showResultsLoginGate, setShowResultsLoginGate] = useState(false);
-  const pendingResultsRef = React.useRef(null); // { answers, source, top5 } parked until login
 
   // Inline Quiz State
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -224,15 +218,7 @@ const Home = () => {
         }).catch(err => console.error("Error saving quiz:", err));
 
         setIsProcessing(false);
-
-        // If signed in, go straight to results. Otherwise park the results
-        // and show the login gate — it cannot be skipped.
-        if (user) {
-          presentResults(quizAnswers, 'quiz', top5);
-        } else {
-          pendingResultsRef.current = { answers: quizAnswers, source: 'quiz', top5 };
-          setShowResultsLoginGate(true);
-        }
+        presentResults(quizAnswers, 'quiz', top5);
       } catch (error) {
         console.error(error);
         setIsProcessing(false);
@@ -262,13 +248,7 @@ const Home = () => {
         top_breeds: top5.map(b => b.name)
       }).catch(err => console.error("Error saving matchmaker run:", err));
 
-      // If signed in, go straight to results. Otherwise park and show login gate.
-      if (user) {
-        presentResults(answers, 'ai', top5);
-      } else {
-        pendingResultsRef.current = { answers, source: 'ai', top5 };
-        setShowResultsLoginGate(true);
-      }
+      presentResults(answers, 'ai', top5);
     } catch (error) {
       console.error(error);
     } finally {
@@ -677,20 +657,6 @@ const Home = () => {
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           onSuccess={handleAuthSuccess}
-        />
-
-        {/* Post-quiz / post-matchmaker login gate — cannot be dismissed.
-            Once the user signs in, the parked results are presented. */}
-        <QuickLoginModal
-          isOpen={showResultsLoginGate}
-          onSuccess={() => {
-            setShowResultsLoginGate(false);
-            const parked = pendingResultsRef.current;
-            if (parked) {
-              pendingResultsRef.current = null;
-              presentResults(parked.answers, parked.source, parked.top5);
-            }
-          }}
         />
 
         {/* Full Profile modal for slider breeds (pros/cons intact) */}

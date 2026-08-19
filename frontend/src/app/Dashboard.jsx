@@ -786,7 +786,15 @@ const Dashboard = () => {
         }
         .pb-tips__btn:focus-visible { outline: 2px solid var(--orange); outline-offset: -2px; border-radius: 12px; }
         .pb-tips__icon { flex: 0 0 auto; font-size: 16px; line-height: 1.5; }
-        .pb-tips__text { flex: 1 1 auto; color: rgba(255,255,255,.88); font-size: 12.5px; line-height: 1.6; }
+        /* Collapsed to 3 lines so one long tip can't blow up the card on a
+           phone — the chevron already promises "there's more", the clamp is
+           what keeps that promise honest. Full text reappears once the row
+           is open, right above the "Why this applies" detail. */
+        .pb-tips__text {
+          flex: 1 1 auto; color: rgba(255,255,255,.88); font-size: 12.5px; line-height: 1.6;
+          display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .pb-tips__row.is-open .pb-tips__text { -webkit-line-clamp: unset; display: block; overflow: visible; }
         .pb-tips__chev { flex: 0 0 auto; color: rgba(255,255,255,.45); font-size: 9px; line-height: 2.1; }
 
         .pb-tips__detail {
