@@ -69,8 +69,8 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
 
   const pillBtn = (bg, color, border) => ({
     padding: '12px 24px', background: bg, color, border: border || 'none',
-    borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold',
-    fontFamily: "'Poppins', sans-serif", fontSize: '14px'
+    borderRadius: '50px', cursor: 'pointer', fontWeight: 'var(--weight-semibold)',
+    fontFamily: 'var(--font-display)', fontSize: '14px'
   });
 
   return (
@@ -82,7 +82,7 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
           style={{
             background: 'white', color: 'var(--brown)', border: '1px solid #EAE4DE',
             padding: '9px 20px', borderRadius: '50px', cursor: 'pointer',
-            fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: '13px',
+            fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', fontSize: '13px',
             boxShadow: 'var(--shadow)', display: 'flex', alignItems: 'center', gap: '8px'
           }}
         >
@@ -91,8 +91,8 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
       </div>
 
       <div className="results-header" style={{ textAlign: 'center', marginBottom: '26px' }}>
-        <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)' }}>Your Pawfect Matches</h2>
-        <p style={{ fontFamily: "'Poppins', sans-serif", color: 'var(--text-soft)' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--brown)' }}>Your Pawfect Matches</h2>
+        <p style={{ fontFamily: 'var(--font-body-family)', color: 'var(--text-soft)' }}>
           Based on your lifestyle, here are the best companions for you to welcome home.
         </p>
       </div>
@@ -114,12 +114,12 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
             style={{ cursor: 'pointer' }}
             onError={(e) => { e.target.src = 'https://via.placeholder.com/180?text=Dog'; }}
           />
-          <div style={{ color: 'white', fontFamily: "'Fredoka', sans-serif", lineHeight: 1, textAlign: 'center', width: '100%' }}>
+          <div style={{ color: 'white', fontFamily: 'var(--font-body-family)', lineHeight: 1, textAlign: 'center', width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-              <span style={{ fontSize: '46px', fontWeight: 800 }}>{top.matchPercentage}%</span>
+              <span style={{ fontSize: '46px', fontWeight: 800, fontFamily: 'var(--font-accent)' }}>{top.matchPercentage}%</span>
               <span style={{ fontSize: '17px', opacity: 0.9, marginLeft: '6px' }}>Match</span>
             </div>
-            <div style={{ fontSize: '13px', marginTop: '6px', fontWeight: 600, opacity: 0.9 }}>
+            <div style={{ fontSize: '13px', marginTop: '6px', fontWeight: 'var(--weight-medium)', opacity: 0.9 }}>
               {matchLabel(top.matchPercentage)}
             </div>
           </div>
@@ -148,13 +148,13 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
             <button
               onClick={() => onBuy(top)}
-              style={{ flex: '1 1 120px', padding: '12px', background: 'white', color: 'var(--orange)', border: 'none', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
+              style={{ flex: '1 1 120px', padding: '12px', background: 'white', color: 'var(--orange)', border: 'none', borderRadius: '50px', fontWeight: 'var(--weight-bold)', cursor: 'pointer', fontFamily: 'var(--font-display)', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
             >
               Buy
             </button>
             <button
               onClick={() => onFullProfile(top)}
-              style={{ flex: '1 1 120px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", backdropFilter: 'blur(5px)' }}
+              style={{ flex: '1 1 120px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50px', fontWeight: 'var(--weight-semibold)', cursor: 'pointer', fontFamily: 'var(--font-display)', backdropFilter: 'blur(5px)' }}
             >
               Full Profile
             </button>
@@ -187,14 +187,14 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
 
       {/* Not quite sure? — retake */}
       <div style={{ marginTop: '44px', textAlign: 'center', padding: 'clamp(22px, 4vw, 30px)', background: '#fff9f5', borderRadius: '20px', border: '2px dashed var(--orange)' }}>
-        <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontSize: '24px', fontFamily: "'Fredoka', sans-serif" }}>Not quite sure? Or wanna try again for fun? 🐾</h3>
+        <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontSize: '24px', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)' }}>Not quite sure? Or wanna try again for fun? 🐾</h3>
         <p style={{ color: 'var(--text-soft)', marginBottom: '20px', fontSize: '16px' }}>There's no rush in finding your perfect furry friend. Take all the time you need!</p>
-        <button onClick={onRetake} style={{ padding: '12px 28px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', boxShadow: '0 4px 15px rgba(255,107,43,0.3)' }}>Let's Retake the Quiz</button>
+        <button onClick={onRetake} style={{ padding: '12px 28px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', fontSize: '15px', boxShadow: '0 4px 15px rgba(255,107,43,0.3)' }}>Let's Retake the Quiz</button>
       </div>
 
       {/* Have a breed in mind? — search */}
       <div style={{ marginTop: '28px', background: 'var(--cream)', padding: '30px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontFamily: "'Fredoka', sans-serif" }}>Have a breed in mind?</h3>
+        <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)' }}>Have a breed in mind?</h3>
         <p style={{ color: 'var(--text-soft)', fontSize: '14px', marginBottom: '20px' }}>Type any breed name and we'll tell you the pros &amp; cons based on YOUR specific lifestyle answers</p>
         <div style={{ display: 'flex', gap: '10px', position: 'relative', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 220px', position: 'relative' }}>
@@ -202,7 +202,7 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="husky"
-              style={{ width: '100%', padding: '15px', borderRadius: '50px', border: '1px solid #ddd', fontFamily: "'Poppins', sans-serif" }}
+              style={{ width: '100%', padding: '15px', borderRadius: '50px', border: '1px solid #ddd', fontFamily: 'var(--font-body-family)' }}
             />
             {suggestions.length > 0 && (
               <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', border: '1px solid #ddd', borderRadius: '12px', maxHeight: '220px', overflowY: 'auto', zIndex: 10, marginTop: '6px', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}>
@@ -215,7 +215,7 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
                     onMouseOut={e => e.currentTarget.style.background = 'white'}
                   >
                     <img src={`/${b.img}`} alt={b.name} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
-                    <span style={{ fontFamily: "'Poppins', sans-serif", color: 'var(--brown)', fontWeight: 600 }}>{b.name}</span>
+                    <span style={{ fontFamily: 'var(--font-body-family)', color: 'var(--brown)', fontWeight: 'var(--weight-regular)' }}>{b.name}</span>
                   </div>
                 ))}
               </div>
@@ -226,7 +226,7 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
               const b = breedsData.find(x => x.name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
               if (b) openSearched(b); else alert('Breed not found. Try the suggestions dropdown.');
             }}
-            style={{ padding: '15px 30px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', flex: '1 1 150px' }}
+            style={{ padding: '15px 30px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', flex: '1 1 150px' }}
           >
             Check This Breed
           </button>
@@ -235,7 +235,7 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
 
       {/* Share your results */}
       <div style={{ marginTop: '28px', textAlign: 'center', background: 'white', padding: '40px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontFamily: "'Fredoka', sans-serif" }}>Share your results</h3>
+        <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)' }}>Share your results</h3>
         <p style={{ color: 'var(--text-soft)', fontSize: '14px', marginBottom: '20px' }}>Let your friends know what breed suits you!</p>
         <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
           {navigator.share && (
@@ -270,8 +270,8 @@ const RecommendationResults = ({ breeds, answers, user, onBack, onBuy, onFullPro
           color: #fff;
           border: none;
           border-radius: 50px;
-          font-family: 'Poppins', sans-serif;
-          font-weight: 700;
+          font-family: var(--font-display);
+          font-weight: var(--weight-semibold);
           font-size: 15px;
           cursor: pointer;
           box-shadow: 0 10px 28px rgba(208, 92, 25, 0.4);

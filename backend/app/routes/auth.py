@@ -11,7 +11,7 @@ from app.auth.dependencies import ADMIN_ROLE
 from app.auth.security import get_password_hash, create_access_token
 from app.config.settings import ENV_FILE, settings
 from app.database.connection import get_database
-from app.models.user import UserCreate, UserInDB, UserResponse
+from app.models.user import QuickRegisterRequest, UserCreate, UserInDB, UserResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -39,6 +39,45 @@ async def register(user: UserCreate):
     
     await users_collection.insert_one(user_in_db.dict())
     return UserResponse(**user_in_db.dict())
+
+
+@router.post("/quick-register")
+async def quick_register(req: QuickRegisterRequest):
+    """Register-or-login with just name + mobile (email optional).
+
+    If the mobile is already registered, sign them in directly.
+    Otherwise create a new account with the provided fields and
+    sensible defaults for the rest, then sign them in.
+
+    This is the post-quiz / post-survey gate — it must never fail
+    for a valid mobile, and it must never ask for more than name,
+    number, and optionally email.
+    """
+    db = get_database()
+    users_collection = db["users"]
+
+    existing = await users_collection.find_one({"mobile": req.mobile})
+    if existing:
+        # Already registered — sign them in directly
+        access_token = create_access_token(data={"sub": existing["id"], "role": existing.get("role", "USER")})
+        return {"access_token": access_token, "token_type": "bearer", "user": UserResponse(**existing)}
+
+    # New account with minimal fields
+    user_in_db = UserInDB(
+        id=str(uuid.uuid4()),
+        name=req.name,
+        mobile=req.mobile,
+        city="",                          # not collected at this gate
+        email=req.email or f"{req.mobile}@placeholder.local",
+        role="USER",
+        pwd_hash=get_password_hash("PawBuddy@123"),
+        created_at=datetime.utcnow(),
+    )
+
+    await users_collection.insert_one(user_in_db.dict())
+    access_token = create_access_token(data={"sub": user_in_db.id, "role": user_in_db.role})
+    return {"access_token": access_token, "token_type": "bearer", "user": UserResponse(**user_in_db.dict())}
+
 
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):

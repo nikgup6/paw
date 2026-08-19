@@ -396,35 +396,6 @@ const Overview = () => {
           </Link>
         </section>
 
-        {/* ---- Prescriptions ---- */}
-        <section className="pb-card">
-          <div className="pb-card__head">
-            <div>
-              <h3 className="pb-card__title">Prescription summary</h3>
-              <p className="pb-card__sub">Latest from Medical Logs.</p>
-            </div>
-            {health.prescriptions > 0 && <span className="pb-pill is-neutral">{health.prescriptions}</span>}
-          </div>
-          {summary.recent_prescriptions.length === 0 ? (
-            <div className="pb-empty" style={{ padding: '16px 8px' }}>None yet.</div>
-          ) : (
-            <ul className="pb-list">
-              {summary.recent_prescriptions.map((rx) => (
-                <li key={rx.id} className="pb-list__row">
-                  <span className="pb-list__main">
-                    <strong>{rx.summary || `${(rx.medicines || []).length} medicines`}</strong>
-                    <span className="pb-list__meta">
-                      {[rx.doctor, rx.clinic_name, rx.prescribed_date && formatDay(rx.prescribed_date)]
-                        .filter(Boolean).join(' · ')}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link className="pb-btn pb-btn--sm" style={{ marginTop: 12 }} to={`${base}/documents`}>Documents →</Link>
-        </section>
-
         {/* ---- Recent documents ---- */}
         <section className="pb-card">
           <div className="pb-card__head">
@@ -451,46 +422,6 @@ const Overview = () => {
           <Link className="pb-btn pb-btn--sm" style={{ marginTop: 12 }} to={`${base}/documents`}>Document Vault →</Link>
         </section>
 
-        {/* ---- Reminder activity ---- */}
-        <section className="pb-card">
-          <div className="pb-card__head">
-            <div>
-              <h3 className="pb-card__title">Recent activity</h3>
-              <p className="pb-card__sub">Latest changes.</p>
-            </div>
-          </div>
-          {summary.recent_activity.length === 0 ? (
-            <div className="pb-empty" style={{ padding: '16px 8px' }}>Nothing yet.</div>
-          ) : (
-            <ul className="pb-list">
-              {summary.recent_activity.map((item, index) => (
-                <li key={`${item.title}-${index}`} className="pb-list__row">
-                  <span className="pb-list__main">
-                    <strong>{item.title}</strong>
-                    <span className="pb-list__meta">{[item.detail, formatTimestamp(item.at)].filter(Boolean).join(' · ')}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link className="pb-btn pb-btn--sm" style={{ marginTop: 12 }} to={`${base}/reminders`}>All reminders →</Link>
-        </section>
-
-        {/* ---- Quick actions ---- */}
-        <section className="pb-card">
-          <div className="pb-card__head">
-            <div>
-              <h3 className="pb-card__title">Quick actions</h3>
-              
-            </div>
-          </div>
-          <div className="pb-quick">
-            <Link className="pb-btn pb-btn--block" to={`${base}/documents`}>📄 Upload a record</Link>
-            <Link className="pb-btn pb-btn--block" to={`${base}/documents`}>📝 Add a prescription</Link>
-            <Link className="pb-btn pb-btn--block" to={`${base}/reminders`}>🔔 New reminder</Link>
-            <Link className="pb-btn pb-btn--block" to={`/app/dogs/${dogId}/edit`}>🐶 Edit profile</Link>
-          </div>
-        </section>
       </div>
 
       {openGroup && (
@@ -521,7 +452,7 @@ const Overview = () => {
         .pb-group {
           display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
           padding: 14px 15px; border-radius: 14px; cursor: pointer; text-align: left;
-          background: var(--white); border: 1px solid #EFE6DC; border-left: 4px solid #D8CCBE;
+          background: var(--white); border: 1px solid var(--border); border-left: 4px solid #D8CCBE;
           font-family: inherit;
           transition: transform var(--pb-fast) var(--pb-ease), box-shadow var(--pb-fast) var(--pb-ease),
                       border-color var(--pb-fast) var(--pb-ease);
@@ -533,24 +464,25 @@ const Overview = () => {
         .pb-group:active { transform: translateY(0); }
         .pb-group__icon { font-size: 17px; line-height: 1; margin-bottom: 6px; }
         .pb-group__n {
-          font-family: 'Fredoka', sans-serif; color: var(--brown);
-          font-size: 27px; font-weight: 600; line-height: 1.05;
+          /* A count (shots given in this group), not a heading. */
+          font-family: var(--font-accent); color: var(--brown);
+          font-size: 27px; font-weight: var(--weight-semibold); line-height: 1.05;
         }
-        .pb-group__label { color: var(--brown); font-size: 13px; font-weight: 700; }
-        .pb-group__sub { color: var(--text-soft); font-size: 11.5px; font-weight: 600; }
+        .pb-group__label { color: var(--brown); font-size: 13px; font-weight: var(--weight-bold); }
+        .pb-group__sub { color: var(--text-soft); font-size: 11.5px; font-weight: var(--weight-semibold); }
         .pb-group__sub.is-owed { color: #C62828; }
 
         .pb-grp__head {
           display: flex; align-items: center; gap: 8px; margin: 0 0 8px;
-          font-family: 'Fredoka', sans-serif; color: var(--brown); font-size: 15px; font-weight: 600;
+          font-family: var(--font-display); color: var(--brown); font-size: 15px; font-weight: var(--weight-semibold);
         }
         .pb-grp__none { margin: 0; color: var(--text-soft); font-size: 12.5px; }
         .pb-grp__hidden {
           margin: 0 0 8px; padding: 8px 11px; border-radius: 10px;
-          background: var(--white); border: 1px dashed #E3D9CE;
+          background: var(--white); border: 1px dashed var(--border-strong);
           color: var(--text-soft); font-size: 12px;
         }
-        .pb-grp__hidden a { color: var(--orange-strong); font-weight: 700; }
+        .pb-grp__hidden a { color: var(--orange-strong); font-weight: var(--weight-bold); }
 
         @media (max-width: 560px) { .pb-groups { grid-template-columns: 1fr; } }
 
@@ -563,7 +495,7 @@ const Overview = () => {
         .pb-list__row:first-child { padding-top: 0; }
         .pb-list__main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .pb-list__main strong {
-          color: var(--brown); font-size: 13.5px; font-weight: 600;
+          color: var(--brown); font-size: 13.5px; font-weight: var(--weight-semibold);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .pb-list__meta { color: var(--text-soft); font-size: 11.5px; }
@@ -571,16 +503,13 @@ const Overview = () => {
         .pb-next {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
           padding: 11px 13px; border-radius: 12px;
-          background: #FBF7F2; border: 1px solid #EFE6DC; border-left: 4px solid #D8CCBE;
+          background: #FBF7F2; border: 1px solid var(--border); border-left: 4px solid #D8CCBE;
         }
         .pb-next.is-overdue { background: #FFF5F5; border-color: #F2C9C9; border-left-color: #C62828; }
         .pb-next.is-due-today { background: #FFFDF8; border-left-color: #9A6B1F; }
         .pb-next.is-upcoming { border-left-color: var(--orange); }
         .pb-next__main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .pb-next__main strong { color: var(--brown); font-size: 13.5px; font-weight: 600; }
-
-        .pb-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-        @media (max-width: 480px) { .pb-quick { grid-template-columns: 1fr; } }
+        .pb-next__main strong { color: var(--brown); font-size: 13.5px; font-weight: var(--weight-semibold); }
       `}</style>
     </>
   );

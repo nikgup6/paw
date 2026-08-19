@@ -29,6 +29,48 @@
       --radius: 20px;
       --radius-sm: 12px;
 
+      /* Font weights. Named rather than numeric at call sites so "section
+         heading weight" is changed in one place instead of hunted for as a
+         literal 600 among unrelated 600s. */
+      --weight-regular: 400;
+      --weight-medium: 500;
+      --weight-semibold: 600;
+      --weight-bold: 700;
+
+      /* Site-wide typography swap. Three families, one job each:
+           --font-display  headings (was Fredoka; Fredoka now has its own
+                            token below and is no longer the heading face)
+           --font-body-family  everything else — body copy, labels, buttons,
+                            nav, form text (was Poppins)
+           --font-accent   the deliberate third accent: stat numbers, badges,
+                            playful UI moments. Untouched by this swap — same
+                            Fredoka stack, just formalized as its own token
+                            instead of living inside --font-display.
+
+         --font-body-family, NOT --font-body: `--font-body` is already the
+         fluid type-SIZE scale below. Reusing that name once already made
+         font-family resolve to a clamp() and silently dropped the whole app
+         to Times — see the body{} rule beneath this block. */
+      --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --font-body-family: 'Work Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --font-accent: 'Fredoka', sans-serif;
+
+      /* Borders. Three near-identical browns were in circulation (#EFE6DC,
+         #EAE4DE, #E3D9CE) — same intent, three values, so cards and inputs
+         never quite lined up. Two tokens now: a hairline for surfaces, a
+         heavier one for controls the user types into. */
+      --border: #EFE6DC;
+      --border-strong: #E3D9CE;
+      --focus-ring: 0 0 0 4px rgba(227, 93, 24, .18);
+
+      /* The one tap target size. 44px is the accessibility floor for touch. */
+      --tap-min: 44px;
+
+      /* Pill radius. Not a card radius — this is the fully-rounded shape the
+         CTA buttons use, which --radius/--radius-sm can't express. It was
+         written as a literal 50px in ~22 places. */
+      --radius-pill: 50px;
+
       /* Fluid Typography System */
       --font-hero: clamp(1.8rem, 3vw + 0.5rem, 3.5rem);
       --font-h1: clamp(1.5rem, 2vw + 0.5rem, 2.5rem);
@@ -50,7 +92,11 @@
     }
 
     body {
-      font-family: 'Poppins', Georgia, 'Times New Roman', Times, serif;
+      /* Was falling back to Georgia/Times — a serif, so a failed font load
+         changed the whole app's character rather than degrading quietly.
+         Sans-serif fallbacks only, nearest-match per platform. Work Sans is
+         the functional default; headings opt into --font-display instead. */
+      font-family: var(--font-body-family);
       background: var(--cream);
       color: var(--text);
       min-height: 100vh;
@@ -118,9 +164,9 @@
     }
 
     .modal-box h2 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 26px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
       margin-bottom: 12px;
     }
@@ -142,8 +188,8 @@
     .btn-no {
       padding: 14px 36px;
       border-radius: 50px;
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-weight: var(--weight-semibold);
       font-size: 16px;
       border: none;
       cursor: pointer;
@@ -269,15 +315,18 @@
       padding: 8px 20px;
       color: white;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: var(--weight-medium);
       margin-bottom: 28px;
       animation: fadeInDown .6s ease .2s both;
     }
 
     .hero h1 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: var(--font-hero);
-      font-weight: 800;
+      font-weight: var(--weight-bold);
+      /* Jakarta Sans 700 reads tighter than Fredoka did at this size — a hair
+         of negative tracking keeps a multi-word hero line from feeling loose. */
+      letter-spacing: -0.01em;
       color: white;
       line-height: 1.05;
       margin-bottom: 20px;
@@ -303,8 +352,8 @@
       color: var(--orange);
       padding: 18px 44px;
       border-radius: 50px;
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
-      font-weight: 800;
+      font-family: var(--font-display);
+      font-weight: var(--weight-bold);
       font-size: 17px;
       border: none;
       cursor: pointer;
@@ -414,9 +463,9 @@
     }
 
     .quiz-header h2 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 32px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: white;
       text-shadow: 0 2px 12px rgba(61,31,0,.2);
     }
@@ -437,7 +486,7 @@
       margin-bottom: 8px;
       font-size: 12px;
       color: rgba(255,255,255,.85);
-      font-weight: 600;
+      font-weight: var(--weight-semibold);
     }
 
     .progress-bar-bg {
@@ -476,9 +525,9 @@
     }
 
     .q-text {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: var(--font-h3);
-      font-weight: 700;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
       margin-bottom: 8px;
       line-height: 1.3;
@@ -510,7 +559,7 @@
       background: white;
       color: var(--text);
       font-size: 14px;
-      font-weight: 500;
+      font-weight: var(--weight-medium);
       cursor: pointer;
       text-align: left;
       transition: all .2s ease;
@@ -533,14 +582,14 @@
     }
 
     .opt-label {
-      font-weight: 600;
+      font-weight: var(--weight-semibold);
       font-size: 14px;
     }
 
     .opt-desc {
       font-size: 11px;
       color: var(--text-soft);
-      font-weight: 400;
+      font-weight: var(--weight-regular);
       line-height: 1.4;
     }
 
@@ -579,7 +628,7 @@
       padding: 12px 24px;
       border-radius: 50px;
       color: var(--text-soft);
-      font-weight: 600;
+      font-weight: var(--weight-semibold);
       cursor: pointer;
       font-size: 14px;
       transition: all .2s ease;
@@ -596,8 +645,8 @@
       padding: 14px 32px;
       border-radius: 50px;
       border: none;
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-weight: var(--weight-semibold);
       font-size: 15px;
       cursor: pointer;
       transition: all .3s cubic-bezier(.34, 1.56, .64, 1);
@@ -636,9 +685,9 @@
     }
 
     .results-header h2 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: var(--font-h2);
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
     }
 
@@ -699,15 +748,15 @@
       padding: 4px 14px;
       border-radius: 50px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       letter-spacing: .1em;
       margin-bottom: 10px;
     }
 
     .top-match-info h3 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 30px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       margin-bottom: 8px;
     }
 
@@ -729,7 +778,7 @@
       padding: 4px 12px;
       border-radius: 50px;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: var(--weight-medium);
     }
 
     .match-score {
@@ -818,9 +867,9 @@
     }
 
     .breed-name {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 18px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
       margin-bottom: 6px;
     }
@@ -843,7 +892,7 @@
       padding: 3px 10px;
       border-radius: 50px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: var(--weight-semibold);
     }
 
     .pill-orange {
@@ -900,7 +949,7 @@
       padding: 10px;
       border-radius: var(--radius-sm);
       font-size: 12px;
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       cursor: pointer;
       border: none;
       transition: all .2s ease;
@@ -960,7 +1009,7 @@
       padding: 8px 20px;
       border-radius: 50px;
       border: none;
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       cursor: pointer;
       font-size: 13px;
       transition: all .2s;
@@ -980,9 +1029,9 @@
     }
 
     .custom-breed-section h3 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 20px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
       margin-bottom: 8px;
     }
@@ -1006,9 +1055,12 @@
       border-radius: 50px;
       border: 2px solid #EAE4DE;
       font-size: 15px;
-      font-family: Georgia, 'Times New Roman', Times, serif;
+      /* Was a bare serif stack — the one control in the app that would have
+         rendered in Times. Currently unused, fixed so reviving it can't
+         reintroduce the inconsistency. */
+      font-family: var(--font-body-family);
       outline: none;
-      transition: border-color .2s;
+      transition: border-color var(--pb-fast, .2s) var(--pb-ease, ease);
     }
 
     .custom-breed-input:focus {
@@ -1021,7 +1073,8 @@
       padding: 14px 28px;
       border-radius: 50px;
       border: none;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-weight: var(--weight-semibold);
       cursor: pointer;
       font-size: 14px;
       transition: all .25s;
@@ -1045,9 +1098,9 @@
     }
 
     .custom-result-inner h4 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 18px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
       margin-bottom: 16px;
     }
@@ -1063,14 +1116,14 @@
 
     .pros h5 {
       color: #27AE60;
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       margin-bottom: 8px;
       font-size: 13px;
     }
 
     .cons h5 {
       color: var(--red);
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       margin-bottom: 8px;
       font-size: 13px;
     }
@@ -1083,13 +1136,13 @@
     .pros ul li::before {
       content: ' ';
       color: #27AE60;
-      font-weight: 700;
+      font-weight: var(--weight-bold);
     }
 
     .cons ul li::before {
       content: ' ';
       color: var(--red);
-      font-weight: 700;
+      font-weight: var(--weight-bold);
     }
 
     .pros ul li,
@@ -1110,9 +1163,9 @@
     }
 
     .share-section h3 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 20px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
       margin-bottom: 8px;
     }
@@ -1132,7 +1185,8 @@
 }
 
 .contact-panel h4{
-  font-family: 'Fredoka', 'Fredoka', sans-serif;
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
   font-size: 20px;
   color: var(--brown);
   margin-bottom: 16px;
@@ -1159,7 +1213,8 @@
       padding: 12px 24px;
       border-radius: 50px;
       border: none;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-weight: var(--weight-semibold);
       font-size: 14px;
       cursor: pointer;
       transition: all .25s;
@@ -1234,9 +1289,9 @@
     }
 
     .detail-header h3 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 28px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       margin-bottom: 8px;
     }
 
@@ -1277,9 +1332,11 @@
     }
 
     .detail-section h4 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      /* Small uppercase eyebrow label ("TEMPERAMENT", "CARE NEEDS"), not a
+         display heading — classified against the Field-labels row. */
+      font-family: var(--font-body-family);
       font-size: 14px;
-      font-weight: 700;
+      font-weight: var(--weight-medium);
       color: var(--orange);
       text-transform: uppercase;
       letter-spacing: .08em;
@@ -1309,14 +1366,14 @@
       font-size: 11px;
       color: var(--text-soft);
       margin-bottom: 4px;
-      font-weight: 600;
+      font-weight: var(--weight-semibold);
       text-transform: uppercase;
       letter-spacing: .06em;
     }
 
     .detail-item .di-val {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
     }
 
@@ -1336,7 +1393,7 @@
 
     .cost-row:last-child {
       border-bottom: none;
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       color: var(--orange);
     }
 
@@ -1358,9 +1415,9 @@
     }
 
     .compare-header h2 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 32px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
     }
 
@@ -1377,8 +1434,8 @@
       background: var(--orange);
       color: white;
       padding: 16px 20px;
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-weight: var(--weight-semibold);
       font-size: 14px;
       text-align: left;
     }
@@ -1400,7 +1457,7 @@
     }
 
     .compare-table td:first-child {
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       color: var(--text-soft);
       font-size: 12px;
       text-transform: uppercase;
@@ -1413,8 +1470,8 @@
       padding: 14px 32px;
       border-radius: 50px;
       border: none;
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-weight: var(--weight-semibold);
       cursor: pointer;
       margin-top: 32px;
       transition: all .25s;
@@ -1439,9 +1496,9 @@
     }
 
     .admin-wrap h2 {
-      font-family: 'Fredoka', 'Fredoka', sans-serif;
+      font-family: var(--font-display);
       font-size: 28px;
-      font-weight: 800;
+      font-weight: var(--weight-semibold);
       color: var(--brown);
       margin-bottom: 8px;
     }
@@ -1488,7 +1545,7 @@
 
     .admin-rate {
       font-size: 18px;
-      font-weight: 700;
+      font-weight: var(--weight-bold);
       color: var(--brown);
       margin-bottom: 24px;
     }
@@ -1695,18 +1752,18 @@
       animation: slideUp .45s cubic-bezier(.34,1.56,.64,1);
     }
     .auth-logo { text-align:center; font-size:40px; margin-bottom:8px; }
-    .auth-title { font-family:'Fredoka', 'Fredoka', sans-serif; font-size:22px; font-weight:800; color:var(--brown); text-align:center; margin-bottom:4px; }
+    .auth-title { font-family:var(--font-display); font-size:22px; font-weight:var(--weight-semibold); color:var(--brown); text-align:center; margin-bottom:4px; }
     .auth-sub { color:var(--text-soft); font-size:13px; text-align:center; margin-bottom:24px; }
     .auth-tabs { display:flex; background:var(--grey); border-radius:50px; padding:4px; margin-bottom:24px; }
-    .auth-tab { flex:1; padding:9px; border:none; background:none; border-radius:50px; font-weight:700; font-size:13px; cursor:pointer; color:var(--text-soft); transition:all .2s; }
+    .auth-tab { flex:1; padding:9px; border:none; background:none; border-radius:50px; font-family:var(--font-display); font-weight:var(--weight-semibold); font-size:13px; cursor:pointer; color:var(--text-soft); transition:all .2s; }
     .auth-tab.active { background:var(--orange); color:white; }
     .auth-field { margin-bottom:14px; }
-    .auth-field label { display:block; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:5px; text-transform:uppercase; letter-spacing:.06em; }
+    .auth-field label { display:block; font-size:12px; font-family:var(--font-body-family); font-weight:var(--weight-medium); color:var(--text-soft); margin-bottom:5px; text-transform:uppercase; letter-spacing:.06em; }
     .auth-input-wrap { position:relative; }
-    .auth-field input { width:100%; padding:12px 16px; border-radius:12px; border:2px solid #EAE4DE; font-size:14px; font-family:'Fredoka', 'Fredoka', sans-serif; outline:none; transition:border-color .2s; }
+    .auth-field input { width:100%; padding:12px 16px; border-radius:12px; border:2px solid #EAE4DE; font-size:14px; font-family:var(--font-body-family); outline:none; transition:border-color .2s; }
     .auth-field input:focus { border-color:var(--orange); }
     .auth-eye { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; color:var(--text-soft); }
-    .auth-btn { width:100%; padding:14px; background:var(--orange); color:white; border:none; border-radius:50px; font-family:'Fredoka', 'Fredoka', sans-serif; font-weight:800; font-size:15px; cursor:pointer; margin-top:8px; transition:all .25s; }
+    .auth-btn { width:100%; padding:14px; background:var(--orange); color:white; border:none; border-radius:50px; font-family:var(--font-display); font-weight:var(--weight-semibold); font-size:15px; cursor:pointer; margin-top:8px; transition:all .25s; }
     .auth-btn:hover { background:var(--orange-light); transform:translateY(-2px); }
     .auth-error { color:var(--red); font-size:12px; margin-top:8px; text-align:center; min-height:16px; }
     .auth-success { color:#27AE60; font-size:12px; margin-top:8px; text-align:center; }
@@ -1720,51 +1777,54 @@
       margin: 0 auto;
     }
     .user-bar { background:var(--orange-pale); border-bottom:1px solid rgba(255,107,43,.15); padding:8px 20px; display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--brown); }
-    .user-bar-name { font-weight:700; }
-    .user-bar-logout { background:none; border:none; color:var(--orange); font-weight:700; cursor:pointer; font-size:13px; }
+    .user-bar-name { font-weight: var(--weight-bold); }
+    .user-bar-logout { background:none; border:none; color:var(--orange); font-weight: var(--weight-bold); cursor:pointer; font-size:13px; }
 
     /* â”€â”€ BUY MODAL â”€â”€ */
     .buy-overlay { position:fixed; inset:0; background:rgba(61,31,0,.65); backdrop-filter:blur(10px); z-index:2000; display:none; align-items:center; justify-content:center; }
     .buy-overlay.open { display:flex; }
     .buy-box { background:white; border-radius:28px; padding:40px; max-width:480px; width:92%; box-shadow:0 24px 64px rgba(61,31,0,.2); animation:slideUp .45s cubic-bezier(.34,1.56,.64,1); }
-    .buy-box h3 { font-family:'Fredoka', 'Fredoka', sans-serif; font-size:20px; font-weight:800; color:var(--brown); margin-bottom:8px; }
-    .buy-box .buy-breed-name { color:var(--orange); font-weight:700; font-size:17px; margin-bottom:16px; }
+    .buy-box h3 { font-family:var(--font-display); font-size:20px; font-weight:var(--weight-semibold); color:var(--brown); margin-bottom:8px; }
+    .buy-box .buy-breed-name { color:var(--orange); font-weight: var(--weight-bold); font-size:17px; margin-bottom:16px; }
     .buy-avail { background:linear-gradient(135deg,#E8FAF0,#d5f5e3); border-radius:16px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
     .buy-avail-icon { font-size:24px; }
-    .buy-avail-text { font-size:14px; font-weight:600; color:#1e8449; }
+    .buy-avail-text { font-size:14px; font-weight: var(--weight-semibold); color:#1e8449; }
     .buy-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
-    .buy-action-btn { padding:14px; border-radius:16px; border:2px solid #EAE4DE; background:white; cursor:pointer; font-weight:700; font-size:13px; color:var(--text); transition:all .2s; text-align:center; }
+    .buy-action-btn { padding:14px; border-radius:16px; border:2px solid #EAE4DE; background:white; cursor:pointer; font-family:var(--font-display); font-weight:var(--weight-semibold); font-size:13px; color:var(--text); transition:all .2s; text-align:center; }
     .buy-action-btn:hover { border-color:var(--orange); background:var(--orange-pale); color:var(--orange); }
     .buy-action-btn.selected { border-color:var(--orange); background:var(--orange); color:white; }
     .buy-close { background:none; border:none; color:var(--text-soft); cursor:pointer; font-size:13px; margin-top:8px; text-align:center; display:block; width:100%; }
 
     /* â”€â”€ BUY BUTTON â”€â”€ */
-    .btn-buy { flex:1; padding:10px; border-radius:var(--radius-sm); font-size:12px; font-weight:700; cursor:pointer; border:none; transition:all .2s ease; background:#27AE60; color:white; }
+    /* High-emphasis CTA — this is literally the "Buy" example from the role
+       table, so it gets the 700 weight reserved for that tier rather than the
+       600 every other button uses. */
+    .btn-buy { flex:1; padding:10px; border-radius:var(--radius-sm); font-size:12px; font-family:var(--font-display); font-weight:var(--weight-bold); cursor:pointer; border:none; transition:all .2s ease; background:#27AE60; color:white; }
     .btn-buy:hover { background:#1e8449; }
 
     /* â”€â”€ FEEDBACK POPUP â”€â”€ */
     .feedback-overlay { position:fixed; inset:0; background:rgba(61,31,0,.5); backdrop-filter:blur(8px); z-index:1800; display:none; align-items:flex-end; justify-content:center; padding-bottom:32px; }
     .feedback-overlay.open { display:none; pointer-events:none; }
     .feedback-box { background:white; border-radius:24px; padding:32px 36px; max-width:440px; width:92%; box-shadow:0 24px 64px rgba(61,31,0,.2); animation:slideUp .4s cubic-bezier(.34,1.56,.64,1); }
-    .feedback-box h4 { font-family:'Fredoka', 'Fredoka', sans-serif; font-size:18px; font-weight:800; color:var(--brown); margin-bottom:6px; }
+    .feedback-box h4 { font-family:var(--font-display); font-size:18px; font-weight:var(--weight-semibold); color:var(--brown); margin-bottom:6px; }
     .feedback-box p { color:var(--text-soft); font-size:13px; margin-bottom:20px; }
     .stars-row { display:flex; gap:10px; justify-content:center; margin-bottom:18px; }
     .star-btn { background:none; border:none; font-size:36px; cursor:pointer; transition:transform .15s; line-height:1; color:#D4AC0D; opacity:.3; }
     .star-btn.lit { opacity:1; }
     .star-btn:hover { transform:scale(1.2); }
-    .feedback-textarea { width:100%; padding:12px 16px; border-radius:12px; border:2px solid #EAE4DE; font-size:14px; font-family:'Fredoka', 'Fredoka', sans-serif; resize:none; outline:none; min-height:80px; transition:border-color .2s; }
+    .feedback-textarea { width:100%; padding:12px 16px; border-radius:12px; border:2px solid #EAE4DE; font-size:14px; font-family:var(--font-body-family); resize:none; outline:none; min-height:80px; transition:border-color .2s; }
     .feedback-textarea:focus { border-color:var(--orange); }
-    .feedback-submit { width:100%; padding:13px; background:var(--orange); color:white; border:none; border-radius:50px; font-family:'Fredoka', 'Fredoka', sans-serif; font-weight:800; font-size:14px; cursor:pointer; margin-top:12px; transition:all .25s; }
+    .feedback-submit { width:100%; padding:13px; background:var(--orange); color:white; border:none; border-radius:50px; font-family:var(--font-display); font-weight:var(--weight-semibold); font-size:14px; cursor:pointer; margin-top:12px; transition:all .25s; }
     .feedback-submit:hover { background:var(--orange-light); }
     .feedback-skip { background:none; border:none; color:var(--text-soft); font-size:12px; cursor:pointer; display:block; text-align:center; margin-top:8px; }
 
     /* â”€â”€ MULTI-SELECT OPTION â”€â”€ */
     .option-btn.multi-selected { border-color:var(--orange); background:var(--orange); color:white; transform:scale(1.02); box-shadow:0 4px 20px rgba(255,107,43,.3); }
     .option-btn.multi-selected .opt-desc { color:rgba(255,255,255,.8); }
-    .multi-hint { font-size:11px; color:var(--orange); font-weight:600; text-align:right; margin-bottom:6px; }
+    .multi-hint { font-size:11px; color:var(--orange); font-weight: var(--weight-semibold); text-align:right; margin-bottom:6px; }
 
     /* â”€â”€ PDF COMPARE BTN â”€â”€ */
-    .btn-pdf-compare { background:var(--brown); color:white; padding:12px 24px; border-radius:50px; border:none; font-weight:700; font-size:13px; cursor:pointer; transition:all .25s; display:flex; align-items:center; gap:8px; margin-top:16px; }
+    .btn-pdf-compare { background:var(--brown); color:white; padding:12px 24px; border-radius:50px; border:none; font-family:var(--font-display); font-weight:var(--weight-semibold); font-size:13px; cursor:pointer; transition:all .25s; display:flex; align-items:center; gap:8px; margin-top:16px; }
     .btn-pdf-compare:hover { background:var(--brown-mid); transform:translateY(-2px); }
 
     /* â”€â”€ ADMIN WIDE â”€â”€ */
@@ -1774,7 +1834,7 @@
     .admin-table th { background:var(--brown); color:white; padding:12px 16px; text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
     .admin-table td { padding:11px 16px; border-bottom:1px solid #EAE4DE; }
     .admin-table tr:nth-child(even) td { background:var(--grey); }
-    .admin-section-title { font-family:'Fredoka', 'Fredoka', sans-serif; font-size:16px; font-weight:800; color:var(--brown); margin:32px 0 12px; text-align:left; }
+    .admin-section-title { font-family:var(--font-display); font-size:16px; font-weight:var(--weight-semibold); color:var(--brown); margin:32px 0 12px; text-align:left; }
 
   
 /* PAW BUDDY V2 STYLES */
@@ -2026,9 +2086,9 @@
   color: white;
   border: none;
   border-radius: 50px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-display);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(208, 92, 25, 0.3);
   display: inline-flex;
@@ -2053,8 +2113,8 @@
   border: none;
   border-radius: 50px;
   padding: 15px 25px;
-  font-family: 'Fredoka', 'Fredoka', sans-serif;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
   font-size: 16px;
   box-shadow: 0 8px 24px rgba(255, 107, 43, 0.4);
   cursor: pointer;

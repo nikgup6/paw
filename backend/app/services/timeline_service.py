@@ -197,6 +197,29 @@ async def build_health_records(db, dog_id: str, dog: Optional[dict] = None) -> d
     #    on the same timeline — the owner reads it off the same booklet page.
     entries.extend(await _deworming_entries(db, dog_id, dob, ref))
 
+    # A dog with nothing on file yet starts clean.
+    #
+    # The schedule is generated from date of birth alone, so the moment a
+    # profile is saved every dose that fell before today is technically past
+    # its date — a 3-year-old showed 3 overdue vaccines and a 4-month-old
+    # showed 7, before the owner had uploaded anything at all. That is an
+    # accusation the data cannot support: with no records we do not know
+    # whether those shots were given, and most owners adding an adult dog have
+    # a booklet full of them.
+    #
+    # So past-dated *generated* doses are withheld until there is at least one
+    # vaccination record to reason from. Future doses still show, so the
+    # schedule is not lost — only the claim that the dog is behind. As soon as
+    # anything is uploaded the normal overdue logic resumes, and doses read off
+    # a certificate are never affected because those come from evidence.
+    if not records:
+        entries = [
+            e for e in entries
+            if not (e["source"] == "schedule"
+                    and e["status"] == OVERDUE
+                    and e.get("category") != CAT_DEWORMING)
+        ]
+
     # Generated entries the owner has hidden never make it out of here — which
     # also removes their reminders, since those are derived from this list.
     entries = [e for e in entries if e["key"] not in dismissed]
@@ -255,12 +278,9 @@ def _schedule_entries(dob: date, breed: Optional[str], records: List[dict],
 
         if collapsed:
             first = fam_doses[0]
-            due = schedule.due_date_for(dob, first)
-            if due < ref:
-                due = ref
             out.append(_due_entry(
                 f"schedule:{family}:primary", schedule.FAMILY_LABELS[family],
-                iso(due), ref,
+                iso(schedule.due_date_for(dob, first)), ref,
                 source="schedule", family=family, dose_label="Primary course", core=True,
             ))
         elif not skip_puppy_doses:

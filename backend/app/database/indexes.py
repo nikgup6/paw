@@ -93,8 +93,40 @@ async def ensure_indexes(db) -> None:
         # code is the natural key.
         await db["readiness_levels"].create_index("code", unique=True)
 
+        # Existing Dog Owner survey. Reads are "newest first" and filtered by
+        # breed or city from the admin table, so those are the three that matter.
+        surveys = db["owner_surveys"]
+        await surveys.create_index("id", unique=True)
+        await surveys.create_index("created_at")
+        await surveys.create_index("breed")
+        await surveys.create_index("city")
+
+        # Care Tips — replaced wholesale on every workbook import, so the
+        # indexes just need to make matching (breed+category+approval) and
+        # the admin browse (breed/category filters) fast, not enforce
+        # uniqueness the source spreadsheet doesn't itself guarantee.
+        care_tips = db["care_tips"]
+        await care_tips.create_index("id", unique=True)
+        await care_tips.create_index([("breed_name", 1), ("category", 1), ("is_approved", 1)])
+
+        await db["care_tip_fallback"].create_index("id", unique=True)
+
+        season_cal = db["city_season_calendar"]
+        await season_cal.create_index("id", unique=True)
+        await season_cal.create_index([("city", 1), ("month", 1)])
+
+        # Today's routine wellness care. (dog_id, day) is the upsert key and
+        # must be unique — two rows for one dog-day would let a tick vanish
+        # depending on which document a read happened to find first.
+        daily = db["daily_care"]
+        await daily.create_index([("dog_id", 1), ("day", 1)], unique=True)
+        await daily.create_index("day")
+
+        # The per-dog habit list. One document per dog, so dog_id is unique.
+        await db["daily_care_items"].create_index("dog_id", unique=True)
+
         logger.info("Indexes ensured for dog_profiles + vaccination_documents + vaccinations "
                     "+ health_documents + prescriptions + reminders + custom_reminders "
-                    "+ events + quiz_progress")
+                    "+ events + quiz_progress + care_tips")
     except Exception:
         logger.warning("Failed to ensure indexes", exc_info=True)

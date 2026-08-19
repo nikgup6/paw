@@ -3,6 +3,7 @@ import { NavLink, Navigate, Outlet, useParams } from 'react-router-dom';
 import { useDogs } from '../../context/DogsContext';
 import { getDog } from '../../utils/dogs';
 import { ageFromDob } from '../../utils/healthStatus';
+import { thumb } from '../../utils/images';
 
 /* The Health Records module for ONE dog.
 
@@ -69,7 +70,7 @@ const HealthLayout = () => {
       <div className="pb-health__head">
         <div className="pb-health__dog">
           <div className="pb-health__avatar" aria-hidden="true">
-            {dog.photo_url ? <img src={dog.photo_url} alt="" /> : <span>🐶</span>}
+            {dog.photo_url ? <img src={thumb(dog.photo_url, 40)} alt="" /> : <span>🐶</span>}
           </div>
           <div>
             <h2 className="pb-page__title" style={{ marginBottom: 2 }}>{dog.name}</h2>
@@ -103,24 +104,24 @@ const HealthLayout = () => {
         .pb-health__dog { display: flex; align-items: center; gap: 13px; }
         .pb-health__avatar {
           flex: 0 0 50px; width: 50px; height: 50px; border-radius: 15px; overflow: hidden;
-          background: var(--orange-pale); border: 1px solid #EFE6DC;
+          background: var(--orange-pale); border: 1px solid var(--border);
           display: flex; align-items: center; justify-content: center; font-size: 24px;
         }
         .pb-health__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .pb-tabs {
           display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto;
-          padding: 5px; border-radius: 14px; background: var(--white); border: 1px solid #EFE6DC;
+          padding: 5px; border-radius: 14px; background: var(--white); border: 1px solid var(--border);
           scrollbar-width: none;
         }
         .pb-tabs::-webkit-scrollbar { display: none; }
         .pb-tab {
           padding: 9px 16px; border-radius: 10px; white-space: nowrap; text-decoration: none;
-          color: var(--text-soft); font-size: 13.5px; font-weight: 600;
+          color: var(--text-soft); font-size: 13.5px; font-weight: var(--weight-semibold);
           transition: color .22s ease, background-color .22s ease;
         }
         .pb-tab:hover { color: var(--orange-strong); background: var(--cream); }
-        .pb-tab.is-active { color: var(--orange-strong); background: var(--orange-pale); font-weight: 700; }
+        .pb-tab.is-active { color: var(--orange-strong); background: var(--orange-pale); font-weight: var(--weight-bold); }
       `}</style>
     </div>
   );

@@ -17,17 +17,43 @@ import Reveal from '../components/home/Reveal';
 
 // New Revamped Components
 import AuthModal from '../components/AuthModal';
+import QuickLoginModal from '../components/QuickLoginModal';
 import BreedSlider from '../components/BreedSlider';
 import BreedProfileModal from '../components/BreedProfileModal';
 import BreedModal from '../components/BreedModal';
 import RecommendationResults from '../components/RecommendationResults';
 import AboutModal from '../components/AboutModal';
+import { getOwnerId, listDogs } from '../utils/dogs';
 import CitySelect from '../components/CitySelect';
 
 // Constants & Utilities
 import { useBreeds } from '../context/BreedsContext';
 import questionsData from '../constants/questions.json';
 import { computeMatches } from '../utils/breedUtils';
+
+/* Question 5 was a self-rated activity label, replaced with two behavioural
+   proxies ("activity_time" + "activity_intensity") in questions.json. This
+   inline quiz shares that JSON but keeps its own separate answer state and
+   handler (handleQuizAnswer below, not Quiz.jsx's), so it needs the same
+   small derivation duplicated here — otherwise a quiz completed through this
+   widget would submit the two raw answers but never compute the
+   `activity` tier breedUtils.js's ACTIVITY_BAND (config/enums.js) expects,
+   and computeMatches below would silently default to 'moderate' regardless
+   of what was actually answered. See Quiz.jsx for the identical logic and
+   the full reasoning. */
+const ACTIVITY_TIME_POINTS = { under30: 0, '30to60': 1, '1to2h': 2, '2hplus': 3 };
+const ACTIVITY_INTENSITY_POINTS = { slow: 0, brisk: 1, vigorous: 2 };
+const flattenAnswer = (value) => (Array.isArray(value) ? (value.length === 1 ? value[0] : value) : value);
+
+function deriveActivityTier(answers) {
+  const time = flattenAnswer(answers.activity_time);
+  const intensity = flattenAnswer(answers.activity_intensity);
+  if (!(time in ACTIVITY_TIME_POINTS) || !(intensity in ACTIVITY_INTENSITY_POINTS)) return null;
+  const score = ACTIVITY_TIME_POINTS[time] + ACTIVITY_INTENSITY_POINTS[intensity];
+  if (score <= 1) return 'relaxed';
+  if (score <= 3) return 'moderate';
+  return 'high';
+}
 import { parsePrompt } from '../utils/matchmaker';
 import axios from 'axios';
 
@@ -50,6 +76,11 @@ const Home = () => {
   // Auth modal gate state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingTab, setPendingTab] = useState('menu'); // dashboard tab to open after login
+
+  // Post-quiz / post-matchmaker login gate — shown when results are ready
+  // but the user isn't signed in yet
+  const [showResultsLoginGate, setShowResultsLoginGate] = useState(false);
+  const pendingResultsRef = React.useRef(null); // { answers, source, top5 } parked until login
 
   // Inline Quiz State
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -95,6 +126,21 @@ const Home = () => {
     openDashboard(typeof tab === 'string' ? tab : 'menu');
   };
 
+  /* "Already a dog owner?" — the intake survey is for people arriving for the
+     first time. Somebody who already has a dog on file is coming back for
+     their health records, and putting eight questions between them and those
+     records every visit would be the wrong trade. Asked once, not every time. */
+  const handleDogOwnerClick = async () => {
+    try {
+      const existing = await listDogs(getOwnerId());
+      navigate(existing.length > 0 ? '/app' : '/owner-survey');
+    } catch {
+      // Can't tell either way — send them to the dashboard, which knows how to
+      // handle both cases on its own.
+      navigate('/app');
+    }
+  };
+
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
     // Signed in from the post-results login prompt — keep them on their Top 5.
@@ -133,14 +179,20 @@ const Home = () => {
       const currentAns = prev[qId] || [];
       const qConfig = questionsData.find(x => x.id === qId);
 
-      if (qConfig && qConfig.multi === false) {
-        return { ...prev, [qId]: currentAns.includes(val) ? [] : [val] };
+      const nextForQ = qConfig && qConfig.multi === false
+        ? (currentAns.includes(val) ? [] : [val])
+        : (currentAns.includes(val) ? currentAns.filter(a => a !== val) : [...currentAns, val]);
+
+      const next = { ...prev, [qId]: nextForQ };
+
+      // See deriveActivityTier's own comment above — recomputed in the same
+      // update that answers either half of the pair.
+      if (qId === 'activity_time' || qId === 'activity_intensity') {
+        const tier = deriveActivityTier(next);
+        next.activity = tier ? [tier] : [];
       }
 
-      const newAns = currentAns.includes(val)
-        ? currentAns.filter(a => a !== val)
-        : [...currentAns, val];
-      return { ...prev, [qId]: newAns };
+      return next;
     });
   };
 
@@ -172,7 +224,15 @@ const Home = () => {
         }).catch(err => console.error("Error saving quiz:", err));
 
         setIsProcessing(false);
-        presentResults(quizAnswers, 'quiz', top5);
+
+        // If signed in, go straight to results. Otherwise park the results
+        // and show the login gate — it cannot be skipped.
+        if (user) {
+          presentResults(quizAnswers, 'quiz', top5);
+        } else {
+          pendingResultsRef.current = { answers: quizAnswers, source: 'quiz', top5 };
+          setShowResultsLoginGate(true);
+        }
       } catch (error) {
         console.error(error);
         setIsProcessing(false);
@@ -202,7 +262,13 @@ const Home = () => {
         top_breeds: top5.map(b => b.name)
       }).catch(err => console.error("Error saving matchmaker run:", err));
 
-      presentResults(answers, 'ai', top5);
+      // If signed in, go straight to results. Otherwise park and show login gate.
+      if (user) {
+        presentResults(answers, 'ai', top5);
+      } else {
+        pendingResultsRef.current = { answers, source: 'ai', top5 };
+        setShowResultsLoginGate(true);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -303,7 +369,7 @@ const Home = () => {
                 onSelectFriendPath={() => handleFriendPathClick('menu')}
                 /* Existing owners go straight to the product area: dashboard,
                    dog profiles and Health Records all live under /app now. */
-                onDogOwner={() => navigate('/app')}
+                onDogOwner={handleDogOwnerClick}
               />
               <Reveal><HowItWorks /></Reveal>
               <Reveal><TrustSection /></Reveal>
@@ -611,6 +677,20 @@ const Home = () => {
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           onSuccess={handleAuthSuccess}
+        />
+
+        {/* Post-quiz / post-matchmaker login gate — cannot be dismissed.
+            Once the user signs in, the parked results are presented. */}
+        <QuickLoginModal
+          isOpen={showResultsLoginGate}
+          onSuccess={() => {
+            setShowResultsLoginGate(false);
+            const parked = pendingResultsRef.current;
+            if (parked) {
+              pendingResultsRef.current = null;
+              presentResults(parked.answers, parked.source, parked.top5);
+            }
+          }}
         />
 
         {/* Full Profile modal for slider breeds (pros/cons intact) */}

@@ -63,7 +63,7 @@ const VerifiedBadge = () => {
               fontSize: '13px',
               lineHeight: 1.6,
               color: 'var(--text-soft)',
-              fontFamily: "'Fredoka', sans-serif"
+              fontFamily: 'var(--font-body-family)'
             }}
           >
             This recommendation is reviewed and validated using veterinary expertise, breed-specific data, and lifestyle compatibility factors.

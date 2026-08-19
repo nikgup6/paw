@@ -7,8 +7,9 @@ returns a status the client ignores rather than an error it has to handle.
 """
 import logging
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.auth.dependencies import require_admin
 from app.database.connection import get_database
 from app.models.funnel import EventIn, Event, ProgressIn
 from app.services import funnel_service
@@ -39,7 +40,7 @@ async def save_progress(payload: ProgressIn):
     return await funnel_service.upsert_progress(db, payload.dict(exclude_unset=True))
 
 
-@router.get("/report")
+@router.get("/report", dependencies=[Depends(require_admin)])
 async def funnel_report(
     days: int = Query(30, ge=1, le=365),
     start: str = Query(None, description="ISO date, inclusive"),

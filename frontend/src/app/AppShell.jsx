@@ -1,6 +1,8 @@
 import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { DogsProvider, useDogs } from '../context/DogsContext';
+import { HealthIcon, HomeIcon, MoreIcon, ServicesIcon, SwitchDogIcon } from './components/TabIcons';
+import { thumb } from '../utils/images';
 import '../styles/app.css';
 
 /* The signed-in product area at /app.
@@ -42,13 +44,13 @@ const Sidebar = ({ onNavigate }) => {
               onClick={onNavigate}
             >
               <span className="pb-nav__avatar" aria-hidden="true">
-                {activeDog?.photo_url ? <img src={activeDog.photo_url} alt="" /> : '🐶'}
+                {activeDog?.photo_url ? <img src={thumb(activeDog.photo_url, 22)} alt="" /> : '🐶'}
               </span>
               <span className="pb-nav__text">
-                {activeDog?.name || 'Dashboard'}
+                {activeDog?.name || 'Home'}
                 {/* The caption only earns its line when the label above it is a
-                    name. Without a dog it would just say "Dashboard" twice. */}
-                {activeDog?.name && <span className="pb-nav__cap">Dashboard</span>}
+                    name. Without a dog it would just say "Home" twice. */}
+                {activeDog?.name && <span className="pb-nav__cap">Home</span>}
               </span>
             </NavLink>
             <NavLink
@@ -75,6 +77,16 @@ const Sidebar = ({ onNavigate }) => {
               <span className="pb-nav__icon" aria-hidden="true">🐶</span>
               <span className="pb-nav__text">Profile</span>
             </NavLink>
+            {/* Desktop's only route to a second dog now that the top bar's
+                actions are mobile-hidden — on mobile that lives under More. */}
+            <NavLink
+              to="/app/dogs/new"
+              className={({ isActive }) => `pb-nav ${isActive ? 'is-active' : ''}`}
+              onClick={onNavigate}
+            >
+              <span className="pb-nav__icon" aria-hidden="true">➕</span>
+              <span className="pb-nav__text">Add a dog</span>
+            </NavLink>
           </>
         ) : (
           <span className="pb-nav is-locked">
@@ -95,7 +107,7 @@ const Sidebar = ({ onNavigate }) => {
               onClick={() => { selectDog(dog.id); onNavigate?.(); }}
             >
               <span className="pb-nav__avatar" aria-hidden="true">
-                {dog.photo_url ? <img src={dog.photo_url} alt="" /> : '🐶'}
+                {dog.photo_url ? <img src={thumb(dog.photo_url, 34)} alt="" /> : '🐶'}
               </span>
               <span className="pb-nav__text">{dog.name}</span>
             </NavLink>
@@ -118,48 +130,99 @@ const Sidebar = ({ onNavigate }) => {
 const MobileDogHeader = ({ dog, onOpen }) => (
   <button type="button" className="pb-mhead" onClick={onOpen}>
     <span className="pb-mhead__avatar" aria-hidden="true">
-      {dog?.photo_url ? <img src={dog.photo_url} alt="" /> : '🐶'}
+      {dog?.photo_url ? <img src={thumb(dog.photo_url, 34)} alt="" /> : '🐶'}
     </span>
     <span className="pb-mhead__text">
       <strong>{dog?.name || 'Your dog'}</strong>
-      <em>Dashboard</em>
+      <em>Home</em>
     </span>
   </button>
 );
 
 /* Same icons and the same is-active treatment the sidebar uses, so the bar
-   reads as the sidebar rather than as a second navigation language. */
-const MobileTabs = ({ activeDogId, onSwitchDog, onHome, isDashboard }) => (
+   reads as the sidebar rather than as a second navigation language.
+
+   Order is Home · Services · Health · Switch Dog · More — mobile only. "Home"
+   is the dog's dashboard (the app's own home), NOT the marketing site; the
+   marketing site lives under More, where leaving the app is a deliberate
+   choice rather than something a thumb finds by accident. The desktop sidebar
+   keeps its own order and is untouched by this. */
+const MobileTabs = ({ onSwitchDog, onMore, activeDogId }) => (
   <nav className="pb-tabbar" aria-label="Sections">
     <NavLink
-      to={activeDogId ? `/app/dogs/${activeDogId}/health` : '/app'}
+      to="/app"
+      end
       className={({ isActive }) => `pb-tabbar__item ${isActive ? 'is-active' : ''}`}
     >
-      <span aria-hidden="true">💚</span><span>Health</span>
+      <HomeIcon /><span>Home</span>
     </NavLink>
     <NavLink
       to="/app/services"
       className={({ isActive }) => `pb-tabbar__item ${isActive ? 'is-active' : ''}`}
     >
-      <span aria-hidden="true">🧰</span><span>Services</span>
+      <ServicesIcon /><span>Services</span>
     </NavLink>
     <NavLink
-      to={activeDogId ? `/app/dogs/${activeDogId}/profile` : '/app'}
+      to={activeDogId ? `/app/dogs/${activeDogId}/health` : '/app'}
       className={({ isActive }) => `pb-tabbar__item ${isActive ? 'is-active' : ''}`}
     >
-      <span aria-hidden="true">🐶</span><span>Profile</span>
+      <HealthIcon /><span>Health</span>
     </NavLink>
     <button type="button" className="pb-tabbar__item" onClick={onSwitchDog}>
-      <span aria-hidden="true">🔄</span><span>Switch Dog</span>
+      <SwitchDogIcon /><span>Switch Dog</span>
     </button>
-    <button type="button" className="pb-tabbar__item" onClick={onHome}>
-      <span aria-hidden="true">🏠</span><span>Home</span>
+    <button type="button" className="pb-tabbar__item" onClick={onMore}>
+      <MoreIcon /><span>More</span>
     </button>
   </nav>
 );
 
+/* "More" — the two destinations that don't earn a permanent tab: this dog's
+   profile, and the public site. Built from the same overlay/modal shell the
+   dog switcher uses, so it is one interaction pattern, not a new one. */
+const MoreSheet = ({ dog, onClose, onProfile, onAddDog, onSite }) => (
+  <div className="pb-overlay" role="dialog" aria-modal="true" aria-label="More" onClick={onClose}>
+    <div className="pb-modal pb-modal--sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="pb-modal__bar">
+        <span>More</span>
+        <button type="button" onClick={onClose} aria-label="Close">×</button>
+      </div>
+      <div className="pb-modal__body">
+        <div className="pb-more">
+          {dog && (
+            <button type="button" className="pb-more__item" onClick={onProfile}>
+              <span aria-hidden="true">🐶</span>
+              <span>
+                <strong>{dog.name}’s profile</strong>
+                <em>Breed, birthday, weight and city</em>
+              </span>
+            </button>
+          )}
+          <button type="button" className="pb-more__item" onClick={onAddDog}>
+            <span aria-hidden="true">➕</span>
+            <span>
+              <strong>Add another dog</strong>
+              <em>Start a new profile</em>
+            </span>
+          </button>
+          <button type="button" className="pb-more__item" onClick={onSite}>
+            <span aria-hidden="true">🌐</span>
+            <span>
+              <strong>Paw Buddy home</strong>
+              <em>Back to the main website</em>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const PAGE_TITLES = [
-  [/^\/app\/?$/, 'Dashboard'],
+  // "Home" everywhere, matching the tab bar's own label for this route —
+  // the header saying "Dashboard" while the tab said "Home" named one place
+  // two different things.
+  [/^\/app\/?$/, 'Home'],
   [/^\/app\/services/, 'Services'],
   [/^\/app\/dogs\/new/, 'Your dog’s profile'],
   [/\/edit$/, 'Your dog’s profile'],
@@ -174,6 +237,7 @@ const Shell = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { dogs, selectedDogId, selectDog } = useDogs();
@@ -238,8 +302,18 @@ const Shell = () => {
       <MobileTabs
         activeDogId={activeDogId}
         onSwitchDog={() => setSwitcherOpen(true)}
-        onHome={() => navigate('/')}
+        onMore={() => setMoreOpen(true)}
       />
+
+      {moreOpen && (
+        <MoreSheet
+          dog={activeDog}
+          onClose={() => setMoreOpen(false)}
+          onProfile={() => { setMoreOpen(false); navigate(`/app/dogs/${activeDogId}/profile`); }}
+          onAddDog={() => { setMoreOpen(false); navigate('/app/dogs/new'); }}
+          onSite={() => { setMoreOpen(false); navigate('/'); }}
+        />
+      )}
 
       {/* The app's existing overlay/modal shell wrapping the dashboard's own
           dog-picker markup — no new interaction pattern, and selecting here
@@ -278,7 +352,7 @@ const Shell = () => {
                       }}
                     >
                       <span className="pb-switch__avatar" aria-hidden="true">
-                        {dog.photo_url ? <img src={dog.photo_url} alt="" loading="lazy" /> : '🐶'}
+                        {dog.photo_url ? <img src={thumb(dog.photo_url, 34)} alt="" loading="lazy" /> : '🐶'}
                       </span>
                       <span className="pb-switch__meta">
                         <strong>{dog.name}</strong>

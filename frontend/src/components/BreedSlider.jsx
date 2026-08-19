@@ -19,6 +19,19 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
   const [animateTrigger, setAnimateTrigger] = useState(true);
   const reducedMotion = useReducedMotion();
 
+  /* Mobile gets a stripped-down card (no side detail chips, swipe instead of
+     click-only arrows) — desktop is untouched. 768px matches the breakpoint
+     this component already used for its own arrow/layout resizing below. */
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const onChange = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   const activeBreed = breeds[currentIndex];
 
   useEffect(() => {
@@ -54,6 +67,16 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
   const handlePrev = () => {
     setDirection(-1);
     setCurrentIndex((prevIndex) => (prevIndex - 1 + breeds.length) % breeds.length);
+  };
+
+  /* Swipe, mobile only. The photo rubber-bands under the finger and always
+     springs back to center (dragConstraints is {0,0}) — the swipe is read as
+     a gesture, not a drag-to-reveal, so the existing next/prev slide
+     animation is what actually shows the new breed, exactly as a tap on the
+     arrows already does. Distance OR a fast flick either one triggers it. */
+  const handleSwipeEnd = (_e, info) => {
+    if (info.offset.x < -60 || info.velocity.x < -500) handleNext();
+    else if (info.offset.x > 60 || info.velocity.x > 500) handlePrev();
   };
 
   const handleSearchSelect = (breedName) => {
@@ -122,7 +145,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
           style={{
             background: 'white', color: 'var(--brown)', border: '1px solid #EAE4DE',
             padding: '8px 20px', borderRadius: '50px', cursor: 'pointer',
-            fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: '13px',
+            fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', fontSize: '13px',
             boxShadow: 'var(--shadow)', display: 'flex', alignItems: 'center', gap: '8px'
           }}
         >
@@ -148,7 +171,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               style={{
                 border: 'none', outline: 'none', padding: '8px 0', width: '100%',
-                fontSize: '14px', fontFamily: "'Poppins', sans-serif", color: 'var(--brown)'
+                fontSize: '14px', fontFamily: 'var(--font-body-family)', color: 'var(--brown)'
               }}
             />
           </div>
@@ -178,7 +201,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
                     onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                   >
                     <img src={`/${s.img}`} alt={s.name} style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover' }} />
-                    <span style={{ fontWeight: 600, color: 'var(--brown)', fontSize: '13px', fontFamily: "'Poppins', sans-serif" }}>
+                    <span style={{ fontWeight: 'var(--weight-regular)', color: 'var(--brown)', fontSize: '13px', fontFamily: 'var(--font-body-family)' }}>
                       {s.name}
                     </span>
                   </div>
@@ -189,75 +212,86 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
         </div>
       </div>
 
-      {/* Main Magazine Layout Stage */}
-      <div 
-        style={{ 
-          position: 'relative', flex: 1, display: 'grid', 
-          gridTemplateColumns: 'minmax(200px, 1fr) auto minmax(200px, 1fr)', 
+      {/* Main Magazine Layout Stage.
+          Mobile drops to a single centered column — no side detail chips, no
+          giant background title — so the photo is the only thing in the
+          stage, matching the plain photo/name/description card in the sketch. */}
+      <div
+        style={{
+          position: 'relative', flex: 1, display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'minmax(200px, 1fr) auto minmax(200px, 1fr)',
           alignItems: 'center', gap: 'clamp(20px, 4vw, 40px)',
           overflow: 'hidden', padding: '0 10px'
         }}
       >
-        {/* Giant background text header */}
-        <AnimatePresence mode="wait">
-          {animateTrigger && (
-            <motion.div
-              key={`bg-title-${activeBreed.id}`}
-              variants={bgHeaderVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              style={{
-                position: 'absolute', top: '2%', left: '50%', transform: 'translateX(-50%)',
-                fontSize: 'clamp(3rem, 10vw, 8.5rem)', fontWeight: 900,
-                color: 'var(--orange)', pointerEvents: 'none', zIndex: 1,
-                fontFamily: "'Fredoka', sans-serif", width: '100%', textAlign: 'center',
-                letterSpacing: '0.05em', whiteSpace: 'nowrap'
-              }}
-            >
-              {activeBreed.name.toUpperCase()}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Left-Side details */}
-        <div style={{ zIndex: 2 }}>
+        {/* Giant background text header — decorative, desktop only */}
+        {!isMobile && (
           <AnimatePresence mode="wait">
             {animateTrigger && (
-              <motion.div 
-                key={`left-${activeBreed.id}`} 
-                variants={leftSideVariants}
+              <motion.div
+                key={`bg-title-${activeBreed.id}`}
+                variants={bgHeaderVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+                style={{
+                  position: 'absolute', top: '2%', left: '50%', transform: 'translateX(-50%)',
+                  fontSize: 'clamp(3rem, 10vw, 8.5rem)', fontWeight: 900,
+                  color: 'var(--orange)', pointerEvents: 'none', zIndex: 1,
+                  fontFamily: "'Fredoka', sans-serif", width: '100%', textAlign: 'center',
+                  letterSpacing: '0.05em', whiteSpace: 'nowrap'
+                }}
               >
-                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Breed Group</div>
-                  <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
-                    {activeBreed.purpose || 'Companion'}
-                  </strong>
-                </div>
-
-                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Energy Needs</div>
-                  <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
-                    {activeBreed.energy.split('–')[0] || 'Moderate'}
-                  </strong>
-                </div>
-
-                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Climate Compatibility</div>
-                  <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
-                    {activeBreed.climate.split('\n')[0] || 'Medium Climate'}
-                  </strong>
-                </div>
+                {activeBreed.name.toUpperCase()}
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        )}
 
-        {/* Center Arched frame holding active dog's photo */}
+        {/* Left-Side details — Breed Group / Energy / Climate. Desktop only. */}
+        {!isMobile && (
+          <div style={{ zIndex: 2 }}>
+            <AnimatePresence mode="wait">
+              {animateTrigger && (
+                <motion.div
+                  key={`left-${activeBreed.id}`}
+                  variants={leftSideVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+                >
+                  <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Breed Group</div>
+                    <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: 'var(--font-body-family)' }}>
+                      {activeBreed.purpose || 'Companion'}
+                    </strong>
+                  </div>
+
+                  <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Energy Needs</div>
+                    <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: 'var(--font-body-family)' }}>
+                      {activeBreed.energy.split('–')[0] || 'Moderate'}
+                    </strong>
+                  </div>
+
+                  <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Climate Compatibility</div>
+                    <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: 'var(--font-body-family)' }}>
+                      {activeBreed.climate.split('\n')[0] || 'Medium Climate'}
+                    </strong>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Center Arched frame holding active dog's photo.
+            Mobile: draggable on the x-axis as a swipe gesture — it always
+            rubber-bands back to center (dragConstraints 0,0); onDragEnd
+            decides whether that swipe counted, and the actual breed change
+            still runs through the same slide transition the arrows use. */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2 }}>
           <AnimatePresence mode="wait">
             <motion.div
@@ -270,6 +304,10 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
                 transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
               }}
               exit={{ scale: reducedMotion ? 1 : 0.94, opacity: 0, x: reducedMotion ? 0 : direction * -50, transition: { duration: 0.35, ease: 'easeIn' } }}
+              drag={isMobile && !reducedMotion ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.55}
+              onDragEnd={handleSwipeEnd}
               style={{
                 height: 'clamp(190px, 30vh, 300px)', // cap by viewport height so the action row stays on-screen
                 aspectRatio: '0.75',
@@ -278,58 +316,64 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
                 border: '7px solid white',
                 boxShadow: 'var(--shadow-lg)',
                 background: '#FCFAF7',
-                marginBottom: '10px'
+                marginBottom: '10px',
+                touchAction: isMobile ? 'pan-y' : undefined, // let the page still scroll vertically
+                cursor: isMobile ? 'grab' : undefined
               }}
             >
-              <img 
-                src={`/${activeBreed.img}`} 
+              <img
+                src={`/${activeBreed.img}`}
                 alt={activeBreed.name}
+                draggable={false}
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover'
+                  objectFit: 'cover',
+                  pointerEvents: 'none' // the frame owns the drag gesture, not the <img>
                 }}
               />
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Right-Side details */}
-        <div style={{ zIndex: 2 }}>
-          <AnimatePresence mode="wait">
-            {animateTrigger && (
-              <motion.div 
-                key={`right-${activeBreed.id}`}
-                variants={rightSideVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
-              >
-                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Adult Weight</div>
-                  <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
-                    {activeBreed.size.split('(')[1]?.split(',')[0] || '10-25 kg'}
-                  </strong>
-                </div>
+        {/* Right-Side details — Weight / Grooming / Owner experience. Desktop only. */}
+        {!isMobile && (
+          <div style={{ zIndex: 2 }}>
+            <AnimatePresence mode="wait">
+              {animateTrigger && (
+                <motion.div
+                  key={`right-${activeBreed.id}`}
+                  variants={rightSideVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+                >
+                  <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Adult Weight</div>
+                    <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: 'var(--font-body-family)' }}>
+                      {activeBreed.size.split('(')[1]?.split(',')[0] || '10-25 kg'}
+                    </strong>
+                  </div>
 
-                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Grooming Level</div>
-                  <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
-                    {activeBreed.grooming.split('–')[0] || 'Low'}
-                  </strong>
-                </div>
+                  <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Grooming Level</div>
+                    <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: 'var(--font-body-family)' }}>
+                      {activeBreed.grooming.split('–')[0] || 'Low'}
+                    </strong>
+                  </div>
 
-                <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Owner Experience</div>
-                  <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: "'Poppins', sans-serif" }}>
-                    {activeBreed.experienceLevel || 'First-timer OK'}
-                  </strong>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  <div style={{ background: 'white', padding: '13px 16px', borderRadius: '16px', boxShadow: 'var(--shadow)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 'var(--weight-medium)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>Owner Experience</div>
+                    <strong style={{ color: 'var(--brown)', fontSize: '15px', fontFamily: 'var(--font-body-family)' }}>
+                      {activeBreed.experienceLevel || 'First-timer OK'}
+                    </strong>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Bottom section showing description and action CTA */}
@@ -351,54 +395,74 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
               style={{ textAlign: 'center' }}
             >
               {isResults && (
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--orange)', color: 'white', padding: '6px 16px', borderRadius: '50px', fontSize: '12px', fontWeight: 700, fontFamily: "'Poppins', sans-serif", marginBottom: '10px', boxShadow: '0 4px 12px rgba(208, 92, 25, 0.3)' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--orange)', color: 'white', padding: '6px 16px', borderRadius: '50px', fontSize: '12px', fontWeight: 'var(--weight-medium)', fontFamily: 'var(--font-body-family)', marginBottom: '10px', boxShadow: '0 4px 12px rgba(208, 92, 25, 0.3)' }}>
                   #{currentIndex + 1} Recommended
                   {typeof activeBreed.matchPercentage === 'number' && <span style={{ opacity: 0.9 }}>· {activeBreed.matchPercentage}% Match</span>}
                 </div>
               )}
 
-              <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '24px', marginBottom: '6px' }}>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--brown)', fontSize: '24px', marginBottom: '6px' }}>
                 {activeBreed.name}
               </h2>
-              <p style={{ color: 'var(--text-soft)', fontSize: '13.5px', lineHeight: 1.5, marginBottom: isResults && activeBreed.warnings?.length ? '8px' : '14px', fontFamily: "'Poppins', sans-serif" }}>
+              {/* Clamped to 3 lines on mobile — the sketch calls for "2-3
+                  lines MAX" so the card height stays predictable regardless
+                  of how long a given breed's description runs. Desktop keeps
+                  the full text, unclamped, as before. */}
+              <p style={{
+                color: 'var(--text-soft)', fontSize: '13.5px', lineHeight: 1.5,
+                marginBottom: isResults && activeBreed.warnings?.length ? '8px' : '14px',
+                fontFamily: 'var(--font-body-family)',
+                ...(isMobile
+                  ? { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }
+                  : {})
+              }}>
                 {isResults ? generatePersonalizedReason(activeBreed, answers) : describeBreed(activeBreed)}
               </p>
 
               {isResults && activeBreed.warnings?.length > 0 && (
-                <p style={{ color: '#9a6b1f', background: '#fdf3e0', border: '1px solid #f3ddb2', borderRadius: '12px', padding: '7px 14px', fontSize: '12.5px', lineHeight: 1.5, marginBottom: '12px', fontFamily: "'Poppins', sans-serif", display: 'inline-block' }}>
+                <p style={{ color: '#9a6b1f', background: '#fdf3e0', border: '1px solid #f3ddb2', borderRadius: '12px', padding: '7px 14px', fontSize: '12.5px', lineHeight: 1.5, marginBottom: '12px', fontFamily: 'var(--font-body-family)', display: 'inline-block' }}>
                   ⚠ {activeBreed.warnings[0]}
                 </p>
               )}
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => onFullProfile && onFullProfile(activeBreed)}
-                  style={{
-                    padding: '11px 22px', fontSize: '14px', borderRadius: '50px',
-                    background: 'white', color: 'var(--brown)', border: '2px solid #EAE4DE',
-                    cursor: 'pointer', fontFamily: "'Poppins', sans-serif", fontWeight: 'bold',
-                    boxShadow: 'var(--shadow)'
-                  }}
-                >
-                  Full Profile
-                </button>
-                <button
-                  onClick={() => onCompare && onCompare(activeBreed)}
-                  style={{
-                    padding: '11px 22px', fontSize: '14px', borderRadius: '50px',
-                    background: 'white', color: 'var(--orange)', border: '2px solid var(--orange)',
-                    cursor: 'pointer', fontFamily: "'Poppins', sans-serif", fontWeight: 'bold',
-                    boxShadow: '0 4px 14px rgba(208, 92, 25, 0.12)'
-                  }}
-                >
-                  ⚖ Compare
-                </button>
+              {/* Mobile: Profile + Compare share a row, Buy is its own full-width
+                  row below — matches the sketch. Desktop keeps the original
+                  single wrapped row, untouched. */}
+              <div style={isMobile
+                ? { display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }
+                : { display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}
+              >
+                <div style={isMobile ? { display: 'flex', gap: '10px' } : { display: 'contents' }}>
+                  <button
+                    onClick={() => onFullProfile && onFullProfile(activeBreed)}
+                    style={{
+                      padding: '11px 22px', fontSize: '14px', borderRadius: '50px',
+                      background: 'white', color: 'var(--brown)', border: '2px solid #EAE4DE',
+                      cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)',
+                      boxShadow: 'var(--shadow)', ...(isMobile ? { flex: 1 } : {})
+                    }}
+                  >
+                    {isMobile ? 'Profile' : 'Full Profile'}
+                  </button>
+                  <button
+                    onClick={() => onCompare && onCompare(activeBreed)}
+                    style={{
+                      padding: '11px 22px', fontSize: '14px', borderRadius: '50px',
+                      background: 'white', color: 'var(--orange)', border: '2px solid var(--orange)',
+                      cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)',
+                      boxShadow: '0 4px 14px rgba(208, 92, 25, 0.12)', ...(isMobile ? { flex: 1 } : {})
+                    }}
+                  >
+                    ⚖ Compare
+                  </button>
+                </div>
                 <button
                   onClick={() => onBuy(activeBreed)}
                   className="hero-btn"
                   style={{
                     padding: '11px 30px', fontSize: '14px', boxShadow: '0 6px 20px rgba(208, 92, 25, 0.25)',
-                    fontFamily: "'Poppins', sans-serif", fontWeight: 'bold'
+                    fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)',
+                    ...(isMobile ? { width: '100%' } : {})
                   }}
                 >
                   Buy 🐾
@@ -411,7 +475,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
 
       {/* Position indicator (navigation is via the side arrows) */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10, marginTop: '8px' }}>
-        <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '13px', fontWeight: 600, color: 'var(--text-soft)', letterSpacing: '0.06em' }} aria-live="polite">
+        <span style={{ fontFamily: 'var(--font-body-family)', fontSize: '13px', fontWeight: 'var(--weight-medium)', color: 'var(--text-soft)', letterSpacing: '0.06em' }} aria-live="polite">
           {currentIndex + 1} / {breeds.length}
         </span>
       </div>
@@ -456,25 +520,6 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
           .slider-side-arrow { width: 44px; height: 44px; font-size: 24px; top: 40%; }
           .slider-side-arrow--left { left: 2px; }
           .slider-side-arrow--right { right: 2px; }
-        }
-
-        @media (max-width: 768px) {
-          div[style*="grid-template-columns"] {
-            grid-template-columns: 1fr !important;
-            grid-gap: 20px !important;
-            justify-items: center;
-          }
-          div[style*="flex-direction: column; gap: 12px"] {
-            flex-direction: row !important;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px !important;
-          }
-          div[style*="background: white; padding: 13px 16px"] {
-            padding: 10px 13px !important;
-            flex: 1 1 120px;
-            text-align: center;
-          }
         }
       `}</style>
     </div>

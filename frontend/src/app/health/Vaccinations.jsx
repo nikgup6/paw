@@ -158,48 +158,23 @@ const Card = ({ entry, onReview, onDelete, deleting }) => {
   );
 };
 
-const Section = ({ title, sub, entries, empty, onReview, onDelete, deletingId }) => {
-  const [isOpen, setIsOpen] = useState(true);
-
-  return (
-    <section className="pb-card">
-      <div 
-        className="pb-card__head" 
-        onClick={() => setIsOpen(!isOpen)}
-        style={{ cursor: 'pointer', userSelect: 'none' }}
-      >
-        <div>
-          <h3 className="pb-card__title">{title}</h3>
-          <p className="pb-card__sub">{sub}</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {entries.length > 0 && <span className="pb-pill is-neutral">{entries.length}</span>}
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '24px',
-            height: '24px',
-            transition: 'transform 0.2s ease',
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            color: 'var(--text-soft)',
-            fontSize: '12px'
-          }}>
-            ▼
-          </span>
-        </div>
+const Section = ({ title, sub, entries, empty, onReview, onDelete, deletingId }) => (
+  <section className="pb-card">
+    <div className="pb-card__head">
+      <div>
+        <h3 className="pb-card__title">{title}</h3>
+        <p className="pb-card__sub">{sub}</p>
       </div>
-      {isOpen && (
-        entries.length === 0
-          ? <div className="pb-empty" style={{ padding: '18px 10px' }}>{empty}</div>
-          : <div className="pb-vax-grid">{entries.map((entry) => (
-              <Card key={entry.key} entry={entry} onReview={onReview}
-                onDelete={onDelete} deleting={deletingId === entry.key} />
-            ))}</div>
-      )}
-    </section>
-  );
-};
+      {entries.length > 0 && <span className="pb-pill is-neutral">{entries.length}</span>}
+    </div>
+    {entries.length === 0
+      ? <div className="pb-empty" style={{ padding: '18px 10px' }}>{empty}</div>
+      : <div className="pb-vax-grid">{entries.map((entry) => (
+          <Card key={entry.key} entry={entry} onReview={onReview}
+            onDelete={onDelete} deleting={deletingId === entry.key} />
+        ))}</div>}
+  </section>
+);
 
 const Vaccinations = () => {
   const { dogId } = useOutletContext();
@@ -358,7 +333,7 @@ const Vaccinations = () => {
       <style>{`
         .pb-vax-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); }
         .pb-vax {
-          background: var(--white); border: 1px solid #EFE6DC; border-radius: 14px;
+          background: var(--white); border: 1px solid var(--border); border-radius: 14px;
           padding: 14px 15px; border-left: 4px solid #D8CCBE;
           transition: transform .2s ease, box-shadow .2s ease;
         }
@@ -371,32 +346,41 @@ const Vaccinations = () => {
 
         .pb-vax__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
         .pb-vax__name {
-          font-family: 'Fredoka', sans-serif; color: var(--brown);
-          font-size: 15px; font-weight: 600; line-height: 1.3; margin: 0;
+          /* Was var(--font-display) (Fredoka). Every vaccine and deworming
+             card sets this from a fresh API response, well after first paint —
+             exactly the case where a webfont still mid-swap causes visible
+             text reflow, and the one place in the app using the display face
+             for data-driven, variable-length text instead of a static
+             heading. Every equivalent list elsewhere (Overview's own group
+             modal, the Dashboard) already renders entry names in the body
+             face; this was the outlier. Bumped a weight to keep the same
+             visual presence Fredoka had at semibold. */
+          font-family: var(--font-body-family); color: var(--brown);
+          font-size: 15px; font-weight: var(--weight-bold); line-height: 1.3; margin: 0;
         }
         .pb-vax__dose {
-          display: inline-block; margin-bottom: 10px; font-size: 10.5px; font-weight: 700;
+          display: inline-block; margin-bottom: 10px; font-size: 10.5px; font-weight: var(--weight-bold);
           text-transform: uppercase; letter-spacing: .04em; color: var(--text-soft);
         }
         .pb-vax__facts { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
         .pb-vax__facts > div { display: flex; flex-direction: column; gap: 2px; }
         .pb-vax__facts dt {
           font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
-          color: var(--text-soft); font-weight: 700;
+          color: var(--text-soft); font-weight: var(--weight-bold);
         }
-        .pb-vax__facts dd { margin: 0; font-size: 13px; color: var(--brown); font-weight: 600; }
+        .pb-vax__facts dd { margin: 0; font-size: 13px; color: var(--brown); font-weight: var(--weight-semibold); }
         .pb-vax__facts dd.is-overdue { color: #C62828; }
         .pb-vax__facts dd.is-due-today { color: #9A6B1F; }
         .pb-vax__facts dd.is-upcoming { color: var(--orange-strong); }
         .pb-hidden-note {
           display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
           margin: 0 0 16px; padding: 10px 14px; border-radius: 12px;
-          background: var(--white); border: 1px dashed #E3D9CE;
+          background: var(--white); border: 1px dashed var(--border-strong);
           color: var(--text-soft); font-size: 12.5px;
         }
         .pb-hidden-note button {
           border: none; background: none; cursor: pointer; padding: 0;
-          color: var(--orange-strong); font-family: inherit; font-size: 12.5px; font-weight: 700;
+          color: var(--orange-strong); font-family: inherit; font-size: 12.5px; font-weight: var(--weight-bold);
           text-decoration: underline;
         }
 
@@ -406,8 +390,8 @@ const Vaccinations = () => {
         .pb-vax__acts { display: flex; gap: 7px; margin-top: 11px; }
         .pb-vax__act {
           flex: 1; padding: 7px; border-radius: 9px; cursor: pointer;
-          border: 1px solid #EFE6DC; background: none; color: var(--text-soft);
-          font-family: inherit; font-size: 12px; font-weight: 700;
+          border: 1px solid var(--border); background: none; color: var(--text-soft);
+          font-family: inherit; font-size: 12px; font-weight: var(--weight-bold);
           transition: color var(--pb-fast) var(--pb-ease), border-color var(--pb-fast) var(--pb-ease), background-color var(--pb-fast) var(--pb-ease);
         }
         .pb-vax__act:hover { border-color: var(--orange); color: var(--orange-strong); background: var(--orange-pale); }
@@ -419,14 +403,14 @@ const Vaccinations = () => {
           display: flex; align-items: center; justify-content: space-between; gap: 9px; flex-wrap: wrap;
           animation: pb-fade-in var(--pb-fast) var(--pb-ease) both;
         }
-        .pb-confirm > span:first-child { color: #B23B3B; font-size: 12px; font-weight: 700; }
+        .pb-confirm > span:first-child { color: #B23B3B; font-size: 12px; font-weight: var(--weight-bold); }
         .pb-confirm__btns { display: flex; gap: 6px; }
         .pb-confirm__no, .pb-confirm__yes {
           padding: 5px 11px; border-radius: 8px; cursor: pointer;
-          font-family: inherit; font-size: 11.5px; font-weight: 700; border: 1px solid transparent;
+          font-family: inherit; font-size: 11.5px; font-weight: var(--weight-bold); border: 1px solid transparent;
           transition: background-color var(--pb-fast) var(--pb-ease);
         }
-        .pb-confirm__no { background: none; border-color: #E3D9CE; color: var(--text-soft); }
+        .pb-confirm__no { background: none; border-color: var(--border-strong); color: var(--text-soft); }
         .pb-confirm__no:hover { background: #fff; }
         .pb-confirm__yes { background: #C62828; color: #fff; }
         .pb-confirm__yes:hover { background: #A81E1E; }
@@ -443,8 +427,8 @@ const Vaccinations = () => {
         .pb-cat {
           display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
           padding: 8px 14px; border-radius: 50px; background: var(--white);
-          border: 1px solid #EFE6DC; color: var(--text-soft);
-          font-family: inherit; font-size: 12.5px; font-weight: 700;
+          border: 1px solid var(--border); color: var(--text-soft);
+          font-family: inherit; font-size: 12.5px; font-weight: var(--weight-bold);
           transition: color var(--pb-fast) var(--pb-ease), border-color var(--pb-fast) var(--pb-ease),
                       background-color var(--pb-fast) var(--pb-ease);
         }
@@ -455,7 +439,7 @@ const Vaccinations = () => {
         .pb-cat:disabled { opacity: .45; cursor: default; }
         .pb-cat__n {
           min-width: 18px; padding: 1px 5px; border-radius: 20px; text-align: center;
-          background: var(--grey); color: var(--text-soft); font-size: 11px; font-weight: 800;
+          background: var(--grey); color: var(--text-soft); font-size: 11px; font-weight: var(--weight-bold);
         }
         .pb-cat.is-on .pb-cat__n { background: rgba(255,255,255,.22); color: #fff; }
 
@@ -463,7 +447,7 @@ const Vaccinations = () => {
         .pb-vax__tag {
           display: inline-block; padding: 2px 8px; border-radius: 20px;
           background: var(--grey); color: var(--text-soft);
-          font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+          font-size: 10px; font-weight: var(--weight-bold); letter-spacing: .04em; text-transform: uppercase;
         }
         .pb-vax__tag.is-rabies { background: #FBE9E7; color: #B23B3B; }
         .pb-vax__tag.is-deworming { background: #E8F3EC; color: #1E7A46; }
@@ -472,7 +456,7 @@ const Vaccinations = () => {
           font-size: 11.5px; color: var(--text-soft);
           display: flex; justify-content: space-between; align-items: center; gap: 8px;
         }
-        .pb-vax__batch { color: var(--brown); font-weight: 600; white-space: nowrap; }
+        .pb-vax__batch { color: var(--brown); font-weight: var(--weight-semibold); white-space: nowrap; }
         @media (max-width: 620px) { .pb-vax-grid { grid-template-columns: 1fr; } }
       `}</style>
     </>

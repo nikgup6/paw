@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useBreedList } from '../context/BreedsContext';
-import cityZones from '../config/cityZones.json';
+import CitySelect from '../components/CitySelect';
 import { useDogs } from '../context/DogsContext';
 import { createDog, deleteDog, getDog, updateDog, uploadDogPhoto } from '../utils/dogs';
-import { ageFromDob } from '../utils/healthStatus';
+import { ageFromDob, formatDMY } from '../utils/healthStatus';
+import { thumb } from '../utils/images';
 
 /* Create or edit a dog.
 
@@ -17,7 +18,6 @@ import { ageFromDob } from '../utils/healthStatus';
    of the product agree on spellings. */
 
 const GENDERS = ['Male', 'Female'];
-const CITIES = Object.keys(cityZones.cities || {}).sort();
 const MAX_PHOTO_MB = 5;
 
 const EMPTY = {
@@ -30,9 +30,15 @@ const DogForm = () => {
   const { dogId } = useParams();
   const isEdit = Boolean(dogId);
   const navigate = useNavigate();
+  const location = useLocation();
   const { ownerId, refresh } = useDogs();
 
-  const [form, setForm] = useState(EMPTY);
+  /* The Existing Dog Owner survey hands breed and city over in route state so
+     the owner doesn't answer the same two questions twice. Only ever seeds a
+     NEW dog — an edit must show what's actually stored, not a stale hand-off. */
+  const prefill = (!isEdit && location.state?.prefill) || null;
+
+  const [form, setForm] = useState(prefill ? { ...EMPTY, ...prefill } : EMPTY);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
@@ -158,7 +164,7 @@ const DogForm = () => {
         <div className="pb-photo">
           <div className="pb-photo__frame">
             {form.photo_url
-              ? <img src={form.photo_url} alt={form.name || 'Dog photo'} />
+              ? <img src={thumb(form.photo_url, 96)} alt={form.name || 'Dog photo'} />
               : <span aria-hidden="true">🐶</span>}
             {photoBusy && <span className="pb-photo__busy"><span className="pb-spin" aria-hidden="true" /></span>}
           </div>
@@ -187,7 +193,7 @@ const DogForm = () => {
 
         <div className="pb-form-grid" style={{ marginTop: 18 }}>
           <label className="pb-field pb-field--full">
-            <span>Name <span className="pb-field__req">*</span></span>
+            <span>Name of your dog <span className="pb-field__req">*</span></span>
             <input type="text" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. Bruno" />
           </label>
 
@@ -209,7 +215,13 @@ const DogForm = () => {
               max={new Date().toISOString().slice(0, 10)}
               onChange={(e) => set('dob', e.target.value)}
             />
-            {age && <span className="pb-field__hint">{age} old</span>}
+            {/* The native control prints the browser's locale order, which is
+                mm/dd/yyyy on a US-configured browser and can't be overridden.
+                Echoing dd/mm/yyyy here removes the ambiguity without giving up
+                the native picker. */}
+            <span className="pb-field__hint">
+              {form.dob ? `${formatDMY(form.dob)} (dd/mm/yyyy)${age ? ` · ${age} old` : ''}` : 'dd/mm/yyyy'}
+            </span>
           </label>
 
           <label className="pb-field">
@@ -244,19 +256,21 @@ const DogForm = () => {
             <span className="pb-field__hint">Preferred, but optional.</span>
           </label>
 
-          <label className="pb-field">
+          {/* Not a <label>: CitySelect owns a listbox and focus of its own, and
+              wrapping it in a label re-targets clicks on the options. */}
+          <div className="pb-field">
             <span>City <span className="pb-field__req">*</span></span>
-            <input
-              type="text"
-              list="pb-cities"
+            {/* Free text couldn't be mapped to a climate zone — "Hyd", "hyderabad "
+                and a typo all fell through, which silently cost the dashboard its
+                climate/season tips. CitySelect only ever emits a known city or an
+                explicit zone: fallback, so the backend's zone_for_city() always
+                resolves. */}
+            <CitySelect
               value={form.city}
-              onChange={(e) => set('city', e.target.value)}
-              placeholder="e.g. Hyderabad"
+              onChange={(city) => set('city', city)}
+              placeholder="Type your city…"
             />
-            <datalist id="pb-cities">
-              {CITIES.map((city) => <option key={city} value={city} />)}
-            </datalist>
-          </label>
+          </div>
 
           <label className="pb-field pb-field--full">
             <span>Existing health conditions (optional)</span>
@@ -329,7 +343,7 @@ const DogForm = () => {
         .pb-photo__frame {
           position: relative; flex: 0 0 104px; width: 104px; height: 104px;
           border-radius: 20px; overflow: hidden; background: var(--orange-pale);
-          border: 1px solid #EFE6DC; display: flex; align-items: center; justify-content: center;
+          border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
           font-size: 42px;
         }
         .pb-photo__frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -339,7 +353,7 @@ const DogForm = () => {
         }
         .pb-photo__side { flex: 1 1 220px; min-width: 0; }
         .pb-photo__label {
-          display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+          display: block; font-size: 11px; font-weight: var(--weight-bold); text-transform: uppercase;
           letter-spacing: .04em; color: var(--text-soft); margin-bottom: 4px;
         }
         .pb-photo__opt {

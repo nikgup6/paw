@@ -277,8 +277,8 @@ const HeroSection = ({ onSelectFriendPath, onDogOwner }) => {
         @media (max-width: 768px) {
           .hero-section {
             padding-top: clamp(88px, 14vh, 100px);
-            min-height: 100vh;
-            min-height: 100dvh;
+            min-height: 90vh;
+            min-height: 90dvh;
           }
 
           .hero-socials {

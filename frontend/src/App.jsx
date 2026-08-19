@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
+import OwnerSurvey from './pages/OwnerSurvey';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { BreedsProvider } from './context/BreedsContext';
@@ -29,7 +30,7 @@ const DocumentVault = lazy(() => import('./app/health/DocumentVault'));
 const Reminders = lazy(() => import('./app/health/Reminders'));
 
 const AppFallback = () => (
-  <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-soft)', fontFamily: "'Poppins', sans-serif" }}>
+  <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-soft)', fontFamily: 'var(--font-body-family)' }}>
     Loading Paw Buddy…
   </div>
 );
@@ -91,6 +92,8 @@ function App() {
             <Route index element={<Home />} />
             <Route path="explore" element={<Explore />} />
             <Route path="quiz" element={<Quiz />} />
+            {/* Existing Dog Owner intake — 8 questions, then Add-a-Dog. */}
+            <Route path="owner-survey" element={<OwnerSurvey />} />
             <Route path="results" element={<Results />} />
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />

@@ -198,12 +198,12 @@ const EmergencyCard = ({ dogId, onClose }) => {
       )}
 
       <style>{`
-        .pb-ec { font-family: 'Poppins', sans-serif; }
+        .pb-ec { font-family: var(--font-body-family); }
         .pb-ec__head { text-align: center; padding: 4px 0 16px; }
         .pb-ec__siren { font-size: 30px; display: block; margin-bottom: 6px; }
         .pb-ec__title {
-          font-family: 'Fredoka', sans-serif; color: #C62828; margin: 0 0 5px;
-          font-size: 22px; font-weight: 700; letter-spacing: .01em; text-transform: uppercase;
+          font-family: var(--font-display); color: #C62828; margin: 0 0 5px;
+          font-size: 22px; font-weight: var(--weight-bold); letter-spacing: .01em; text-transform: uppercase;
           line-height: 1.15;
         }
         .pb-ec__sub { color: var(--text-soft); font-size: 12.5px; margin: 0; }
@@ -213,15 +213,15 @@ const EmergencyCard = ({ dogId, onClose }) => {
           display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
           padding: 11px 0; border-bottom: 1px solid #F0EAE3;
         }
-        .pb-ec__label { color: var(--text-soft); font-size: 12.5px; font-weight: 600; flex-shrink: 0; }
+        .pb-ec__label { color: var(--text-soft); font-size: 12.5px; font-weight: var(--weight-semibold); flex-shrink: 0; }
         .pb-ec__label.is-alert { color: #C62828; }
-        .pb-ec__value { color: var(--brown); font-size: 13.5px; font-weight: 700; text-align: right; }
+        .pb-ec__value { color: var(--brown); font-size: 13.5px; font-weight: var(--weight-bold); text-align: right; }
         .pb-ec__value.is-alert { color: #C62828; }
-        .pb-ec__name { font-family: 'Fredoka', sans-serif; font-size: 17px; text-transform: uppercase; }
+        .pb-ec__name { font-family: var(--font-display); font-size: 17px; text-transform: uppercase; }
 
         .pb-ec__block { margin-top: 16px; }
         .pb-ec__block-title {
-          font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 800;
+          font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: var(--weight-bold);
           color: var(--text-soft); margin: 0 0 8px; display: flex; align-items: center; gap: 7px;
         }
         .pb-ec__block-title span {
@@ -232,8 +232,8 @@ const EmergencyCard = ({ dogId, onClose }) => {
           display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
           background: #F6FBF7; border: 1px solid #DCEFE2; border-radius: 9px; padding: 7px 11px;
         }
-        .pb-ec__shots span { color: var(--brown); font-size: 12.5px; font-weight: 600; min-width: 0; }
-        .pb-ec__shots em { color: #1B8046; font-size: 11.5px; font-style: normal; font-weight: 700; white-space: nowrap; }
+        .pb-ec__shots span { color: var(--brown); font-size: 12.5px; font-weight: var(--weight-semibold); min-width: 0; }
+        .pb-ec__shots em { color: #1B8046; font-size: 11.5px; font-style: normal; font-weight: var(--weight-bold); white-space: nowrap; }
         .pb-ec__none { color: var(--text-soft); font-size: 12.5px; margin: 0; }
 
         /* Outstanding doses are listed in the ER's colour, not the reassuring
@@ -255,18 +255,19 @@ const EmergencyCard = ({ dogId, onClose }) => {
         .pb-ec__group.is-owed { background: #FFF7F7; border-color: #F2C9C9; }
         .pb-ec__group-icon { font-size: 15px; line-height: 1; margin-bottom: 4px; }
         .pb-ec__group-n {
-          font-family: 'Fredoka', sans-serif; color: var(--brown);
-          font-size: 24px; font-weight: 600; line-height: 1.05;
+          /* A count (shots given in this group), not a heading. */
+          font-family: var(--font-accent); color: var(--brown);
+          font-size: 24px; font-weight: var(--weight-semibold); line-height: 1.05;
         }
-        .pb-ec__group-label { color: var(--brown); font-size: 12px; font-weight: 700; }
-        .pb-ec__group-sub { color: #1B8046; font-size: 11px; font-weight: 700; }
+        .pb-ec__group-label { color: var(--brown); font-size: 12px; font-weight: var(--weight-bold); }
+        .pb-ec__group-sub { color: #1B8046; font-size: 11px; font-weight: var(--weight-bold); }
         .pb-ec__group.is-owed .pb-ec__group-sub { color: #C62828; }
 
         .pb-ec__crumb {
           border: none; background: none; padding: 0; margin-bottom: 9px; cursor: pointer;
-          color: var(--orange-strong); font-family: inherit; font-size: 12.5px; font-weight: 700;
+          color: var(--orange-strong); font-family: inherit; font-size: 12.5px; font-weight: var(--weight-bold);
         }
-        .pb-ec__warn { margin: 9px 0 0; font-size: 12px; color: #C62828; font-weight: 600; }
+        .pb-ec__warn { margin: 9px 0 0; font-size: 12px; color: #C62828; font-weight: var(--weight-semibold); }
 
         .pb-ec__contact {
           margin-top: 16px; padding: 12px 14px; border-radius: 12px;
@@ -278,7 +279,7 @@ const EmergencyCard = ({ dogId, onClose }) => {
 
         .pb-ec__back {
           width: 100%; margin-top: 16px; padding: 13px; border-radius: 50px; border: none;
-          background: #E12D2D; color: #fff; font-family: inherit; font-size: 15px; font-weight: 700;
+          background: #E12D2D; color: #fff; font-family: inherit; font-size: 15px; font-weight: var(--weight-bold);
           cursor: pointer; transition: background .2s ease;
         }
         .pb-ec__back:hover { background: #C62828; }

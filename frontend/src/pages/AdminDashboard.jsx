@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import FunnelReport from '../components/admin/FunnelReport';
+import OwnerSurveyTable from '../components/admin/OwnerSurveyTable';
+import CareTipsTable from '../components/admin/CareTipsTable';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -108,7 +110,7 @@ const AdminDashboard = () => {
     { name: 'Anon Visitors', count: stats?.anonymous_visitors || 0 },
   ];
 
-  if (loading) return <div style={{ padding: '60px', textAlign: 'center', fontFamily: "'Fredoka', sans-serif" }}>Loading Dashboard...</div>;
+  if (loading) return <div style={{ padding: '60px', textAlign: 'center', fontFamily: 'var(--font-body-family)' }}>Loading Dashboard...</div>;
 
   return (
     <div style={{ background: 'var(--cream)', minHeight: '100dvh', padding: '20px', position: 'relative' }}>
@@ -121,7 +123,7 @@ const AdminDashboard = () => {
           style={{
             background: 'var(--orange)', color: 'white', border: 'none',
             padding: '10px 20px', borderRadius: '50px', cursor: 'pointer',
-            fontFamily: "'Fredoka', sans-serif", fontWeight: 600,
+            fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)',
             transition: 'all 0.3s ease', boxShadow: '0 4px 15px rgba(255,107,43,0.3)'
           }}
           onMouseOver={e => { e.currentTarget.style.transform = 'translateX(-2px)'; }}
@@ -131,17 +133,17 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', fontFamily: "'Fredoka', sans-serif" }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', fontFamily: 'var(--font-body-family)' }}>
 
         {authError && (
           <div style={{ background: '#FFF5F5', border: '1px solid #F2C9C9', color: '#B23B3B',
                         padding: '14px 18px', borderRadius: '14px', marginBottom: '20px',
                         display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 700 }}>{authError}</span>
+            <span style={{ fontWeight: 'var(--weight-bold)' }}>{authError}</span>
             <button onClick={() => navigate('/login')}
                     style={{ padding: '8px 18px', borderRadius: '50px', border: 'none',
-                             background: '#C62828', color: 'white', fontWeight: 700,
-                             fontFamily: 'inherit', cursor: 'pointer' }}>
+                             background: '#C62828', color: 'white', fontWeight: 'var(--weight-bold)',
+                             fontFamily: 'var(--font-display)', cursor: 'pointer' }}>
               Sign in
             </button>
           </div>
@@ -149,7 +151,7 @@ const AdminDashboard = () => {
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '20px' }}>
           <div>
-            <h2 className="text-h2" style={{ color: 'var(--brown)', fontWeight: 800, margin: 0 }}>Dashboard</h2>
+            <h2 className="text-h2" style={{ fontFamily: 'var(--font-display)', color: 'var(--brown)', fontWeight: 'var(--weight-bold)', margin: 0 }}>Dashboard</h2>
             {/* The page fetches once on mount, so left open it goes stale.
                 Saying when it was last read — and offering to read it again —
                 is the honest version of "real-time". */}
@@ -167,8 +169,8 @@ const AdminDashboard = () => {
                 disabled={refreshing}
                 style={{
                   padding: '5px 14px', borderRadius: '50px', border: '1px solid #E3D9CE',
-                  background: 'white', color: 'var(--brown)', fontFamily: 'inherit',
-                  fontSize: '12.5px', fontWeight: 700,
+                  background: 'white', color: 'var(--brown)', fontFamily: 'var(--font-display)',
+                  fontSize: '12.5px', fontWeight: 'var(--weight-bold)',
                   cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.6 : 1,
                 }}
               >
@@ -183,6 +185,8 @@ const AdminDashboard = () => {
             <button onClick={() => setActiveTab('leads')} style={{ padding: '8px 16px', borderRadius: '50px', border: 'none', background: activeTab === 'leads' ? 'var(--orange)' : 'white', color: activeTab === 'leads' ? 'white' : 'var(--text-soft)', fontWeight: 'bold', cursor: 'pointer', boxShadow: 'var(--shadow)', fontSize: '13px' }}>Leads</button>
             <button onClick={() => setActiveTab('feedback')} style={{ padding: '8px 16px', borderRadius: '50px', border: 'none', background: activeTab === 'feedback' ? 'var(--orange)' : 'white', color: activeTab === 'feedback' ? 'white' : 'var(--text-soft)', fontWeight: 'bold', cursor: 'pointer', boxShadow: 'var(--shadow)', fontSize: '13px' }}>Feedback</button>
             <button onClick={() => setActiveTab('anonymous')} style={{ padding: '8px 16px', borderRadius: '50px', border: 'none', background: activeTab === 'anonymous' ? 'var(--orange)' : 'white', color: activeTab === 'anonymous' ? 'white' : 'var(--text-soft)', fontWeight: 'bold', cursor: 'pointer', boxShadow: 'var(--shadow)', fontSize: '13px' }}>Visitors (Anon)</button>
+            <button onClick={() => setActiveTab('owner_survey')} style={{ padding: '8px 16px', borderRadius: '50px', border: 'none', background: activeTab === 'owner_survey' ? 'var(--orange)' : 'white', color: activeTab === 'owner_survey' ? 'white' : 'var(--text-soft)', fontWeight: 'bold', cursor: 'pointer', boxShadow: 'var(--shadow)', fontSize: '13px' }}>Owner Survey</button>
+            <button onClick={() => setActiveTab('care_tips')} style={{ padding: '8px 16px', borderRadius: '50px', border: 'none', background: activeTab === 'care_tips' ? 'var(--orange)' : 'white', color: activeTab === 'care_tips' ? 'white' : 'var(--text-soft)', fontWeight: 'bold', cursor: 'pointer', boxShadow: 'var(--shadow)', fontSize: '13px' }}>Care Tips</button>
           </div>
         </div>
         
@@ -206,7 +210,7 @@ const AdminDashboard = () => {
                   padding: '25px', borderRadius: '20px', boxShadow: 'var(--shadow)', textAlign: 'center',
                   transition: 'transform 0.3s ease'
                 }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                  <h4 style={{ color: 'var(--text-soft)', marginBottom: '10px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>{item.label}</h4>
+                  <h4 style={{ fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-medium)', color: 'var(--text-soft)', marginBottom: '10px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>{item.label}</h4>
                   <p style={{ fontSize: '42px', fontWeight: '800', color: 'var(--orange)', margin: 0 }}>{item.val}</p>
                 </div>
               ))}
@@ -214,7 +218,7 @@ const AdminDashboard = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
               <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', height: '400px' }}>
-                <h3 style={{ marginBottom: '20px', color: 'var(--brown)' }}>Platform Analytics</h3>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', marginBottom: '20px', color: 'var(--brown)' }}>Platform Analytics</h3>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -233,36 +237,36 @@ const AdminDashboard = () => {
         {activeTab === 'users' && (
           <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', minHeight: '500px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ color: 'var(--brown)', margin: 0 }}>All Users</h3>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--brown)', margin: 0 }}>All Users</h3>
               <input 
                 type="text" 
                 placeholder="Filter by city..." 
                 value={cityFilter}
                 onChange={(e) => setCityFilter(e.target.value)}
-                style={{ padding: '10px 15px', borderRadius: '10px', border: '1px solid #ddd', fontFamily: "'Fredoka', sans-serif", width: '250px' }}
+                style={{ padding: '10px 15px', borderRadius: '10px', border: '1px solid #ddd', fontFamily: 'var(--font-body-family)', width: '250px' }}
               />
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)', color: 'var(--text-soft)' }}>
-                    <th style={{ padding: '10px 0', fontWeight: 600 }}>Name</th>
-                    <th style={{ padding: '10px 0', fontWeight: 600 }}>Mobile</th>
-                    <th style={{ padding: '10px 0', fontWeight: 600 }}>City</th>
-                    <th style={{ padding: '10px 0', fontWeight: 600 }}>Role</th>
+                    <th style={{ padding: '10px 0', fontWeight: 'var(--weight-semibold)' }}>Name</th>
+                    <th style={{ padding: '10px 0', fontWeight: 'var(--weight-semibold)' }}>Mobile</th>
+                    <th style={{ padding: '10px 0', fontWeight: 'var(--weight-semibold)' }}>City</th>
+                    <th style={{ padding: '10px 0', fontWeight: 'var(--weight-semibold)' }}>Role</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.length > 0 ? users.map((u, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <td style={{ padding: '15px 0', fontWeight: 500 }}>{u.name}</td>
+                      <td style={{ padding: '15px 0', fontWeight: 'var(--weight-medium)' }}>{u.name}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)' }}>{u.mobile}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)' }}>{u.city}</td>
                       <td style={{ padding: '15px 0' }}>
                         <span style={{ 
                           background: u.role === 'ADMIN' ? 'var(--orange-pale)' : '#e8f5e9', 
                           color: u.role === 'ADMIN' ? 'var(--orange)' : '#2e7d32', 
-                          padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: 700 
+                          padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: 'var(--weight-bold)' 
                         }}>
                           {u.role}
                         </span>
@@ -279,29 +283,29 @@ const AdminDashboard = () => {
 
         {activeTab === 'buy_requests' && (
           <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', minHeight: '500px' }}>
-            <h3 style={{ marginBottom: '20px', color: 'var(--brown)' }}>Buy / Adoption Requests</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', marginBottom: '20px', color: 'var(--brown)' }}>Buy / Adoption Requests</h3>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)', color: 'var(--text-soft)' }}>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Name</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Mobile</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>City</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Breed</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Intent</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Status</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Name</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Mobile</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>City</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Breed</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Intent</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {buyRequests.length > 0 ? buyRequests.map((req, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <td style={{ padding: '15px 0', fontWeight: 500 }}>{req.user_name}</td>
+                      <td style={{ padding: '15px 0', fontWeight: 'var(--weight-medium)' }}>{req.user_name}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)' }}>{req.mobile}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)' }}>{req.city}</td>
-                      <td style={{ padding: '15px 0', fontWeight: 600, color: 'var(--orange)' }}>{req.breed_name}</td>
+                      <td style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)', color: 'var(--orange)' }}>{req.breed_name}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)' }}>{req.intent}</td>
                       <td style={{ padding: '15px 0' }}>
-                        <span style={{ background: req.status === 'NEW' ? '#fff3e0' : '#e8f5e9', color: req.status === 'NEW' ? '#ef6c00' : '#2e7d32', padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: 700 }}>
+                        <span style={{ background: req.status === 'NEW' ? '#fff3e0' : '#e8f5e9', color: req.status === 'NEW' ? '#ef6c00' : '#2e7d32', padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: 'var(--weight-bold)' }}>
                           {req.status}
                         </span>
                       </td>
@@ -317,26 +321,26 @@ const AdminDashboard = () => {
 
         {activeTab === 'leads' && (
           <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', minHeight: '500px' }}>
-            <h3 style={{ marginBottom: '5px', color: 'var(--brown)' }}>Inactive Leads</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', marginBottom: '5px', color: 'var(--brown)' }}>Inactive Leads</h3>
             <p style={{ color: 'var(--text-soft)', marginBottom: '20px' }}>Users who registered but have not completed the quiz.</p>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '500px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)', color: 'var(--text-soft)' }}>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Name</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Mobile</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>City</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Quiz Status</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Name</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Mobile</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>City</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Quiz Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leads.length > 0 ? leads.map((lead, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <td style={{ padding: '15px 0', fontWeight: 500 }}>{lead.name}</td>
+                      <td style={{ padding: '15px 0', fontWeight: 'var(--weight-medium)' }}>{lead.name}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)' }}>{lead.mobile}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)' }}>{lead.city}</td>
                       <td style={{ padding: '15px 0' }}>
-                        <span style={{ background: '#ffebee', color: '#c62828', padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: 700 }}>
+                        <span style={{ background: '#ffebee', color: '#c62828', padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: 'var(--weight-bold)' }}>
                           {lead.quiz_status}
                         </span>
                       </td>
@@ -352,21 +356,21 @@ const AdminDashboard = () => {
 
         {activeTab === 'feedback' && (
           <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', minHeight: '500px' }}>
-            <h3 style={{ marginBottom: '20px', color: 'var(--brown)' }}>User Feedback</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', marginBottom: '20px', color: 'var(--brown)' }}>User Feedback</h3>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)', color: 'var(--text-soft)' }}>
-                    <th style={{ padding: '15px 0', fontWeight: 600, width: '20%' }}>User</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600, width: '20%' }}>Rating</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600, width: '40%' }}>Comment</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600, width: '20%' }}>Date</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)', width: '20%' }}>User</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)', width: '20%' }}>Rating</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)', width: '40%' }}>Comment</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)', width: '20%' }}>Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {feedbacks.length > 0 ? feedbacks.map((fb, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <td style={{ padding: '15px 0', fontWeight: 500 }}>{fb.user_name || 'Anonymous'}</td>
+                      <td style={{ padding: '15px 0', fontWeight: 'var(--weight-medium)' }}>{fb.user_name || 'Anonymous'}</td>
                       <td style={{ padding: '15px 0', color: '#FFD700', fontSize: '18px', minWidth: '100px' }}>{'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)', whiteSpace: 'pre-wrap' }}>{fb.comment || '-'}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-soft)', fontSize: '13px' }}>{new Date(fb.created_at).toLocaleDateString()}</td>
@@ -380,9 +384,13 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {activeTab === 'owner_survey' && <OwnerSurveyTable />}
+
+        {activeTab === 'care_tips' && <CareTipsTable />}
+
         {activeTab === 'anonymous' && (
           <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', minHeight: '500px' }}>
-            <h3 style={{ marginBottom: '5px', color: 'var(--brown)' }}>Anonymous Visitors</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', marginBottom: '5px', color: 'var(--brown)' }}>Anonymous Visitors</h3>
             <p style={{ color: 'var(--text-soft)', marginBottom: '20px' }}>
               Users who explored the site without logging in. One row per visit —
               showing {Math.min(anonPage * ANON_PER_PAGE + 1, anonymousVisitors.length)}–
@@ -392,14 +400,14 @@ const AdminDashboard = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '400px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)', color: 'var(--text-soft)' }}>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Visitor ID</th>
-                    <th style={{ padding: '15px 0', fontWeight: 600 }}>Time of Visit</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Visitor ID</th>
+                    <th style={{ padding: '15px 0', fontWeight: 'var(--weight-semibold)' }}>Time of Visit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {anonymousVisitors.length > 0 ? anonymousVisitors.slice(anonPage * ANON_PER_PAGE, (anonPage + 1) * ANON_PER_PAGE).map((anon, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <td style={{ padding: '15px 0', fontWeight: 500, fontFamily: 'monospace', fontSize: '13px', color: 'var(--text-soft)' }}>{anon.visitor_id}</td>
+                      <td style={{ padding: '15px 0', fontWeight: 'var(--weight-medium)', fontFamily: 'monospace', fontSize: '13px', color: 'var(--text-soft)' }}>{anon.visitor_id}</td>
                       <td style={{ padding: '15px 0', color: 'var(--text-color)' }}>
                         {anon.visited_at ? new Date(anon.visited_at).toLocaleString() : '-'}
                       </td>
@@ -418,7 +426,7 @@ const AdminDashboard = () => {
                   disabled={anonPage === 0}
                   style={{ padding: '8px 16px', borderRadius: '50px', border: '1px solid #E3D9CE',
                            background: 'white', cursor: anonPage === 0 ? 'not-allowed' : 'pointer',
-                           opacity: anonPage === 0 ? 0.5 : 1, fontFamily: 'inherit', fontWeight: 700 }}
+                           opacity: anonPage === 0 ? 0.5 : 1, fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)' }}
                 >
                   ← Previous
                 </button>
@@ -433,7 +441,7 @@ const AdminDashboard = () => {
                            background: 'white',
                            cursor: (anonPage + 1) * ANON_PER_PAGE >= anonymousVisitors.length ? 'not-allowed' : 'pointer',
                            opacity: (anonPage + 1) * ANON_PER_PAGE >= anonymousVisitors.length ? 0.5 : 1,
-                           fontFamily: 'inherit', fontWeight: 700 }}
+                           fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)' }}
                 >
                   Next →
                 </button>

@@ -121,8 +121,8 @@ const CitySelect = ({ value, onChange, placeholder = 'Type your city…' }) => {
           background: '#fff',
           color: 'var(--brown)',
           fontSize: '16px', // 16px stops iOS zooming the page on focus
-          fontFamily: "'Poppins', sans-serif",
-          fontWeight: 600,
+          fontFamily: 'var(--font-body-family)',
+          fontWeight: 'var(--weight-regular)',
           outline: 'none',
           boxSizing: 'border-box',
         }}

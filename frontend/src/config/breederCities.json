@@ -1,7 +1,7 @@
 {
   "_comment": [
     "Which breeder network serves a user, based on the city they pick in Q3.",
-    "We have verified breeders in Hyderabad, Chennai, Bangalore and Pune.",
+    "We have breeder networks in Hyderabad, Chennai, Bangalore, Pune and Mumbai.",
     "Everyone else is routed to the nearest network AND told plainly that it is",
     "not their own city — we never pretend a Delhi user has local breeders.",
     "",
@@ -11,7 +11,7 @@
     "`defaultCity`."
   ],
 
-  "networks": ["Hyderabad", "Chennai", "Bangalore", "Pune"],
+  "networks": ["Hyderabad", "Chennai", "Bangalore", "Pune", "Mumbai"],
   "defaultCity": "Hyderabad",
 
   "_localComment": "Quiz-city names that ARE the network's own city (so no 'not your city' notice). The quiz says 'Bengaluru'; the breeder sheet is titled 'Bangalore'. Secunderabad is part of Hyderabad.",
@@ -19,7 +19,8 @@
     "Hyderabad": ["Hyderabad", "Secunderabad"],
     "Chennai": ["Chennai"],
     "Bangalore": ["Bengaluru", "Bangalore"],
-    "Pune": ["Pune"]
+    "Pune": ["Pune"],
+    "Mumbai": ["Mumbai", "Navi Mumbai", "Thane"]
   },
 
   "_nearestComment": "Cities routed to each network by rough road proximity. Western Tamil Nadu (Salem, Coimbatore, Erode, Ooty) sits closer to Bengaluru than to Chennai, and Hosur is effectively a Bengaluru suburb. Nagpur is far eastern Maharashtra, so it goes to Hyderabad rather than Pune.",
@@ -36,9 +37,8 @@
       "Nellore", "Tirupati"
     ],
     "Pune": [
-      "Mumbai", "Navi Mumbai", "Thane", "Nashik", "Kolhapur", "Satara", "Sangli",
+      "Nashik", "Kolhapur", "Satara", "Sangli",
       "Solapur", "Aurangabad", "Panaji (Goa)",
-      "Surat", "Ahmedabad", "Vadodara", "Rajkot", "Bhavnagar",
       "Indore", "Bhopal", "Gwalior", "Jabalpur",
       "Jaipur", "Jodhpur", "Udaipur", "Ajmer", "Bikaner", "Jaisalmer", "Mount Abu",
       "Delhi", "New Delhi", "Gurugram", "Noida", "Ghaziabad", "Faridabad", "Agra", "Meerut",
@@ -47,6 +47,9 @@
       "Shimla", "Manali", "Dharamshala", "Dalhousie", "Kufri",
       "Dehradun", "Mussoorie", "Nainital", "Almora",
       "Srinagar", "Gulmarg", "Pahalgam", "Leh", "Kargil"
+    ],
+    "Mumbai": [
+      "Surat", "Ahmedabad", "Vadodara", "Rajkot", "Bhavnagar"
     ]
   }
 }

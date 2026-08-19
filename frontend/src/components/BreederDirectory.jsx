@@ -5,6 +5,7 @@ import {
 } from '../utils/breeders';
 
 import { WhatsAppIcon } from './WhatsAppButton';
+import QuickFeedback from './QuickFeedback';
 
 /* Shown after "Buy Now": the verified breeder network for the user's city.
    Two filters as specced — a free-text breeder-name search, and a zone picker
@@ -16,6 +17,11 @@ const RATING_COLOR = (r) => (r >= 4.7 ? '#1E9E52' : r >= 4.3 ? '#2F8F4E' : '#B47
 const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onContact }) => {
   const [query, setQuery] = useState('');
   const [area, setArea] = useState('all');
+  /* Breeders whose WhatsApp button has been tapped this session. Asking before
+     they've made contact would be asking about nothing; asking every card at
+     once would be noise. Session-only — the once-ever rule lives in
+     QuickFeedback's own storage. */
+  const [contacted, setContacted] = useState(() => new Set());
   //: The owner's explicit choice, if they've made one. Null means "follow the
   //  city the quiz worked out". Read once — it's a device preference, not state
   //  that changes underneath us.
@@ -62,8 +68,8 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
         <h3 className="bd-title">Breeders in {city}</h3>
         <p className="bd-sub">
           {breedName
-            ? <>Verified breeders near you{matchCount > 0 && <> — <strong>{matchCount}</strong> currently list the <strong>{breedName}</strong></>}.</>
-            : <>Our verified breeder network in {city}.</>}
+            ? <>Breeders near you{matchCount > 0 && <> — <strong>{matchCount}</strong> currently list the <strong>{breedName}</strong></>}.</>
+            : <>Our breeder network in {city}.</>}
         </p>
 
         <div className="bd-citybar">
@@ -87,7 +93,7 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
           <div className="bd-notice">
             <span aria-hidden="true">📍</span>
             <span>
-              We don’t have verified breeders in {resolvedUserCity || 'your city'} yet — showing our
+              We don’t have breeders in {resolvedUserCity || 'your city'} yet — showing our
               <strong> {city}</strong> network. They ship and travel; always ask before paying.
             </span>
           </div>
@@ -189,12 +195,27 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
                       href={wa}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => onContact?.(b)}
+                      onClick={() => {
+                        onContact?.(b);
+                        setContacted((prev) => new Set(prev).add(b.id));
+                      }}
                     >
                       <WhatsAppIcon size={17} /> WhatsApp Us
                     </a>
                   )}
                 </div>
+
+                {/* Anchors itself to the screen rather than to this card —
+                    they have already left for WhatsApp, so it should be
+                    waiting when they come back, not buried in a card that may
+                    have scrolled away. Still a toast, never a modal. */}
+                {contacted.has(b.id) && (
+                  <QuickFeedback
+                    context="breeder_contact"
+                    contextId={b.id}
+                    question="Was this breeder helpful?"
+                  />
+                )}
               </article>
             );
           })}
@@ -202,12 +223,12 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
       )}
 
       <p className="bd-foot">
-        Showing {results.length} verified {results.length === 1 ? 'breeder' : 'breeders'} in {city}.
+        Showing {results.length} {results.length === 1 ? 'breeder' : 'breeders'} in {city}.
         Always visit in person and ask to meet the puppy’s mother before you pay.
       </p>
 
       <style>{`
-        .bd-wrap { font-family: 'Poppins', sans-serif; }
+        .bd-wrap { font-family: var(--font-body-family); }
 
         .bd-head { margin-bottom: 22px; }
         .bd-back {
@@ -215,7 +236,7 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
           font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px;
         }
         .bd-title {
-          font-family: 'Fredoka', sans-serif; color: var(--brown);
+          font-family: var(--font-display); font-weight: var(--weight-semibold); color: var(--brown);
           font-size: 26px; margin: 0 0 4px;
         }
         .bd-sub { color: var(--text-soft); font-size: 14px; margin: 0 0 14px; }
@@ -329,7 +350,7 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
           gap: 10px; margin-bottom: 8px;
         }
         .bd-card__name {
-          margin: 0; font-family: 'Fredoka', sans-serif; color: var(--brown);
+          margin: 0; font-family: var(--font-display); font-weight: var(--weight-semibold); color: var(--brown);
           font-size: 17px; line-height: 1.3;
         }
         .bd-rating {

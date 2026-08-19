@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import questionsData from '../constants/questions.json';
 import CitySelect from '../components/CitySelect';
+import QuickLoginModal from '../components/QuickLoginModal';
+import { AuthContext } from '../context/AuthContext';
 import { READINESS_LEVELS } from '../utils/breedUtils';
 import { rememberReadiness, saveProgress, track } from '../utils/analytics';
 import {
@@ -22,9 +24,47 @@ const TIMELINE_QUESTION = 'timeline';
     (free text). Events and the progress row want the plain value. */
 const flatten = (value) => (Array.isArray(value) ? (value.length === 1 ? value[0] : value) : value);
 
+/* Question 5 used to be a single self-rating ("How active is your daily
+   lifestyle?" — Relaxed/Moderately Active/Highly Active). Chintan flagged it
+   for removal: people over- or under-rate themselves, and one label was
+   quietly standing in for two different things — how much TIME they have,
+   and how INTENSE that time actually is. A calm hour of leisurely walking and
+   a calm hour of trail running are not the same lifestyle.
+
+   Replaced with two behavioural questions ("activity_time",
+   "activity_intensity") that ask what actually happens. Grounded in the
+   breed database's own vocabulary — breeds.json's `energy` field already
+   separates duration ("20-30 min", "1-2 hrs") from character ("gentle daily
+   walk" vs "vigorous daily"), so this mirrors a distinction the data already
+   makes, rather than inventing a new one.
+
+   breedUtils.js was never touched: it still expects `answers.activity` as an
+   array holding one of relaxed/moderate/high (see config/enums.js
+   ACTIVITY_BAND). The two raw answers are combined into that same shape
+   right here, in the question layer, the moment both are known — see
+   deriveActivityTier below and its call site in handleOptionSelect. */
+const ACTIVITY_TIME_POINTS = { under30: 0, '30to60': 1, '1to2h': 2, '2hplus': 3 };
+const ACTIVITY_INTENSITY_POINTS = { slow: 0, brisk: 1, vigorous: 2 };
+
+/** Raw time + intensity answers -> the single relaxed/moderate/high tier the
+    engine has always consumed. Sum range is 0-5; the two cuts below are a
+    judgment call (no external benchmark backs them) — simple point-sum to
+    tier, as agreed, not a claim of clinical precision. Returns null until
+    both raw answers exist, so a half-answered pair never writes a guess. */
+function deriveActivityTier(answers) {
+  const time = flatten(answers.activity_time);
+  const intensity = flatten(answers.activity_intensity);
+  if (!(time in ACTIVITY_TIME_POINTS) || !(intensity in ACTIVITY_INTENSITY_POINTS)) return null;
+  const score = ACTIVITY_TIME_POINTS[time] + ACTIVITY_INTENSITY_POINTS[intensity];
+  if (score <= 1) return 'relaxed';
+  if (score <= 3) return 'moderate';
+  return 'high';
+}
+
 const Quiz = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading: authLoading } = useContext(AuthContext);
   const resetOnMount = shouldResetQuiz(location);
   const skipSaveRef = useRef(resetOnMount);
 
@@ -40,6 +80,11 @@ const Quiz = () => {
     if (resetOnMount) return {};
     return loadQuizState().answers;
   });
+
+  // Post-quiz login gate — shown when the quiz is done but the user isn't signed in
+  const [showLoginGate, setShowLoginGate] = useState(false);
+  // When the quiz is finished but auth hasn't resolved yet, we park here
+  const quizCompletedRef = useRef(false);
 
   // Clean up reset signals after mount so refresh does not re-reset
   useEffect(() => {
@@ -110,14 +155,23 @@ const Quiz = () => {
       const currentAns = prev[qId] || [];
       const qConfig = questionsData.find(x => x.id === qId);
 
-      if (qConfig && qConfig.multi === false) {
-        return { ...prev, [qId]: currentAns.includes(val) ? [] : [val] };
+      const nextForQ = qConfig && qConfig.multi === false
+        ? (currentAns.includes(val) ? [] : [val])
+        : (currentAns.includes(val) ? currentAns.filter(a => a !== val) : [...currentAns, val]);
+
+      const next = { ...prev, [qId]: nextForQ };
+
+      /* Recomputed inside the SAME update that answers either half of the
+         pair, so `activity` is written well before the quiz's real last
+         question — never dependent on handleNext's own timing, which for the
+         final question runs synchronously right before navigate() and would
+         race a separate setAnswers call. */
+      if (qId === 'activity_time' || qId === 'activity_intensity') {
+        const tier = deriveActivityTier(next);
+        next.activity = tier ? [tier] : [];
       }
 
-      const newAns = currentAns.includes(val)
-        ? currentAns.filter(a => a !== val)
-        : [...currentAns, val];
-      return { ...prev, [qId]: newAns };
+      return next;
     });
   };
 
@@ -156,8 +210,38 @@ const Quiz = () => {
 
     track('quiz_completed');
     saveProgress({ status: 'completed', current_question: currentQ });
-    navigate('/results');
+
+    // If the user is already signed in, go straight to results.
+    // Otherwise show the login gate — it cannot be skipped.
+    if (!authLoading && user) {
+      navigate('/results');
+    } else if (!authLoading && !user) {
+      setShowLoginGate(true);
+    } else {
+      // Auth is still loading — park the intent and let the effect handle it
+      quizCompletedRef.current = true;
+    }
   };
+
+  // Once auth resolves after quiz completion, either redirect or show the gate
+  useEffect(() => {
+    if (!quizCompletedRef.current) return;
+    if (authLoading) return;
+    quizCompletedRef.current = false;
+    if (user) {
+      navigate('/results');
+    } else {
+      setShowLoginGate(true);
+    }
+  }, [authLoading, user, navigate]);
+
+  // Once auth resolves and the gate is open, redirect if the user is now signed in
+  useEffect(() => {
+    if (showLoginGate && !authLoading && user) {
+      setShowLoginGate(false);
+      navigate('/results');
+    }
+  }, [showLoginGate, authLoading, user, navigate]);
 
   const handleBack = () => {
     if (currentQ > 0) {
@@ -183,8 +267,8 @@ const Quiz = () => {
       <div className="quiz-blob quiz-blob-3"></div>
       <div className="quiz-wrap" style={{ paddingTop: '20px' }}>
         <div className="quiz-header">
-          <h2 style={{ fontFamily: "'Fredoka', sans-serif" }}>Let's find your pawfect match</h2>
-          <p style={{ fontFamily: "'Poppins', sans-serif" }}>Tell us a bit about your lifestyle so we can introduce you to the puppy of your dreams.</p>
+          <h2 style={{ fontFamily: 'var(--font-display)' }}>Let's find your pawfect match</h2>
+          <p style={{ fontFamily: 'var(--font-body-family)' }}>Tell us a bit about your lifestyle so we can introduce you to the puppy of your dreams.</p>
         </div>
 
         <div className="progress-wrap">
@@ -218,9 +302,9 @@ const Quiz = () => {
                 width: '100%',
                 minHeight: '120px',
                 padding: '15px',
-                borderRadius: '15px',
+                borderRadius: 'var(--radius)',
                 border: '1px solid rgba(0,0,0,0.1)',
-                fontFamily: "'Poppins', sans-serif",
+                fontFamily: 'var(--font-body-family)',
                 fontSize: '16px',
                 resize: 'vertical',
                 boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
@@ -263,6 +347,16 @@ const Quiz = () => {
         </div>
       </div>
     </section>
+
+      {/* Post-quiz login gate — cannot be dismissed, shown only when the
+          quiz is complete and the user isn't signed in yet. */}
+      <QuickLoginModal
+        isOpen={showLoginGate}
+        onSuccess={() => {
+          setShowLoginGate(false);
+          navigate('/results');
+        }}
+      />
     </div>
   );
 };

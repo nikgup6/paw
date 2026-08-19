@@ -56,6 +56,22 @@ async def build(db, dog_id: str, dog: dict) -> dict:
         # due still reaches the owner — it is a reminder like any other.
         "upcoming_vaccinations": _shots(records["due_today"] + records["upcoming"]),
         "overdue_vaccinations": _shots(records["overdue"]),
+        # For the Dashboard's tap-to-expand vaccination tiles specifically —
+        # deliberately UNCAPPED (recent_reminders etc. above cut to
+        # RECENT_LIMIT=3, which is right for a "recent activity" strip but
+        # would make a tile reading "7 upcoming" expand to only 3 names).
+        # "Due" merges overdue + due-today into one urgent bucket, matching
+        # the single blinking tile shown for both — a shot overdue by a week
+        # and one due today are both "needs action now," and splitting them
+        # into two tiles doesn't change what the owner has to do about either.
+        # Same non-deworming filter as the tile COUNTS above (vax, not
+        # vax+worming), so a tile's number always matches the length of the
+        # list it expands to.
+        "vaccination_tiles": {
+            "completed": _shots_all(records["completed"]),
+            "due": _shots_all(records["overdue"] + records["due_today"]),
+            "upcoming": _shots_all(records["upcoming"]),
+        },
         "recent_documents": documents[:RECENT_LIMIT],
         "recent_prescriptions": prescriptions[:RECENT_LIMIT],
         "recent_reminders": reminders[:RECENT_LIMIT],
@@ -92,6 +108,11 @@ def _deworming(records: dict) -> dict:
 def _shots(entries: list) -> list:
     return [e for e in entries
             if e.get("category") != timeline_service.CAT_DEWORMING][:RECENT_LIMIT]
+
+
+def _shots_all(entries: list) -> list:
+    """Same non-deworming filter as `_shots`, without the RECENT_LIMIT cut."""
+    return [e for e in entries if e.get("category") != timeline_service.CAT_DEWORMING]
 
 
 def _activity(vaccinations, prescriptions, reminder_log) -> list:

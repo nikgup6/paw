@@ -40,15 +40,15 @@ const card = {
   background: 'white', borderRadius: '16px', padding: '20px',
   boxShadow: 'var(--shadow, 0 4px 20px rgba(0,0,0,.06))', marginBottom: '20px',
 };
-const h3 = { color: 'var(--brown)', margin: '0 0 4px', fontSize: '17px', fontWeight: 800 };
-const sub = { color: 'var(--text-soft)', margin: '0 0 16px', fontSize: '13px', fontFamily: "'Poppins', sans-serif" };
+const h3 = { fontFamily: 'var(--font-display)', color: 'var(--brown)', margin: '0 0 4px', fontSize: '17px', fontWeight: 'var(--weight-semibold)' };
+const sub = { color: 'var(--text-soft)', margin: '0 0 16px', fontSize: '13px', fontFamily: 'var(--font-body-family)' };
 const th = {
   textAlign: 'left', padding: '9px 10px', fontSize: '11px', textTransform: 'uppercase',
   letterSpacing: '.05em', color: 'var(--text-soft)', borderBottom: '1px solid #EFE6DC', whiteSpace: 'nowrap',
 };
 const td = {
   padding: '9px 10px', fontSize: '13px', color: 'var(--brown)',
-  borderBottom: '1px solid #F6F1EB', fontFamily: "'Poppins', sans-serif",
+  borderBottom: '1px solid #F6F1EB', fontFamily: 'var(--font-body-family)',
 };
 
 const ago = (iso) => {
@@ -104,7 +104,7 @@ const FunnelReport = () => {
   const custom = Boolean(start || end);
 
   return (
-    <div style={{ marginBottom: '34px', fontFamily: "'Fredoka', sans-serif" }}>
+    <div style={{ marginBottom: '34px', fontFamily: 'var(--font-body-family)' }}>
 
       {/* ---------------------------- range picker --------------------------- */}
       <div style={{ ...card, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
@@ -147,7 +147,7 @@ const FunnelReport = () => {
                 background: i === 0 ? 'var(--orange-pale, #FDF1E8)' : '#FBF7F2',
                 border: '1px solid #EFE6DC',
               }}>
-                <div style={{ fontSize: '30px', fontWeight: 800, color: 'var(--brown)', lineHeight: 1.05 }}>{step.count}</div>
+                <div style={{ fontFamily: 'var(--font-accent)', fontSize: '30px', fontWeight: 800, color: 'var(--brown)', lineHeight: 1.05 }}>{step.count}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-soft)', fontWeight: 700, marginTop: '3px' }}>
                   {STEP_LABELS[step.event]}
                 </div>
@@ -176,7 +176,7 @@ const FunnelReport = () => {
         display: 'flex', alignItems: 'center', gap: '22px', flexWrap: 'wrap',
       }}>
         <div>
-          <div style={{ fontSize: '46px', fontWeight: 800, color: 'var(--orange)', lineHeight: 1 }}>{cta.rate}%</div>
+          <div style={{ fontFamily: 'var(--font-accent)', fontSize: '46px', fontWeight: 800, color: 'var(--orange)', lineHeight: 1 }}>{cta.rate}%</div>
         </div>
         <div style={{ minWidth: '260px' }}>
           <h3 style={{ ...h3, margin: 0 }}>Breeder CTA click rate</h3>

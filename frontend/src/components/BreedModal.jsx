@@ -73,7 +73,7 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
   if (!modalType || (!breed && modalType !== 'buy_success')) return null;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, fontFamily: "'Poppins', sans-serif", padding: '20px' }}>
+    <div onClick={onClose} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, fontFamily: 'var(--font-body-family)', padding: '20px' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: modalType === 'image_preview' ? 'transparent' : 'white', padding: modalType === 'image_preview' ? '0' : '30px', borderRadius: '20px', width: '100%', maxWidth: modalType === 'compare' ? '900px' : (modalType === 'full_profile' ? '800px' : (modalType === 'buy' ? '900px' : '500px')), maxHeight: '90dvh', overflowY: 'auto', position: 'relative' }}>
         <button onClick={onClose} style={{ position: 'absolute', top: modalType === 'image_preview' ? '-40px' : '20px', right: modalType === 'image_preview' ? '0' : '20px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '35px', height: '35px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>×</button>
         
@@ -227,7 +227,7 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
                 <input 
                   value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Add a breed to compare... (e.g. Beagle)" 
-                  style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontFamily: "'Poppins', sans-serif" }} 
+                  style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontFamily: 'var(--font-body-family)' }}
                 />
                 {searchQuery.trim().length > 0 && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', border: '1px solid #ddd', borderRadius: '10px', maxHeight: '200px', overflowY: 'auto', zIndex: 10, marginTop: '5px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>

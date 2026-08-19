@@ -204,8 +204,8 @@ const DocumentUploader = ({ dogId, documentType, onUploaded, hint }) => {
         .pb-up__drop strong { color: var(--brown); font-size: 14.5px; }
         .pb-up__hint { color: var(--text-soft); font-size: 12.5px; }
         .pb-up__or { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
-        .pb-up__or span { flex: 1; height: 1px; background: #EAE4DE; }
-        .pb-up__or em { color: var(--text-soft); font-size: 12px; font-weight: 600; font-style: normal; }
+        .pb-up__or span { flex: 1; height: 1px; background: var(--border-strong); }
+        .pb-up__or em { color: var(--text-soft); font-size: 12px; font-weight: var(--weight-semibold); font-style: normal; }
         .pb-cam__stage { position: relative; background: #000; aspect-ratio: 4 / 3; display: flex; }
         .pb-cam__stage video { width: 100%; height: 100%; object-fit: cover; display: block; }
         .pb-cam__loading {

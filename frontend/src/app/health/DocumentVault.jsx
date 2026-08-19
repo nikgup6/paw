@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import DocumentUploader from '../components/DocumentUploader';
+import QuickFeedback from '../../components/QuickFeedback';
 import {
   deleteDocument, fileUrl, listDocuments, listPrescriptions, reprocessDocument,
 } from '../../utils/healthVault';
@@ -186,6 +187,20 @@ const DocumentVault = () => {
                     {doc.processing_status === 'Failed' && doc.ai_metadata?.last_error && (
                       <span className="pb-doc__err">{doc.ai_metadata.last_error}</span>
                     )}
+
+                    {/* Asked only where there is something to judge: the scan
+                        finished AND pulled records out. "Did it get the details
+                        right?" is unanswerable on a failed or empty scan, and
+                        this is the one place an owner can actually compare what
+                        was read against the document sitting next to it. */}
+                    {(doc.processing_status === 'Completed' || doc.processing_status === 'Needs Review')
+                      && doc.vaccination_count > 0 && (
+                      <QuickFeedback
+                        context="vaccination_scan"
+                        contextId={doc.id}
+                        question="Did the scan get the details right?"
+                      />
+                    )}
                   </div>
 
                   <div className="pb-doc__actions">
@@ -263,21 +278,21 @@ const DocumentVault = () => {
         .pb-docs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
         .pb-doc {
           display: flex; align-items: center; gap: 12px;
-          background: var(--white); border: 1px solid #EFE6DC; border-radius: 14px; padding: 11px 12px;
+          background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 11px 12px;
           transition: border-color .2s ease, box-shadow .2s ease;
         }
         .pb-doc:hover { border-color: rgba(227,93,24,.35); box-shadow: 0 6px 16px -10px rgba(61,41,28,.4); }
         .pb-doc__thumb {
           flex: 0 0 46px; width: 46px; height: 46px; border-radius: 10px; overflow: hidden;
-          background: var(--cream); border: 1px solid #EFE6DC;
+          background: var(--cream); border: 1px solid var(--border);
           display: flex; align-items: center; justify-content: center;
         }
         .pb-doc__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .pb-doc__thumb.is-pdf { background: #FFF1F1; border-color: #F3D3D3; }
-        .pb-doc__thumb.is-pdf span { color: #C0392B; font-size: 11px; font-weight: 800; }
+        .pb-doc__thumb.is-pdf span { color: #C0392B; font-size: 11px; font-weight: var(--weight-bold); }
         .pb-doc__meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
         .pb-doc__name {
-          color: var(--brown); font-size: 14px; font-weight: 600;
+          color: var(--brown); font-size: 14px; font-weight: var(--weight-semibold);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .pb-doc__sub { color: var(--text-soft); font-size: 11.5px; }
@@ -288,11 +303,11 @@ const DocumentVault = () => {
           margin-top: 8px; padding: 9px 11px; border-radius: 10px;
           background: var(--cream); border: 1px solid #F0EAE3;
         }
-        .pb-doc__rxhead { margin: 0 0 6px; font-size: 11.5px; color: var(--text-soft); font-weight: 600; }
+        .pb-doc__rxhead { margin: 0 0 6px; font-size: 11.5px; color: var(--text-soft); font-weight: var(--weight-semibold); }
         .pb-doc__rxhead em { font-style: normal; color: var(--brown); }
         .pb-doc__rx ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
         .pb-doc__rx li { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; font-size: 12px; }
-        .pb-doc__rx li strong { color: var(--brown); font-weight: 700; }
+        .pb-doc__rx li strong { color: var(--brown); font-weight: var(--weight-bold); }
         .pb-doc__rx li span { color: var(--text-soft); }
         .pb-doc__rx li em { color: var(--text-soft); font-style: italic; font-size: 11px; }
 

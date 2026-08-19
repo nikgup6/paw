@@ -126,18 +126,18 @@ const VaccinationEditModal = ({ vaccination, onClose, onSaved }) => {
         <style>{`
           .vem { position: fixed; inset: 0; z-index: 3400; background: rgba(35,22,14,.72);
                  display: flex; align-items: center; justify-content: center; padding: 20px;
-                 font-family: 'Poppins', sans-serif; }
+                 font-family: var(--font-body-family); }
           .vem__box { background: #fff; border-radius: 16px; width: 100%; max-width: 560px;
                       max-height: 90dvh; overflow-y: auto; box-shadow: 0 30px 70px rgba(0,0,0,.35); }
           .vem__bar { display: flex; justify-content: space-between; align-items: center;
                       padding: 14px 18px; border-bottom: 1px solid #EFE6DC; background: var(--cream,#FBF5EF); }
-          .vem__bar span { font-family: 'Fredoka', sans-serif; color: var(--brown); font-weight: 600; font-size: 16px; }
+          .vem__bar span { font-family: var(--font-display); color: var(--brown); font-weight: var(--weight-semibold); font-size: 16px; }
           .vem__bar button { border: none; background: none; font-size: 24px; line-height: 1; cursor: pointer; color: var(--text-soft); }
           .vem__hint { margin: 14px 18px 4px; color: var(--text-soft); font-size: 13px; line-height: 1.5; }
           .vem__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 18px; }
           .vem__field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
           .vem__field--full { grid-column: 1 / -1; }
-          .vem__field span { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-soft); font-weight: 700; }
+          .vem__field span { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-soft); font-weight: var(--weight-medium); }
           .vem__field input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px;
                               border: 2px solid #EAE4DE; font-size: 14px; font-family: inherit; color: var(--brown); outline: none; }
           .vem__field input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(227,93,24,.12); }
@@ -145,9 +145,9 @@ const VaccinationEditModal = ({ vaccination, onClose, onSaved }) => {
                         border: 1px solid #F2C9C9; color: #B23B3B; font-size: 12.5px; }
           .vem__actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 18px; }
           .vem__cancel { padding: 11px 18px; border-radius: 50px; border: 1px solid #E3D9CE; background: #fff;
-                         color: var(--text-soft); font-weight: 700; font-family: inherit; cursor: pointer; }
+                         color: var(--text-soft); font-weight: var(--weight-semibold); font-family: var(--font-display); cursor: pointer; }
           .vem__save { padding: 11px 20px; border-radius: 50px; border: none; background: var(--orange); color: #fff;
-                       font-weight: 700; font-family: inherit; cursor: pointer; }
+                       font-weight: var(--weight-semibold); font-family: var(--font-display); cursor: pointer; }
           .vem__save:disabled, .vem__cancel:disabled { opacity: .6; cursor: not-allowed; }
           @media (max-width: 560px) { .vem__grid { grid-template-columns: 1fr; } }
         `}</style>

@@ -96,6 +96,22 @@ export const formatDay = (value) => {
   return d ? d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 };
 
+/* Strict dd/mm/yyyy, for confirming what a native date input is actually
+   holding.
+
+   `<input type="date">` renders in the BROWSER's locale, not the page's —
+   there is no attribute or stylesheet that can force dd/mm/yyyy, so a
+   US-locale browser shows 03/12/2024 for the 12th of March. Rather than
+   replacing the control (and losing the native mobile picker), we echo the
+   value underneath in the format Indian users read, so 03/12 vs 12/03 is
+   never ambiguous. The stored value is untouched — always ISO yyyy-mm-dd. */
+export const formatDMY = (value) => {
+  const d = parseDay(value);
+  if (!d) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+};
+
 export const formatTimestamp = (value) => {
   const d = value instanceof Date ? value : parseServerDate(value);
   return d

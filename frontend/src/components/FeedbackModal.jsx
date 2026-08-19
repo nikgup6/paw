@@ -31,7 +31,11 @@ const FeedbackModal = ({ isOpen, onClose, user }) => {
         user_id: user?.id || null,
         user_name: user?.name || 'Anonymous',
         rating: avgRating,
-        comment: detailedComment
+        comment: detailedComment,
+        // Tagged so the two routes stay separable in the data: this modal is
+        // the long-form opt-in, the one-tap prompts post rating_type "quick".
+        context: 'quiz_result',
+        rating_type: 'detailed',
       });
       setSuccess(true);
     } catch (err) {
@@ -43,7 +47,7 @@ const FeedbackModal = ({ isOpen, onClose, user }) => {
 
   const StarRow = ({ label, qKey }) => (
     <div style={{ marginBottom: '15px' }}>
-      <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: 'var(--brown)', fontWeight: 600 }}>{label}</p>
+      <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: 'var(--brown)', fontWeight: 'var(--weight-semibold)' }}>{label}</p>
       <div style={{ display: 'flex', gap: '8px' }}>
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -71,40 +75,40 @@ const FeedbackModal = ({ isOpen, onClose, user }) => {
   );
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', fontFamily: "'Fredoka', sans-serif" }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', fontFamily: 'var(--font-body-family)' }}>
       <div className="glass-panel" style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '440px', maxHeight: '90dvh', overflowY: 'auto', position: 'relative', animation: 'slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
         <button onClick={onClose} style={{ position: 'absolute', top: '15px', right: '15px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '30px', height: '30px', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-        
+
         {success ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: '48px', marginBottom: '15px' }}>🐾</div>
-            <h3 style={{ color: 'var(--orange)', marginBottom: '10px' }}>Thank You!</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--orange)', marginBottom: '10px' }}>Thank You!</h3>
             <p style={{ color: 'var(--text-soft)' }}>Your feedback helps us make Paw Buddy better for everyone.</p>
-            <button onClick={onClose} style={{ marginTop: '20px', padding: '12px 30px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
+            <button onClick={onClose} style={{ marginTop: '20px', padding: '12px 30px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', cursor: 'pointer' }}>Close</button>
           </div>
         ) : (
           <>
-            <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontSize: '22px' }}>How was your experience?</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--brown)', marginBottom: '10px', fontSize: '22px' }}>How was your experience?</h3>
             <p style={{ color: 'var(--text-soft)', fontSize: '14px', marginBottom: '20px' }}>Rate your experience to help us improve.</p>
             
             <StarRow label="How accurate were your breed recommendations?" qKey="q1" />
             <StarRow label="How easy was it to use the platform?" qKey="q2" />
             <StarRow label="How helpful was the breed information?" qKey="q3" />
 
-            <p style={{ margin: '15px 0 5px 0', fontSize: '14px', color: 'var(--brown)', fontWeight: 600 }}>Any additional comments?</p>
-            <textarea 
+            <p style={{ margin: '15px 0 5px 0', fontSize: '14px', color: 'var(--brown)', fontWeight: 'var(--weight-semibold)' }}>Any additional comments?</p>
+            <textarea
               placeholder="Tell us what you loved or what we can do better..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              style={{ width: '100%', padding: '15px', borderRadius: '12px', border: '2px solid #EAE4DE', minHeight: '80px', resize: 'vertical', fontFamily: "'Fredoka', sans-serif", fontSize: '14px', outline: 'none', marginBottom: '15px' }}
+              style={{ width: '100%', padding: '15px', borderRadius: '12px', border: '2px solid #EAE4DE', minHeight: '80px', resize: 'vertical', fontFamily: 'var(--font-body-family)', fontSize: '14px', outline: 'none', marginBottom: '15px' }}
               onFocus={(e) => e.target.style.borderColor = 'var(--orange)'}
               onBlur={(e) => e.target.style.borderColor = '#EAE4DE'}
             />
 
-            <button 
-              onClick={handleSubmit} 
+            <button
+              onClick={handleSubmit}
               disabled={loading}
-              style={{ width: '100%', padding: '14px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'bold', fontSize: '16px', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.3s' }}
+              style={{ width: '100%', padding: '14px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', fontSize: '16px', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.3s' }}
             >
               {loading ? 'Submitting...' : 'Submit Feedback'}
             </button>

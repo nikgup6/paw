@@ -6,7 +6,7 @@ from app.auth.dependencies import require_admin
 from app.config.settings import settings, ENV_FILE
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_database
 from app.database.indexes import ensure_indexes
-from app.routes import auth, breeds, quiz, admin, feedback, buy_requests, analytics, pets, matchmaker, vaccination, health_vault, dogs, funnel
+from app.routes import auth, breeds, quiz, admin, feedback, buy_requests, analytics, pets, matchmaker, vaccination, health_vault, dogs, funnel, owner_survey, care_tips, daily_care
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +88,15 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"],
                    dependencies=[Depends(require_admin)])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(funnel.router, prefix="/api/funnel", tags=["funnel"])
+# Submitting is public (the form runs pre-login); reading is admin-gated
+# per-route inside the module rather than at the router.
+app.include_router(owner_survey.router, prefix="/api/owner-survey", tags=["owner-survey"])
+# Matching is public (runs right after the survey posts); import/browse/approve
+# are admin-gated per-route inside the module, same split as owner_survey.
+app.include_router(care_tips.router, prefix="/api/care-tips", tags=["care-tips"])
+# Dog-scoped like /api/dogs, so it follows that access model rather than a
+# stricter one nothing could satisfy while there is no login.
+app.include_router(daily_care.router, prefix="/api/daily-care", tags=["daily-care"])
 app.include_router(matchmaker.router, prefix="/api/matchmaker", tags=["matchmaker"])
 app.include_router(dogs.router, prefix="/api/dogs", tags=["dogs"])
 app.include_router(vaccination.router, prefix="/api/vaccination-documents", tags=["vaccination (legacy alias)"])

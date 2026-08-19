@@ -1,6 +1,7 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useDogs } from '../context/DogsContext';
 import { ageFromDob, formatDay } from '../utils/healthStatus';
+import { thumb } from '../utils/images';
 
 /* The selected dog's profile, on its own page.
 
@@ -40,7 +41,7 @@ const DogProfilePage = () => {
       <section className="pb-card">
         <div className="pb-prof2">
           <div className="pb-prof2__photo" aria-hidden="true">
-            {dog.photo_url ? <img src={dog.photo_url} alt="" /> : <span>🐶</span>}
+            {dog.photo_url ? <img src={thumb(dog.photo_url, 72)} alt="" /> : <span>🐶</span>}
           </div>
           <dl className="pb-prof2__facts">
             <Fact label="Name" value={dog.name} />
@@ -62,7 +63,7 @@ const DogProfilePage = () => {
         .pb-prof2 { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
         .pb-prof2__photo {
           flex: 0 0 128px; width: 128px; height: 128px; border-radius: 22px; overflow: hidden;
-          background: var(--orange-pale); border: 1px solid #EFE6DC;
+          background: var(--orange-pale); border: 1px solid var(--border);
           display: flex; align-items: center; justify-content: center; font-size: 52px;
         }
         .pb-prof2__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -72,9 +73,9 @@ const DogProfilePage = () => {
         }
         .pb-prof2__facts dt {
           font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
-          color: var(--text-soft); font-weight: 700;
+          color: var(--text-soft); font-weight: var(--weight-bold);
         }
-        .pb-prof2__facts dd { margin: 3px 0 0; font-size: 14.5px; color: var(--brown); font-weight: 600; }
+        .pb-prof2__facts dd { margin: 3px 0 0; font-size: 14.5px; color: var(--brown); font-weight: var(--weight-semibold); }
         .pb-prof2__note {
           margin: 18px 0 0; padding: 11px 13px; border-radius: 11px;
           background: #FFFBF4; border: 1px solid #E9D8B8; color: #9A6B1F; font-size: 13px; line-height: 1.55;

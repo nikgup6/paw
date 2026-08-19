@@ -63,8 +63,8 @@ const Signup = () => {
           onClick={() => navigate(-1)}
           style={{
             background: 'var(--orange)', color: 'white', border: 'none',
-            padding: '10px 20px', borderRadius: '50px', cursor: 'pointer',
-            fontFamily: "'Poppins', sans-serif", fontWeight: 600,
+            padding: '10px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
+            fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-semibold)',
             transition: 'all 0.3s ease', boxShadow: '0 4px 15px rgba(245,124,0,0.3)'
           }}
           onMouseOver={e => { e.currentTarget.style.transform = 'translateX(-2px)'; }}

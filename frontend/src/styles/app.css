@@ -1,14 +1,14 @@
 /* Paw Buddy app shell — the signed-in product area at /app.
 
    Deliberately built from the same tokens as the marketing site (--orange,
-   --brown, --cream, Fredoka headings, Poppins body, 14-20px radii, the soft
-   brown shadows) so the module reads as the same product, just organised.
-   Nothing here restyles the landing page. */
+   --brown, --cream, Jakarta Sans headings, Work Sans body, 14-20px radii, the
+   soft brown shadows) so the module reads as the same product, just
+   organised. Nothing here restyles the landing page. */
 
 .pb-app {
   min-height: 100dvh;
   background: var(--cream);
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body-family);
   color: var(--text);
   display: flex;
 }
@@ -50,8 +50,18 @@
   to   { opacity: 1; transform: none; }
 }
 
-/* Whole page entering — used by every routed page. */
-.pb-fade { animation: pb-fade-up var(--pb-slow) var(--pb-ease) both; }
+/* Whole page entering — used by every routed page.
+
+   Opacity ONLY, deliberately: this element is the ancestor of every modal on
+   the page, and a transformed ancestor becomes the containing block for its
+   `position: fixed` descendants. When this animated translateY, every overlay
+   inside a page positioned itself against the PAGE instead of the viewport
+   and opened far below the fold — the vet profile was landing at ~2976px in
+   an 812px viewport, so it looked like it needed scrolling to.
+
+   The cards below still slide; they aren't ancestors of the overlays. Do not
+   reintroduce transform here without portalling every overlay first. */
+.pb-fade { animation: pb-fade-in var(--pb-slow) var(--pb-ease) both; }
 
 /* Cards settle in sequence rather than all at once; capped so a long list
    doesn't leave the last card waiting. */
@@ -68,7 +78,11 @@
   .pb-fade,
   .pb-page .pb-card,
   .pb-overlay,
+  .pb-tabbar__item > svg,
+  .pb-tabbar__item.is-active > svg,
   .pb-overlay > .pb-modal { animation: none !important; }
+  /* The tab icon keeps its colour change, just not the movement. */
+  .pb-tabbar__item:active > svg { transform: none !important; }
   .pb-app *, .pb-app *::before, .pb-app *::after { transition-duration: .01ms !important; }
 }
 
@@ -78,7 +92,7 @@
   width: 244px;
   flex: 0 0 244px;
   background: var(--white);
-  border-right: 1px solid #EFE6DC;
+  border-right: 1px solid var(--border);
   padding: 18px 14px 28px;
   display: flex;
   flex-direction: column;
@@ -98,16 +112,18 @@
 }
 .pb-side__brand img { width: 30px; height: 30px; object-fit: contain; }
 .pb-side__brand span {
-  font-family: 'Fredoka', sans-serif;
+  /* The brand wordmark, not a heading — stays on the Fredoka accent token
+     so it matches the same "Paw Buddy" wordmark on the landing page. */
+  font-family: var(--font-accent);
   color: var(--brown);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .pb-side__group { display: flex; flex-direction: column; gap: 2px; }
 .pb-side__label {
   font-size: 10.5px;
-  font-weight: 800;
+  font-weight: var(--weight-bold);
   letter-spacing: .07em;
   text-transform: uppercase;
   color: var(--text-soft);
@@ -122,7 +138,7 @@
   border-radius: 11px;
   color: var(--brown);
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   text-decoration: none;
   border: none;
   background: none;
@@ -134,7 +150,7 @@
 }
 .pb-nav:hover { background: var(--orange-pale); color: var(--orange-strong); }
 .pb-nav:active { transform: scale(.985); }
-.pb-nav.is-active { background: var(--orange-pale); color: var(--orange-strong); font-weight: 700; }
+.pb-nav.is-active { background: var(--orange-pale); color: var(--orange-strong); font-weight: var(--weight-bold); }
 .pb-nav__icon { font-size: 15px; line-height: 1; flex-shrink: 0; }
 .pb-nav__avatar {
   flex: 0 0 22px;
@@ -155,7 +171,7 @@
 .pb-nav__cap {
   display: block;
   font-size: 9.5px;
-  font-weight: 800;
+  font-weight: var(--weight-bold);
   letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--text-soft);
@@ -169,7 +185,7 @@
 .pb-soon {
   flex-shrink: 0;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: var(--weight-bold);
   letter-spacing: .04em;
   text-transform: uppercase;
   padding: 3px 7px;
@@ -188,14 +204,14 @@
   gap: 12px;
   padding: 14px clamp(16px, 3vw, 30px);
   background: var(--white);
-  border-bottom: 1px solid #EFE6DC;
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 20;
 }
 .pb-top__burger {
   display: none;
-  border: 1px solid #E3D9CE;
+  border: 1px solid var(--border-strong);
   background: var(--white);
   border-radius: 10px;
   padding: 7px 11px;
@@ -204,10 +220,10 @@
   color: var(--brown);
 }
 .pb-top__title {
-  font-family: 'Fredoka', sans-serif;
+  font-family: var(--font-display);
   color: var(--brown);
   font-size: 17px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
@@ -227,7 +243,7 @@
   border: 1px solid #E9D8B8;
   color: #9A6B1F;
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 .pb-btn.is-on { border-color: var(--orange); color: var(--orange-strong); background: var(--orange-pale); }
 
@@ -241,21 +257,28 @@
   flex-wrap: wrap;
   margin-bottom: 18px;
 }
+/* Typography ladder — every app screen uses exactly these four:
+   page title / page sub / card title / card sub. */
 .pb-page__title {
-  font-family: 'Fredoka', sans-serif;
+  font-family: var(--font-display);
   color: var(--brown);
-  font-size: 22px;
+  font-size: var(--font-h3);
+  font-weight: var(--weight-semibold);
   margin: 0 0 4px;
 }
-.pb-page__sub { color: var(--text-soft); font-size: 13px; margin: 0; }
+.pb-page__sub { color: var(--text-soft); font-size: var(--font-body); font-weight: var(--weight-regular); margin: 0; }
 
 /* --------------------------------- cards ---------------------------------- */
 
+/* THE card. One background, one radius, one shadow, one padding — the
+   Add-a-dog treatment, applied everywhere. Any screen wanting a "card" uses
+   this rather than rolling its own. */
 .pb-card {
   background: var(--white);
-  border: 1px solid #EFE6DC;
-  border-radius: 18px;
-  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
   transition: border-color var(--pb-slow) var(--pb-ease), box-shadow var(--pb-slow) var(--pb-ease);
 }
 .pb-card + .pb-card { margin-top: 16px; }
@@ -268,13 +291,13 @@
   margin-bottom: 14px;
 }
 .pb-card__title {
-  font-family: 'Fredoka', sans-serif;
+  font-family: var(--font-display);
   color: var(--brown);
-  font-size: 16px;
+  font-size: var(--font-body-lg);
   margin: 0 0 2px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
-.pb-card__sub { color: var(--text-soft); font-size: 12.5px; margin: 0; }
+.pb-card__sub { color: var(--text-soft); font-size: var(--font-small); font-weight: var(--weight-regular); margin: 0; }
 
 .pb-grid { display: grid; gap: 16px; }
 .pb-grid--2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
@@ -285,17 +308,63 @@
 .pb-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; }
 .pb-stat {
   background: var(--white);
-  border: 1px solid #EFE6DC;
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px 15px;
   border-left: 4px solid #D8CCBE;
 }
-.pb-stat__value { font-family: 'Fredoka', sans-serif; color: var(--brown); font-size: 24px; font-weight: 600; line-height: 1.1; }
-.pb-stat__label { font-size: 11.5px; color: var(--text-soft); font-weight: 600; margin-top: 3px; }
+/* A count (vaccinations done, documents, reminders) — number, not a heading.
+   Stays on the Fredoka accent token, same as every other stat figure in the
+   app (Dashboard stat tiles, admin counts, breed match %). */
+.pb-stat__value { font-family: var(--font-accent); color: var(--brown); font-size: 24px; font-weight: var(--weight-semibold); line-height: 1.1; }
+.pb-stat__label { font-size: 11.5px; color: var(--text-soft); font-weight: var(--weight-semibold); margin-top: 3px; }
 .pb-stat.is-good { border-left-color: #1E9E52; }
 .pb-stat.is-warn { border-left-color: #9A6B1F; }
 .pb-stat.is-bad { border-left-color: #C62828; }
 .pb-stat.is-brand { border-left-color: var(--orange); }
+
+/* --tap: the same tile as a real <button>, tap-to-expand. Scoped to this
+   modifier only, so Overview.jsx's own plain <div class="pb-stat"> tiles are
+   completely unaffected — this file adds nothing to the base rule above. */
+.pb-stat--tap {
+  /* undo <button> UA defaults so it reads as the same tile as every other */
+  width: 100%; text-align: left; font-family: inherit; cursor: pointer;
+  transition: border-color var(--pb-fast) var(--pb-ease), box-shadow var(--pb-fast) var(--pb-ease),
+              transform var(--pb-fast) var(--pb-ease);
+}
+.pb-stat--tap:active { transform: scale(.97); }
+.pb-stat--tap:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+@media (hover: hover) {
+  .pb-stat--tap:hover { border-color: var(--orange); box-shadow: 0 8px 20px -14px rgba(61,41,28,.35); }
+}
+.pb-stat--tap.is-open { border-color: var(--orange); box-shadow: 0 8px 20px -14px rgba(61,41,28,.35); }
+
+/* Urgency, on the Due tile only, only while it's actually > 0 — a caught-up
+   dog never blinks. Slow (2.4s) and shallow (a shadow pulse, not a colour
+   flash), so it reads as "this needs attention" rather than an alarm; same
+   restraint as the Tips card's shine. Stops once opened, same as the tip
+   shine stopping once read — the blink's job is to get the tap, not to keep
+   going after it worked. */
+@keyframes pb-stat-urgent {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(198,40,40,0); }
+  50%      { box-shadow: 0 0 0 5px rgba(198,40,40,.16); }
+}
+.pb-stat--tap.is-urgent:not(.is-open) { animation: pb-stat-urgent 2.4s var(--pb-ease) infinite; }
+
+.pb-stat-detail {
+  /* Sits BELOW .pb-stats as its own block (not a grid item inside it), so it
+     naturally takes the full card width rather than one tile's worth. */
+  margin-top: 4px;
+  padding: 14px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  animation: pb-fade-in var(--pb-fast) var(--pb-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-stat--tap.is-urgent:not(.is-open) { animation: none; box-shadow: 0 0 0 2px rgba(198,40,40,.18); }
+}
 
 /* --------------------------------- pills ---------------------------------- */
 
@@ -306,7 +375,7 @@
   border-radius: 50px;
   padding: 4px 11px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: var(--weight-bold);
   letter-spacing: .02em;
   white-space: nowrap;
 }
@@ -319,31 +388,59 @@
 
 /* -------------------------------- buttons --------------------------------- */
 
+/* Three variants and nothing else: .pb-btn (secondary/outline) is the base,
+   --primary is the filled orange, --link is the text button. Every one shares
+   height, radius, padding, weight and transition, so a button looks the same
+   whichever screen it is on. */
 .pb-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
+  /* 44px floor: these are tapped on phones, and a 36px button is a miss. */
+  min-height: var(--tap-min);
   padding: 10px 17px;
-  border-radius: 11px;
-  border: 1px solid #E3D9CE;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
   background: var(--white);
   color: var(--brown);
   font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
+  font-size: var(--font-small);
+  font-weight: var(--weight-bold);
   cursor: pointer;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
   transition: background-color var(--pb-fast) var(--pb-ease), border-color var(--pb-fast) var(--pb-ease), color var(--pb-fast) var(--pb-ease), transform var(--pb-fast) var(--pb-ease), box-shadow var(--pb-fast) var(--pb-ease);
 }
 .pb-btn:active:not(:disabled) { transform: scale(.97); }
-.pb-btn:hover:not(:disabled) { border-color: var(--orange); color: var(--orange-strong); background: #FFFAF6; }
+/* hover:hover so a touch device doesn't leave the hover style stuck after a tap */
+@media (hover: hover) {
+  .pb-btn:hover:not(:disabled) { border-color: var(--orange); color: var(--orange-strong); background: var(--orange-pale); }
+}
+/* focus-visible, not focus: keyboard users get a ring, mouse users don't get
+   one stuck on the button after clicking it. */
+.pb-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--orange); }
 .pb-btn:disabled { opacity: .5; cursor: not-allowed; }
+
 .pb-btn--primary { background: var(--orange); border-color: var(--orange); color: var(--white); }
-.pb-btn--primary:hover:not(:disabled) { background: var(--orange-strong); border-color: var(--orange-strong); color: var(--white); }
+@media (hover: hover) {
+  .pb-btn--primary:hover:not(:disabled) { background: var(--orange-strong); border-color: var(--orange-strong); color: var(--white); }
+}
 .pb-btn--danger { color: #C62828; border-color: #F2C9C9; }
-.pb-btn--danger:hover:not(:disabled) { border-color: #E08A8A; background: #FFF5F5; color: #C62828; }
-.pb-btn--sm { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; }
+@media (hover: hover) {
+  .pb-btn--danger:hover:not(:disabled) { border-color: #E08A8A; background: #FFF5F5; color: #C62828; }
+}
+/* The text/link variant — same metrics, no chrome. */
+.pb-btn--link {
+  border-color: transparent; background: none; color: var(--orange-strong);
+  padding-left: 8px; padding-right: 8px;
+}
+@media (hover: hover) {
+  .pb-btn--link:hover:not(:disabled) { background: var(--orange-pale); border-color: transparent; }
+}
+/* --sm stays a 44px target: only the padding and type shrink, never the
+   touchable height. */
+.pb-btn--sm { padding: 7px 12px; font-size: var(--font-small); border-radius: 9px; }
 .pb-btn--block { width: 100%; }
 
 /* --------------------------------- forms ---------------------------------- */
@@ -353,35 +450,50 @@
 .pb-field--full { grid-column: 1 / -1; }
 .pb-field > span {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   text-transform: uppercase;
   letter-spacing: .04em;
   color: var(--text-soft);
 }
+/* One control style for every input, select and textarea in the app: same
+   height, border, radius, focus ring and placeholder. */
 .pb-field input,
 .pb-field select,
 .pb-field textarea {
   width: 100%;
   box-sizing: border-box;
+  min-height: var(--tap-min);
   padding: 11px 12px;
-  border-radius: 11px;
-  border: 2px solid #EAE4DE;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-strong);
   background: var(--white);
   color: var(--brown);
-  font-size: 14.5px;
+  font-size: var(--font-body-lg);
   font-family: inherit;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   outline: none;
-  transition: border-color .2s ease, box-shadow .2s ease;
+  transition: border-color var(--pb-fast) var(--pb-ease), box-shadow var(--pb-fast) var(--pb-ease);
 }
 .pb-field textarea { min-height: 80px; resize: vertical; }
+.pb-field input::placeholder,
+.pb-field textarea::placeholder { color: var(--text-soft); opacity: .65; }
+@media (hover: hover) {
+  .pb-field input:hover:not(:disabled),
+  .pb-field select:hover:not(:disabled),
+  .pb-field textarea:hover:not(:disabled) { border-color: var(--border-strong); }
+}
+/* :focus (not just :focus-visible) — a form control SHOULD show where you are
+   typing regardless of whether you got there by mouse or keyboard. */
 .pb-field input:focus,
 .pb-field select:focus,
 .pb-field textarea:focus {
   border-color: var(--orange);
-  box-shadow: 0 0 0 4px rgba(227, 93, 24, .12);
+  box-shadow: var(--focus-ring);
 }
-.pb-field__hint { font-size: 11.5px; color: var(--text-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
+.pb-field input:disabled,
+.pb-field select:disabled,
+.pb-field textarea:disabled { opacity: .5; cursor: not-allowed; background: var(--grey); }
+.pb-field__hint { font-size: 11.5px; color: var(--text-soft); font-weight: var(--weight-semibold); text-transform: none; letter-spacing: 0; }
 .pb-field__req { color: var(--orange-strong); }
 
 .pb-choices { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -390,11 +502,11 @@
   min-width: 92px;
   padding: 11px 10px;
   border-radius: 11px;
-  border: 2px solid #EAE4DE;
+  border: 2px solid var(--border-strong);
   background: var(--white);
   color: var(--brown);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   font-family: inherit;
   cursor: pointer;
   transition: all .2s ease;
@@ -452,7 +564,7 @@
   border: 1px solid #BFE5CD;
   color: #1B8046;
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 /* -------------------------------- overlays -------------------------------- */
@@ -483,15 +595,15 @@
   justify-content: space-between;
   gap: 12px;
   padding: 13px 17px;
-  border-bottom: 1px solid #EFE6DC;
+  border-bottom: 1px solid var(--border);
   background: var(--cream);
   position: sticky;
   top: 0;
 }
 .pb-modal__bar span {
-  font-family: 'Fredoka', sans-serif;
+  font-family: var(--font-display);
   color: var(--brown);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   font-size: 15.5px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -536,7 +648,7 @@
   min-width: 0;
   padding: 10px 12px;
   border-radius: 13px;
-  border: 2px solid #EFE6DC;
+  border: 2px solid var(--border);
   background: var(--white);
   cursor: pointer;
   font-family: inherit;
@@ -552,7 +664,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--orange-pale);
-  border: 1px solid #EFE6DC;
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -561,10 +673,10 @@
 .pb-switch--stack .pb-switch__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pb-switch--stack .pb-switch__meta { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
 .pb-switch--stack .pb-switch__meta strong {
-  font-family: 'Fredoka', sans-serif;
+  font-family: var(--font-display);
   color: var(--brown);
   font-size: 14.5px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -582,6 +694,28 @@
 .pb-mhead,
 .pb-tabbar { display: none; }
 
+/* ---- the "More" sheet ---- */
+/* Reuses .pb-overlay/.pb-modal so it inherits the app's existing dismissal
+   behaviour; only the list inside is new. */
+.pb-more { display: flex; flex-direction: column; gap: 9px; }
+.pb-more__item {
+  display: flex; align-items: center; gap: 13px; width: 100%; text-align: left;
+  /* 56px — a comfortable thumb target for a sheet reached from the tab bar */
+  min-height: 56px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--white);
+  font-family: inherit; color: var(--brown); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .18s ease, background-color .18s ease;
+}
+.pb-more__item > span:first-child { font-size: 20px; flex-shrink: 0; }
+.pb-more__item strong { display: block; font-size: 14px; font-weight: var(--weight-semibold); }
+.pb-more__item em {
+  display: block; font-style: normal; color: var(--text-soft);
+  font-size: 12px; margin-top: 2px; line-height: 1.4;
+}
+.pb-more__item:active { background: var(--cream); }
+@media (hover: hover) { .pb-more__item:hover { border-color: var(--orange); } }
+
 /* ---------------------------- mobile & tablet ----------------------------- */
 /* 1024px so an iPad Pro in portrait (exactly 1024) gets the touch layout
    rather than a desktop sidebar it has no room for. Everything at 1024 and
@@ -593,6 +727,13 @@
   .pb-scrim { display: none !important; }
   .pb-top__burger { display: none; }
 
+  /* Dashboard / + Dog / Home duplicated the bottom bar on this breakpoint —
+     the same destinations twice, one of them a thumb-width from Switch Dog.
+     Desktop keeps them (it has no bottom bar), and "+ Dog" also gained a
+     sidebar entry so desktop never depends on this row alone. */
+  .pb-top__actions { display: none; }
+
+
   .pb-mhead {
     display: flex;
     align-items: center;
@@ -600,7 +741,7 @@
     width: 100%;
     padding: 10px 16px;
     border: none;
-    border-bottom: 1px solid #EFE6DC;
+    border-bottom: 1px solid var(--border);
     background: var(--white);
     cursor: pointer;
     text-align: left;
@@ -618,7 +759,7 @@
     border-radius: 11px;
     overflow: hidden;
     background: var(--orange-pale);
-    border: 1px solid #EFE6DC;
+    border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -627,10 +768,10 @@
   .pb-mhead__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .pb-mhead__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
   .pb-mhead__text strong {
-    font-family: 'Fredoka', sans-serif;
+    font-family: var(--font-display);
     color: var(--brown);
     font-size: 15px;
-    font-weight: 600;
+    font-weight: var(--weight-semibold);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -638,7 +779,7 @@
   .pb-mhead__text em {
     font-style: normal;
     font-size: 10px;
-    font-weight: 800;
+    font-weight: var(--weight-bold);
     letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--text-soft);
@@ -652,7 +793,7 @@
     bottom: 0;
     z-index: 40;
     background: var(--white);
-    border-top: 1px solid #EFE6DC;
+    border-top: 1px solid var(--border);
     box-shadow: 0 -6px 20px -14px rgba(61, 41, 28, .5);
     /* The bar's own height sits above the iOS home indicator; the inset is
        added as padding so the strip below stays part of the bar rather than a
@@ -678,12 +819,31 @@
     color: var(--text-soft);
     font-family: inherit;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: var(--weight-bold);
     line-height: 1.1;
     text-align: center;
     transition: color var(--pb-fast) var(--pb-ease), background-color var(--pb-fast) var(--pb-ease);
   }
-  .pb-tabbar__item > span:first-child { font-size: 18px; line-height: 1; }
+  /* The icon is now an <svg>, not an emoji <span> — it inherits the tab's
+     colour, so the active state needs no separate icon rule.
+
+     Motion on tap, in the app's existing language: the same easing curve and
+     durations as everything else, and movement small enough to confirm the
+     press rather than perform. The icon dips on press and settles with a
+     single soft rise when the tab becomes active — no looping, nothing that
+     keeps moving after you've arrived. */
+  .pb-tabbar__item > svg {
+    flex-shrink: 0;
+    transition: transform var(--pb-slow) var(--pb-ease);
+  }
+  .pb-tabbar__item:active > svg { transform: scale(.82); }
+  .pb-tabbar__item.is-active > svg { animation: pb-tab-pop var(--pb-slow) var(--pb-ease); }
+
+  @keyframes pb-tab-pop {
+    0%   { transform: scale(.82) translateY(2px); }
+    55%  { transform: scale(1.14) translateY(-3px); }
+    100% { transform: scale(1) translateY(0); }
+  }
   .pb-tabbar__item > span:last-child {
     max-width: 100%;
     overflow: hidden;
@@ -712,8 +872,8 @@
   .pb-page { padding: 16px; }
   .pb-top { flex-wrap: wrap; }
   .pb-top__title { order: -1; flex: 1 1 auto; }
-  .pb-top__actions { flex: 1 1 100%; }
-  .pb-top__actions .pb-btn { flex: 1 1 auto; }
+  /* (.pb-top__actions is display:none from 1023.98px down — the rules that
+     used to wrap it onto its own row here would never apply.) */
   .pb-card { padding: 16px; border-radius: 16px; }
   .pb-modal__actions { flex-direction: column-reverse; }
   .pb-modal__actions .pb-btn { width: 100%; }

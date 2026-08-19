@@ -1292,5 +1292,260 @@
     "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJjQBS2nYnwzsRYWkeKNxxVkM",
     "tier": 2,
     "confidence": 66
+  },
+  {
+    "id": "mum-1",
+    "city": "Mumbai",
+    "zone": "Thane & Extended",
+    "name": "Oscar Pet's World (Thane)",
+    "owner": "Prasad",
+    "locality": "Kavesar, Thane West",
+    "address": "Plot No.269, Waghbil Village, Creek Retibunder Rd, Ghodbunder Rd, Kavesar, Thane West, Thane 400615",
+    "phone": "+91 95947 97777",
+    "rating": 4.6,
+    "reviews": 773,
+    "breeds": [
+      "Poodle (Standard)",
+      "German Shepherd",
+      "Cocker Spaniel"
+    ],
+    "otherBreeds": [],
+    "certification": "Full paperwork and diet instructions provided (buyer-confirmed)",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJBW6qOei75zsR_XrZFkJgDcw",
+    "tier": 1,
+    "confidence": 88
+  },
+  {
+    "id": "mum-2",
+    "city": "Mumbai",
+    "zone": "Navi Mumbai",
+    "name": "Oscar Pet's World (Airoli)",
+    "owner": "Prasad; Ujjwal",
+    "locality": "Sector 17, Airoli",
+    "address": "Asmita Apartment, AL-5/30/7, Sector 17, Airoli, Navi Mumbai 400708",
+    "phone": "+91 81085 87777",
+    "rating": 5.0,
+    "reviews": 84,
+    "breeds": [
+      "Shih Tzu",
+      "German Shepherd",
+      "Cocker Spaniel"
+    ],
+    "otherBreeds": [],
+    "certification": "Full documentation and food guidelines provided (buyer-confirmed)",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJUZVXhB6_5zsRE-6__SWPtn0",
+    "tier": 1,
+    "confidence": 83
+  },
+  {
+    "id": "mum-3",
+    "city": "Mumbai",
+    "zone": "Western Suburbs Central",
+    "name": "Sagar Kennels (Bandra)",
+    "owner": "Sagar",
+    "locality": "Kherwadi, Bandra East",
+    "address": "Panchvat, Government Colony, 5 CHS, Kherwadi Rd, Kherwadi, Bandra East, Mumbai 400051",
+    "phone": "+91 98691 54086",
+    "rating": 4.9,
+    "reviews": 288,
+    "breeds": [
+      "Beagle",
+      "Doberman Pinscher",
+      "Cocker Spaniel"
+    ],
+    "otherBreeds": [],
+    "certification": "First vaccination confirmed at handover",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ6UTqfI7J5zsRGpu8aB_oNZE",
+    "tier": 2,
+    "confidence": 79
+  },
+  {
+    "id": "mum-4",
+    "city": "Mumbai",
+    "zone": "Western Suburbs Far North",
+    "name": "Mumbai Pet Point",
+    "owner": "Dharmil",
+    "locality": "Adarsh Nagar, Kandivali",
+    "address": "Kandivali, Adarsh Nagar, Mahavir Nagar Extension, Mumbai 400067",
+    "phone": "+91 88792 67080",
+    "rating": 4.9,
+    "reviews": 273,
+    "breeds": [
+      "Shih Tzu"
+    ],
+    "otherBreeds": [],
+    "certification": "None mentioned",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJlwVc9Lu35zsRbqdlm6xDw-Q",
+    "tier": 2,
+    "confidence": 79
+  },
+  {
+    "id": "mum-5",
+    "city": "Mumbai",
+    "zone": "Thane & Extended",
+    "name": "MR. DOGCODE Pet Studio",
+    "owner": "Hardik",
+    "locality": "Godrej Hill, Kalyan West",
+    "address": "Shop 3, Seasons Pride Housing Society, Shani Mandir Rd, Godrej Hill, Khadakpada, Kalyan West 421301",
+    "phone": "+91 86553 43550",
+    "rating": 4.8,
+    "reviews": 333,
+    "breeds": [
+      "Labrador Retriever",
+      "Beagle",
+      "German Shepherd"
+    ],
+    "otherBreeds": [],
+    "certification": "None mentioned",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJTVWtAruX5zsRKz1oiaF-1os",
+    "tier": 2,
+    "confidence": 79
+  },
+  {
+    "id": "mum-6",
+    "city": "Mumbai",
+    "zone": "Outer / Vasai-Virar",
+    "name": "Sagar Pets (Bhayandar)",
+    "owner": "Sagar",
+    "locality": "Burhani Nagar, Bhayandar West",
+    "address": "Jai Om Balaji, Station Rd, opp. Radha Govind Park, Burhani Nagar, Bhayandar West, Mira Bhayandar 401101",
+    "phone": "+91 87794 87928",
+    "rating": 4.9,
+    "reviews": 209,
+    "breeds": [
+      "Golden Retriever",
+      "Pomeranian",
+      "Labrador Retriever",
+      "Siberian Husky",
+      "Cocker Spaniel"
+    ],
+    "otherBreeds": [],
+    "certification": "None mentioned",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJO_LJtEHJ5zsRIQvmxpPdYyQ",
+    "tier": 2,
+    "confidence": 79
+  },
+  {
+    "id": "mum-7",
+    "city": "Mumbai",
+    "zone": "Western Suburbs North",
+    "name": "Sahil Pet's",
+    "owner": "Sahil",
+    "locality": "Jawahar Nagar, Goregaon West",
+    "address": "Plot 320, 17, Jawahar Nagar Rd, Jawahar Nagar, Goregaon West, Mumbai 400104",
+    "phone": "+91 99871 97165",
+    "rating": 4.8,
+    "reviews": 72,
+    "breeds": [
+      "Shih Tzu"
+    ],
+    "otherBreeds": [],
+    "certification": "Owner accompanied buyer to the vet post-sale",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJoZ3MKSq35zsR5esJYNr4E4A",
+    "tier": 2,
+    "confidence": 78
+  },
+  {
+    "id": "mum-8",
+    "city": "Mumbai",
+    "zone": "Western Suburbs North",
+    "name": "Aarav Pets Kennel and Top Breeder",
+    "owner": "Ajinkiya",
+    "locality": "Jawahar Nagar, Goregaon West",
+    "address": "Road No.17, Jawahar Nagar, Goregaon West, Mumbai 400104",
+    "phone": "+91 97690 23124",
+    "rating": 4.9,
+    "reviews": 107,
+    "breeds": [
+      "Poodle (Standard)",
+      "Shih Tzu"
+    ],
+    "otherBreeds": [],
+    "certification": "None mentioned",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJR9FcqzK35zsRZtP0kyPZzxM",
+    "tier": 2,
+    "confidence": 76
+  },
+  {
+    "id": "mum-9",
+    "city": "Mumbai",
+    "zone": "Western Suburbs North",
+    "name": "Ohh My Dog",
+    "owner": "Not stated",
+    "locality": "Shastri Nagar, Andheri West",
+    "address": "Shop 7, Raviraj Complex, Mayfair CHS, off New Link Rd, Shastri Nagar, Andheri West, Mumbai 400053",
+    "phone": "+91 97682 11111",
+    "rating": 4.5,
+    "reviews": 2530,
+    "breeds": [
+      "Golden Retriever"
+    ],
+    "otherBreeds": [],
+    "certification": "Vaccination schedule explained",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJCwe0URa25zsR76zXNyXQ-fs",
+    "tier": 2,
+    "confidence": 74
+  },
+  {
+    "id": "mum-10",
+    "city": "Mumbai",
+    "zone": "Navi Mumbai",
+    "name": "KAPSPETS AAA",
+    "owner": "Alka",
+    "locality": "Sector 28, Vashi",
+    "address": "Shop 10, Plot 88/65, near Tilak College, Maruti Vihar, Sector 28, Vashi, Navi Mumbai 400703",
+    "phone": "+91 80805 80801",
+    "rating": 4.3,
+    "reviews": 669,
+    "breeds": [
+      "Golden Retriever",
+      "Beagle"
+    ],
+    "otherBreeds": [],
+    "certification": "None mentioned",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJu8QNsCXB5zsRr36XHwCekl4",
+    "tier": 2,
+    "confidence": 73
+  },
+  {
+    "id": "mum-11",
+    "city": "Mumbai",
+    "zone": "Thane & Extended",
+    "name": "Krupa Pet's",
+    "owner": "Sanket",
+    "locality": "Thankar Pada, Kalyan West",
+    "address": "Shop 4, Awasti Chawl, near Kwality Company, Beturkarpada Rd, Thankar Pada, Kalyan West 421301",
+    "phone": "+91 98333 40502",
+    "rating": 4.7,
+    "reviews": 271,
+    "breeds": [
+      "Siberian Husky"
+    ],
+    "otherBreeds": [],
+    "certification": "None mentioned",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJXaUCfQCX5zsRaUAj7deZd_8",
+    "tier": 2,
+    "confidence": 70
+  },
+  {
+    "id": "mum-12",
+    "city": "Mumbai",
+    "zone": "Navi Mumbai",
+    "name": "Aqua India Aquarium and Pets",
+    "owner": "Not stated",
+    "locality": "Sector 8, Nerul",
+    "address": "Shop 16-17, Ambika Shopping Centre, near Rajiv Gandhi Bridge, Sector 8, Nerul, Navi Mumbai 400706",
+    "phone": "+91 80971 78055",
+    "rating": 4.3,
+    "reviews": 266,
+    "breeds": [
+      "German Shepherd",
+      "Siberian Husky"
+    ],
+    "otherBreeds": [],
+    "certification": "None mentioned",
+    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJVVXlpufD5zsRlmVOPSkcS88",
+    "tier": 2,
+    "confidence": 70
   }
 ]

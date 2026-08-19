@@ -120,31 +120,64 @@
     "multi": false
   },
   {
-    "id": "activity",
-    "text": "How active is your daily lifestyle?",
-    "sub": "Dogs have different energy levels. Matching your activity style with the right breed creates a happier experience for both you and your companion.",
+    "id": "activity_time",
+    "text": "How many hours a day can you dedicate to walks/play?",
+    "sub": "Every breed has a real daily exercise requirement, not a personality label. The time you actually have tells us which breeds you can keep genuinely satisfied.",
     "options": [
       {
         "icon": "",
-        "label": "Relaxed Lifestyle",
-        "desc": "Comfortable indoor routines with lighter physical activity and shorter walks.",
-        "val": "relaxed"
+        "label": "Under 30 minutes",
+        "desc": "Best suited to breeds with light exercise needs and a calm indoor temperament.",
+        "val": "under30"
       },
       {
         "icon": "",
-        "label": "Moderately Active",
-        "desc": "Enjoys regular walks, occasional outings and balanced daily activity.",
-        "val": "moderate"
+        "label": "30 minutes to 1 hour",
+        "desc": "Comfortable for most breeds with moderate daily exercise needs.",
+        "val": "30to60"
       },
       {
         "icon": "",
-        "label": "Highly Active",
-        "desc": "Energetic lifestyle with outdoor activities, workouts, running or adventure trips.",
-        "val": "high"
+        "label": "1 to 2 hours",
+        "desc": "Enough for energetic breeds that need real daily exercise to stay settled.",
+        "val": "1to2h"
+      },
+      {
+        "icon": "",
+        "label": "2 hours or more",
+        "desc": "Suited to high-energy breeds that need serious daily exercise, or they become restless or destructive.",
+        "val": "2hplus"
+      }
+    ],
+    "cols": 2,
+    "multi": false
+  },
+  {
+    "id": "activity_intensity",
+    "text": "What kind of activity does your dog get most days?",
+    "sub": "Time alone doesn't capture everything — an hour of slow walking and an hour of running ask completely different things of a dog's body and temperament.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Slow, leisurely walks",
+        "desc": "A gentle pace, well suited to calmer breeds or ones with joint sensitivity.",
+        "val": "slow"
+      },
+      {
+        "icon": "",
+        "label": "Brisk walks or active play",
+        "desc": "A steady, purposeful pace with games or yard time mixed in.",
+        "val": "brisk"
+      },
+      {
+        "icon": "",
+        "label": "Running, hiking, fetch or dog sports",
+        "desc": "Vigorous, sustained activity — what high-drive working and sporting breeds actually need.",
+        "val": "vigorous"
       }
     ],
     "cols": 3,
-    "multi": true
+    "multi": false
   },
   {
     "id": "budget",

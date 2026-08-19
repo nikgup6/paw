@@ -65,3 +65,41 @@ async def require_admin(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="This area is restricted to administrators.")
     return claims
+
+
+async def require_self_or_admin(
+    user_id: str,
+    creds: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> dict:
+    """For a `/…/user/{user_id}` route: the record's own owner, or an admin.
+
+    Plain `require_admin` is too strict here — these routes are how an
+    ordinary signed-in user reads their OWN history (e.g. their own buy
+    requests), which isn't an admin action. But leaving them open to anyone is
+    an IDOR: swap the user_id in the URL and read a stranger's name, mobile
+    and city. This is the middle ground: a valid token is required, and it
+    must either belong to `user_id` or to an admin.
+
+    `user_id` is bound from the route's own path parameter — FastAPI matches
+    same-named path params across a route and its dependencies automatically.
+    """
+    if creds is None or not creds.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sign in to view this.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    claims = decode_token(creds.credentials)
+    if claims is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Your session has expired. Please sign in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if claims.get("role") == ADMIN_ROLE or claims.get("sub") == user_id:
+        return claims
+
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                        detail="You can only view your own requests.")

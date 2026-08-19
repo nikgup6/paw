@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useBreeds } from '../context/BreedsContext';
 import BreedCard from '../components/BreedCard';
 import FeedbackModal from '../components/FeedbackModal';
+import QuickFeedback from '../components/QuickFeedback';
 import { AuthContext } from '../context/AuthContext';
 import { buildLivingConditions, computeMatches, computeReadiness, generateProsCons, generatePersonalizedReason } from '../utils/breedUtils';
 import { clearQuizState } from '../utils/quizState';
@@ -39,10 +40,10 @@ const PrepPanel = ({ readinessCode, topBreed, onSubmitEmail }) => {
   return (
     <div style={{
       margin: '30px auto 0', maxWidth: '760px', padding: '24px',
-      background: 'white', borderRadius: '20px', border: '1px solid #EFE6DC',
-      boxShadow: '0 8px 24px -18px rgba(61,41,28,.5)', fontFamily: "'Poppins', sans-serif",
+      background: 'white', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
+      boxShadow: '0 8px 24px -18px rgba(61,41,28,.5)', fontFamily: 'var(--font-body-family)',
     }}>
-      <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', margin: '0 0 6px', fontSize: '20px' }}>
+      <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--brown)', margin: '0 0 6px', fontSize: '20px' }}>
         {cold ? 'Your Starter Kit' : 'Your 90-day prep guide'}
       </h3>
       <p style={{ color: 'var(--text-soft, #7a6a5c)', fontSize: '14px', margin: '0 0 16px', lineHeight: 1.6 }}>
@@ -60,15 +61,15 @@ const PrepPanel = ({ readinessCode, topBreed, onSubmitEmail }) => {
 
       {cold ? (
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link to="/explore" style={{ padding: '11px 20px', borderRadius: '50px', background: 'var(--orange)', color: 'white', fontWeight: 700, textDecoration: 'none', fontSize: '14px' }}>
+          <Link to="/explore" style={{ padding: '11px 20px', borderRadius: 'var(--radius-pill)', background: 'var(--orange)', color: 'white', fontWeight: 'var(--weight-bold)', textDecoration: 'none', fontSize: '14px' }}>
             Read about the breeds
           </Link>
-          <Link to="/app" style={{ padding: '11px 20px', borderRadius: '50px', border: '1px solid #E3D9CE', color: 'var(--brown)', fontWeight: 700, textDecoration: 'none', fontSize: '14px' }}>
+          <Link to="/app" style={{ padding: '11px 20px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-strong)', color: 'var(--brown)', fontWeight: 'var(--weight-bold)', textDecoration: 'none', fontSize: '14px' }}>
             Health tracker
           </Link>
         </div>
       ) : sent ? (
-        <p style={{ margin: 0, color: '#1B8046', fontSize: '14px', fontWeight: 700 }}>
+        <p style={{ margin: 0, color: '#1B8046', fontSize: '14px', fontWeight: 'var(--weight-bold)' }}>
           Sent. Check your inbox — we will not email you about anything else.
         </p>
       ) : (
@@ -79,11 +80,11 @@ const PrepPanel = ({ readinessCode, topBreed, onSubmitEmail }) => {
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
             placeholder="you@example.com"
-            style={{ flex: '1 1 220px', padding: '12px 14px', borderRadius: '12px', border: '2px solid #EAE4DE', fontFamily: 'inherit', fontSize: '14px', color: 'var(--brown)', outline: 'none' }}
+            style={{ flex: '1 1 220px', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '2px solid var(--border-strong)', fontFamily: 'inherit', fontSize: '14px', color: 'var(--brown)', outline: 'none' }}
           />
           <button
             onClick={submit}
-            style={{ padding: '12px 22px', borderRadius: '50px', border: 'none', background: 'var(--orange)', color: 'white', fontWeight: 700, fontFamily: 'inherit', fontSize: '14px', cursor: 'pointer' }}
+            style={{ padding: '12px 22px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--orange)', color: 'white', fontWeight: 'var(--weight-bold)', fontFamily: 'inherit', fontSize: '14px', cursor: 'pointer' }}
           >
             Send it to me
           </button>
@@ -342,7 +343,7 @@ const Results = () => {
   };
 
   if (loading) {
-    return <div style={{ padding: '60px', textAlign: 'center', fontFamily: "'Poppins', sans-serif" }}><h2>Analyzing your answers... 🐾</h2></div>;
+    return <div style={{ padding: '60px', textAlign: 'center', fontFamily: 'var(--font-body-family)' }}><h2>Analyzing your answers... 🐾</h2></div>;
   }
 
   return (
@@ -355,8 +356,8 @@ const Results = () => {
           onClick={() => navigate('/')}
           style={{
             background: 'var(--orange)', color: 'white', border: 'none',
-            padding: '8px 16px', borderRadius: '50px', cursor: 'pointer',
-            fontFamily: "'Poppins', sans-serif", fontWeight: 600,
+            padding: '8px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
+            fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-semibold)',
             transition: 'all 0.3s ease', boxShadow: '0 4px 15px rgba(255,107,43,0.3)',
             fontSize: 'clamp(12px, 2.5vw, 14px)'
           }}
@@ -369,8 +370,8 @@ const Results = () => {
 
       <div className="results-wrap">
         <div className="results-header">
-          <h2 style={{ fontFamily: "'Fredoka', sans-serif" }}>Your Pawfect Matches</h2>
-          <p style={{ fontFamily: "'Poppins', sans-serif" }}>Based on your lifestyle, here are the best companions for you to welcome home.</p>
+          <h2 style={{ fontFamily: 'var(--font-display)' }}>Your Pawfect Matches</h2>
+          <p style={{ fontFamily: 'var(--font-body-family)' }}>Based on your lifestyle, here are the best companions for you to welcome home.</p>
         </div>
         
         {topBreeds.length > 0 && (
@@ -384,12 +385,14 @@ const Results = () => {
                 style={{ cursor: 'pointer' }}
                 onError={(e) => { e.target.src = 'https://via.placeholder.com/180?text=Dog'; }}
               />
-              <div style={{ color: 'white', fontFamily: "'Fredoka', sans-serif", lineHeight: 1, textAlign: 'center', width: '100%', marginTop: '5px' }}>
+              {/* The match percentage — a number, same treatment as .match-score
+                  on the landing page, not the heading face. */}
+              <div style={{ color: 'white', fontFamily: 'var(--font-accent)', lineHeight: 1, textAlign: 'center', width: '100%', marginTop: '5px' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '48px', fontWeight: 800 }}>{topBreeds[0].matchPercentage}%</span>
+                  <span style={{ fontSize: '48px', fontWeight: 'var(--weight-bold)' }}>{topBreeds[0].matchPercentage}%</span>
                   <span style={{ fontSize: '18px', opacity: 0.9, marginLeft: '6px' }}>Match</span>
                 </div>
-                <div style={{ fontSize: '14px', marginTop: '6px', fontWeight: 600, opacity: 0.9 }}>
+                <div style={{ fontSize: '14px', marginTop: '6px', fontWeight: 'var(--weight-semibold)', opacity: 0.9 }}>
                   {topBreeds[0].matchPercentage >= 85 ? 'Exceptional Match' : (topBreeds[0].matchPercentage >= 75 ? 'Excellent Match' : (topBreeds[0].matchPercentage >= 60 ? 'Good Match' : 'Warning'))}
                 </div>
               </div>
@@ -411,9 +414,9 @@ const Results = () => {
                   <button
                     onClick={() => handleAction('buy', topBreeds[0])}
                     style={{
-                      flex: '1 1 100px', padding: '12px', borderRadius: '50px',
+                      flex: '1 1 100px', padding: '12px', borderRadius: 'var(--radius-pill)',
                       fontWeight: softCta ? 700 : 800, cursor: 'pointer',
-                      fontFamily: "'Poppins', sans-serif",
+                      fontFamily: 'var(--font-body-family)',
                       /* A cool lead still gets the door, just not a shove
                          through it — same control, quieter treatment. */
                       background: softCta ? 'rgba(255,255,255,0.15)' : 'white',
@@ -426,8 +429,8 @@ const Results = () => {
                     {softCta ? 'See breeders' : 'Buy'}
                   </button>
                 )}
-                <button onClick={() => handleAction('compare', topBreeds[0])} style={{ flex: '1 1 100px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", backdropFilter: 'blur(5px)' }}>Compare</button>
-                <button onClick={() => handleAction('full_profile', topBreeds[0])} style={{ flex: '1 1 100px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", backdropFilter: 'blur(5px)' }}>Full Profile</button>
+                <button onClick={() => handleAction('compare', topBreeds[0])} style={{ flex: '1 1 100px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 'var(--radius-pill)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', fontFamily: 'var(--font-body-family)', backdropFilter: 'blur(5px)' }}>Compare</button>
+                <button onClick={() => handleAction('full_profile', topBreeds[0])} style={{ flex: '1 1 100px', padding: '12px', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 'var(--radius-pill)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', fontFamily: 'var(--font-body-family)', backdropFilter: 'blur(5px)' }}>Full Profile</button>
               </div>
             </div>
           </div>
@@ -463,13 +466,13 @@ const Results = () => {
 
         <div id="end-of-recommendations" style={{ height: '1px' }}></div>
 
-        <div id="retake-quiz-section" style={{ marginTop: '40px', textAlign: 'center', padding: 'clamp(22px, 4vw, 30px)', background: '#fff9f5', borderRadius: '20px', border: '2px dashed var(--orange)', opacity: 0.9 }}>
+        <div id="retake-quiz-section" style={{ marginTop: '40px', textAlign: 'center', padding: 'clamp(22px, 4vw, 30px)', background: '#fff9f5', borderRadius: 'var(--radius)', border: '2px dashed var(--orange)', opacity: 0.9 }}>
           <h3 style={{ color: 'var(--brown)', marginBottom: '10px', fontSize: '24px' }}>Not quite sure? Or wanna try again for fun? 🐾</h3>
           <p style={{ color: 'var(--text-soft)', marginBottom: '20px', fontSize: '16px' }}>There's no rush in finding your perfect furry friend. Take all the time you need!</p>
-          <button onClick={handleRetakeQuiz} style={{ padding: '11px 26px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', boxShadow: '0 4px 15px rgba(255,107,43,0.3)' }}>Let's Retake the Quiz</button>
+          <button onClick={handleRetakeQuiz} style={{ padding: '11px 26px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', boxShadow: '0 4px 15px rgba(255,107,43,0.3)' }}>Let's Retake the Quiz</button>
         </div>
 
-        <div style={{ marginTop: '50px', background: 'var(--cream)', padding: '30px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+        <div style={{ marginTop: '50px', background: 'var(--cream)', padding: '30px', borderRadius: 'var(--radius)', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
           <h3 style={{ color: 'var(--brown)', marginBottom: '10px' }}>Have a breed in mind?</h3>
           <p style={{ color: 'var(--text-soft)', fontSize: '14px', marginBottom: '20px' }}>Type any breed name and we'll tell you the pros & cons based on YOUR specific lifestyle answers</p>
           <div style={{ display: 'flex', gap: '10px', position: 'relative', flexWrap: 'wrap' }}>
@@ -477,10 +480,10 @@ const Results = () => {
               <input 
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 placeholder="husky" 
-                style={{ width: '100%', padding: '15px', borderRadius: '50px', border: '1px solid #ddd', fontFamily: "'Poppins', sans-serif" }} 
+                style={{ width: '100%', padding: '15px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-strong)', fontFamily: 'var(--font-body-family)' }} 
               />
               {searchQuery.trim().length > 0 && modalType !== 'compare' && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', border: '1px solid #ddd', borderRadius: '10px', maxHeight: '200px', overflowY: 'auto', zIndex: 10, marginTop: '5px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', maxHeight: '200px', overflowY: 'auto', zIndex: 10, marginTop: '5px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
                   {breedsData.filter(b => b.name.toLowerCase().includes(searchQuery.trim().toLowerCase())).map(b => (
                     <div 
                       key={b.name} 
@@ -501,23 +504,34 @@ const Results = () => {
               const b = breedsData.find(x => x.name.toLowerCase().includes(val));
               if (b) { handleAction('searched_profile', b); setSearchQuery(''); }
               else { alert('Breed not found. Try the suggestions dropdown.'); }
-            }} style={{ padding: '15px 30px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', flex: '1 1 150px' }}>Check This Breed</button>
+            }} style={{ padding: '15px 30px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold', flex: '1 1 150px' }}>Check This Breed</button>
           </div>
         </div>
 
-        <div style={{ marginTop: '30px', textAlign: 'center', background: 'white', padding: '40px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+        <div style={{ marginTop: '30px', textAlign: 'center', background: 'white', padding: '40px', borderRadius: 'var(--radius)', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
           <h3 style={{ color: 'var(--brown)', marginBottom: '10px' }}>Share your results</h3>
           <p style={{ color: 'var(--text-soft)', fontSize: '14px', marginBottom: '20px' }}>Let your friends know what breed suits you!</p>
           <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '30px' }}>
             {navigator.share && (
-              <button onClick={shareNative} style={{ padding: '12px 24px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>Share Results</button>
+              <button onClick={shareNative} style={{ padding: '12px 24px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold' }}>Share Results</button>
             )}
-            <button onClick={shareWhatsApp} style={{ padding: '12px 24px', background: '#25D366', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>Share on WhatsApp</button>
-            <button onClick={downloadTopMatchImage} style={{ padding: '12px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>Download as Image</button>
-            <button onClick={() => setShowFeedback(true)} style={{ padding: '12px 24px', background: 'transparent', color: 'var(--orange)', border: '1px solid var(--orange)', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>Share Feedback</button>
-            <button onClick={handleRetakeQuiz} style={{ padding: '12px 24px', background: '#D32F2F', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>Retake Quiz</button>
+            <button onClick={shareWhatsApp} style={{ padding: '12px 24px', background: '#25D366', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold' }}>Share on WhatsApp</button>
+            <button onClick={downloadTopMatchImage} style={{ padding: '12px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold' }}>Download as Image</button>
+            <button onClick={() => setShowFeedback(true)} style={{ padding: '12px 24px', background: 'transparent', color: 'var(--orange)', border: '1px solid var(--orange)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold' }}>Share Feedback</button>
+            <button onClick={handleRetakeQuiz} style={{ padding: '12px 24px', background: '#D32F2F', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold' }}>Retake Quiz</button>
           </div>
-          <div style={{ background: '#fff9f5', padding: '20px', borderRadius: '15px', display: 'inline-block', width: '100%', maxWidth: '500px' }}>
+
+          {/* The default ask is one tap, as a screen-anchored toast (it
+              positions itself, so no layout wrapper here); "Share Feedback"
+              above stays the opt-in route to the fuller 3-question modal for
+              anyone who wants to say more. Neither path blocks. */}
+          <QuickFeedback
+            context="quiz_result"
+            contextId={topBreeds[0]?.name || null}
+            question="Did these matches feel right?"
+            user={user}
+          />
+          <div style={{ background: '#fff9f5', padding: '20px', borderRadius: 'var(--radius)', display: 'inline-block', width: '100%', maxWidth: '500px' }}>
             <h4 style={{ color: 'var(--brown)', marginBottom: '15px', fontSize: '18px' }}>Contact Me</h4>
             <p style={{ margin: '5px 0', color: 'var(--text-color)' }}><strong style={{ color: 'var(--orange)' }}>Phone:</strong> +91 7358444850</p>
             <p style={{ margin: '5px 0', color: 'var(--text-color)' }}><strong style={{ color: 'var(--orange)' }}>Email:</strong> pawbuddy.br@gmail.com</p>
@@ -528,13 +542,13 @@ const Results = () => {
 
       {/* Modals */}
       {modalType && (
-        <div onClick={closeAction} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, fontFamily: "'Poppins', sans-serif", padding: '20px' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: modalType === 'image_preview' ? 'transparent' : 'white', padding: modalType === 'image_preview' ? '0' : '30px', borderRadius: '20px', width: '100%', maxWidth: modalType === 'compare' ? '900px' : (modalType === 'full_profile' ? '800px' : (modalType === 'buy' ? '900px' : '500px')), maxHeight: '90dvh', overflowY: 'auto', position: 'relative' }}>
+        <div onClick={closeAction} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, fontFamily: 'var(--font-body-family)', padding: '20px' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: modalType === 'image_preview' ? 'transparent' : 'white', padding: modalType === 'image_preview' ? '0' : '30px', borderRadius: 'var(--radius)', width: '100%', maxWidth: modalType === 'compare' ? '900px' : (modalType === 'full_profile' ? '800px' : (modalType === 'buy' ? '900px' : '500px')), maxHeight: '90dvh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={closeAction} style={{ position: 'absolute', top: modalType === 'image_preview' ? '-40px' : '20px', right: modalType === 'image_preview' ? '0' : '20px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '35px', height: '35px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>×</button>
             
             {modalType === 'image_preview' && selectedBreed && (
-              <div style={{ textAlign: 'center', background: 'white', padding: '20px', borderRadius: '15px' }}>
-                <img src={`/${selectedBreed.img}`} alt={selectedBreed.name} style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '10px' }} />
+              <div style={{ textAlign: 'center', background: 'white', padding: '20px', borderRadius: 'var(--radius)' }}>
+                <img src={`/${selectedBreed.img}`} alt={selectedBreed.name} style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 'var(--radius-sm)' }} />
                 <h3 style={{ marginTop: '15px', color: 'var(--brown)', fontSize: '24px' }}>{selectedBreed.name}</h3>
               </div>
             )}
@@ -559,7 +573,7 @@ const Results = () => {
                       <WhatsAppButton type="button" style={{ padding: '12px 24px' }}>Open WhatsApp</WhatsAppButton>
                     </a>
                   )}
-                  <button onClick={closeAction} style={{ padding: '12px 30px', background: 'var(--cream)', color: 'var(--brown)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold' }}>Close</button>
+                  <button onClick={closeAction} style={{ padding: '12px 30px', background: 'var(--cream)', color: 'var(--brown)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold' }}>Close</button>
                 </div>
               </div>
             )}
@@ -567,15 +581,15 @@ const Results = () => {
             {(modalType === 'full_profile' || modalType === 'searched_profile') && selectedBreed && (
               <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 250px' }}>
-                  <img src={`/${selectedBreed.img}`} alt={selectedBreed.name} style={{ width: '100%', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
-                  <div style={{ marginTop: '20px', padding: '15px', background: 'var(--cream)', borderRadius: '15px' }}>
+                  <img src={`/${selectedBreed.img}`} alt={selectedBreed.name} style={{ width: '100%', borderRadius: 'var(--radius)', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }} />
+                  <div style={{ marginTop: '20px', padding: '15px', background: 'var(--cream)', borderRadius: 'var(--radius)' }}>
                     <h4 style={{ margin: '0 0 10px 0', color: 'var(--orange)' }}>Quick Stats</h4>
                     <p style={{ margin: '5px 0', fontSize: '14px' }}><strong style={{color: 'var(--brown)'}}>Size:</strong> {selectedBreed.size}</p>
                     <p style={{ margin: '5px 0', fontSize: '14px' }}><strong style={{color: 'var(--brown)'}}>Shedding:</strong> {selectedBreed.shedding}</p>
                     <p style={{ margin: '5px 0', fontSize: '14px' }}><strong style={{color: 'var(--brown)'}}>Energy:</strong> {selectedBreed.energy}</p>
                     <p style={{ margin: '5px 0', fontSize: '14px' }}><strong style={{color: 'var(--brown)'}}>Apartment Friendly:</strong> {selectedBreed.apt}</p>
                   </div>
-                  <div style={{ marginTop: '15px', padding: '15px', background: '#ffebee', borderRadius: '15px' }}>
+                  <div style={{ marginTop: '15px', padding: '15px', background: '#ffebee', borderRadius: 'var(--radius)' }}>
                  <h4 style={{ margin: '0 0 10px 0', color: '#c62828' }}>Monthly Cost Estimate</h4>
                  <div style={{ margin: 0, color: '#c62828', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                    {(() => {
@@ -594,7 +608,7 @@ const Results = () => {
 
                      return (
                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                         <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center', background: 'rgba(198, 40, 40, 0.1)', padding: '10px', borderRadius: '10px' }}>
+                         <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center', background: 'rgba(198, 40, 40, 0.1)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
                            {mainCost} <span style={{ fontSize: '12px', fontWeight: 'normal' }}>/ month</span>
                          </div>
                          
@@ -604,7 +618,7 @@ const Results = () => {
                            const val = parts.slice(1).join('').trim();
                            return (
                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', borderBottom: '1px solid rgba(198, 40, 40, 0.1)', paddingBottom: '4px' }}>
-                               <span style={{ fontWeight: 600 }}>{label}</span>
+                               <span style={{ fontWeight: 'var(--weight-semibold)' }}>{label}</span>
                                <span>{val}</span>
                              </div>
                            );
@@ -621,22 +635,22 @@ const Results = () => {
 
                   {modalType === 'searched_profile' && (
                     <div style={{ marginBottom: '25px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                      <div className="pros" style={{ background: '#f0fdf4', padding: '15px', borderRadius: '12px' }}>
-                        <h5 style={{ color: '#27AE60', fontWeight: 700, marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Pros</h5>
+                      <div className="pros" style={{ background: '#f0fdf4', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
+                        <h5 style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Pros</h5>
                         <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
                           {generateProsCons(selectedBreed).pros.map((pro, i) => (
                             <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
-                              <span style={{ color: '#27AE60', fontWeight: 700, marginRight: '5px' }}>✓</span>{pro}
+                              <span style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✓</span>{pro}
                             </li>
                           ))}
                         </ul>
                       </div>
-                      <div className="cons" style={{ background: '#fef2f2', padding: '15px', borderRadius: '12px' }}>
-                        <h5 style={{ color: 'var(--red)', fontWeight: 700, marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Cons</h5>
+                      <div className="cons" style={{ background: '#fef2f2', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
+                        <h5 style={{ color: 'var(--red)', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Cons</h5>
                         <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
                           {generateProsCons(selectedBreed).cons.map((con, i) => (
                             <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
-                              <span style={{ color: 'var(--red)', fontWeight: 700, marginRight: '5px' }}>✕</span>{con}
+                              <span style={{ color: 'var(--red)', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✕</span>{con}
                             </li>
                           ))}
                         </ul>
@@ -648,7 +662,7 @@ const Results = () => {
                     <h4 style={{ color: 'var(--orange)', marginBottom: '15px', fontSize: '18px' }}>Best Living Conditions</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {buildLivingConditions(selectedBreed).map((cond, i) => (
-                        <div key={i} style={{ background: '#f8f9fa', padding: '12px 15px', borderRadius: '10px', fontSize: '14px' }}>
+                        <div key={i} style={{ background: '#f8f9fa', padding: '12px 15px', borderRadius: 'var(--radius-sm)', fontSize: '14px' }}>
                           <strong style={{ color: 'var(--brown)' }}>{cond.label}:</strong> {cond.text}
                         </div>
                       ))}
@@ -656,11 +670,11 @@ const Results = () => {
                   </div>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                    <div style={{ background: 'var(--cream)', padding: '15px', borderRadius: '15px' }}>
+                    <div style={{ background: 'var(--cream)', padding: '15px', borderRadius: 'var(--radius)' }}>
                       <h4 style={{ color: 'var(--orange)', marginBottom: '8px' }}>Ideal Indian Cities</h4>
                       <p style={{ fontSize: '14px', margin: 0, color: 'var(--text-soft)' }}>{selectedBreed.idealCities}</p>
                     </div>
-                    <div style={{ background: 'var(--cream)', padding: '15px', borderRadius: '15px' }}>
+                    <div style={{ background: 'var(--cream)', padding: '15px', borderRadius: 'var(--radius)' }}>
                       <h4 style={{ color: 'var(--orange)', marginBottom: '8px' }}>Common Health Issues</h4>
                       <p style={{ fontSize: '14px', margin: 0, color: 'var(--text-soft)' }}>{selectedBreed.health}</p>
                     </div>
@@ -669,7 +683,7 @@ const Results = () => {
                     <div style={{ marginTop: '20px' }}>
                       <button
                         onClick={() => handleAction('buy', selectedBreed)}
-                        style={{ padding: '12px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontFamily: "'Poppins', sans-serif", width: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
+                        style={{ padding: '12px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', fontFamily: 'var(--font-body-family)', width: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
                       >
                         {softCta ? 'See breeders for this breed' : 'Request to Buy'}
                       </button>
@@ -688,10 +702,10 @@ const Results = () => {
                     <input 
                       value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Add a breed to compare... (e.g. Beagle)" 
-                      style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontFamily: "'Poppins', sans-serif" }} 
+                      style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-strong)', fontFamily: 'var(--font-body-family)' }} 
                     />
                     {searchQuery.trim().length > 0 && (
-                      <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', border: '1px solid #ddd', borderRadius: '10px', maxHeight: '200px', overflowY: 'auto', zIndex: 10, marginTop: '5px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+                      <div style={{ position: 'absolute', top: '100%', left: 0, width: '100%', background: 'white', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', maxHeight: '200px', overflowY: 'auto', zIndex: 10, marginTop: '5px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
                         {breedsData.filter(b => b.name.toLowerCase().includes(searchQuery.trim().toLowerCase())).map(b => (
                           <div 
                             key={b.name} 
@@ -714,9 +728,9 @@ const Results = () => {
                       </div>
                     )}
                   </div>
-                  <button onClick={addBreedToCompare} style={{ padding: '10px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', flex: '0 1 auto', whiteSpace: 'nowrap' }}>Add to Compare</button>
+                  <button onClick={addBreedToCompare} style={{ padding: '10px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 'bold', flex: '0 1 auto', whiteSpace: 'nowrap' }}>Add to Compare</button>
                 </div>
-                <div ref={compareRef} style={{ overflowX: 'auto', background: 'var(--cream)', borderRadius: '15px', padding: '15px' }}>
+                <div ref={compareRef} style={{ overflowX: 'auto', background: 'var(--cream)', borderRadius: 'var(--radius)', padding: '15px' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', tableLayout: 'fixed', wordWrap: 'break-word', minWidth: '320px' }}>
                     <thead>
                       <tr>
@@ -759,7 +773,7 @@ const Results = () => {
                   </table>
                 </div>
                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <button onClick={downloadPDF} style={{ padding: '12px 24px', background: 'var(--brown)', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>Save to PDF</button>
+                  <button onClick={downloadPDF} style={{ padding: '12px 24px', background: 'var(--brown)', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>Save to PDF</button>
                 </div>
               </div>
             )}

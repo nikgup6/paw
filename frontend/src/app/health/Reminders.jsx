@@ -428,7 +428,7 @@ const Reminders = () => {
         .pb-rems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
         .pb-rem {
           display: flex; align-items: center; gap: 11px;
-          background: var(--white); border: 1px solid #EFE6DC; border-radius: 13px;
+          background: var(--white); border: 1px solid var(--border); border-radius: 13px;
           padding: 11px 13px; border-left: 4px solid #D8CCBE;
         }
         .pb-rem.is-due-today { border-left-color: #9A6B1F; background: #FFFDF8; }
@@ -437,7 +437,7 @@ const Reminders = () => {
         .pb-rem__icon { font-size: 19px; flex-shrink: 0; }
         .pb-rem__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         .pb-rem__title {
-          color: var(--brown); font-size: 14px; font-weight: 600;
+          color: var(--brown); font-size: 14px; font-weight: var(--weight-semibold);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .pb-rem__meta { color: var(--text-soft); font-size: 11.5px; }
@@ -449,14 +449,14 @@ const Reminders = () => {
           flex: 0 1 auto; width: auto; min-width: 64px;
           padding: 11px 8px 11px 12px;
         }
-        .pb-time__sep { color: var(--text-soft); font-weight: 800; }
+        .pb-time__sep { color: var(--text-soft); font-weight: var(--weight-bold); }
         .pb-time__ap {
           display: flex; margin-left: 4px; border-radius: 10px;
-          border: 2px solid #EAE4DE; overflow: hidden; background: #fff;
+          border: 2px solid var(--border-strong); overflow: hidden; background: #fff;
         }
         .pb-time__btn {
           padding: 10px 12px; border: none; background: none; cursor: pointer;
-          font-family: inherit; font-size: 12.5px; font-weight: 800;
+          font-family: inherit; font-size: 12.5px; font-weight: var(--weight-bold);
           color: var(--text-soft);
           transition: background-color var(--pb-fast) var(--pb-ease), color var(--pb-fast) var(--pb-ease);
         }
@@ -468,8 +468,8 @@ const Reminders = () => {
           display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
           animation: pb-fade-in var(--pb-fast) var(--pb-ease) both;
         }
-        .pb-confirm--inline > span:first-child { color: #B23B3B; font-size: 11.5px; font-weight: 700; }
-        .pb-rem__auto { font-size: 11px; color: var(--text-soft); font-weight: 600; white-space: nowrap; }
+        .pb-confirm--inline > span:first-child { color: #B23B3B; font-size: 11.5px; font-weight: var(--weight-bold); }
+        .pb-rem__auto { font-size: 11px; color: var(--text-soft); font-weight: var(--weight-semibold); white-space: nowrap; }
         @media (max-width: 720px) {
           .pb-rem { flex-wrap: wrap; }
           .pb-rem__main { flex: 1 1 60%; }

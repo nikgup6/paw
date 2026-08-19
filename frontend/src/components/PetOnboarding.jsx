@@ -185,7 +185,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
           style={{
             position: 'absolute', top: '20px', right: '25px',
             background: 'none', border: 'none', fontSize: '24px',
-            cursor: 'pointer', color: 'var(--text-soft)', fontWeight: 'bold'
+            cursor: 'pointer', color: 'var(--text-soft)', fontWeight: 'var(--weight-bold)'
           }}
         >
           &times;
@@ -193,7 +193,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
 
         {step === 1 ? (
           <div>
-            <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', marginBottom: '10px', fontSize: '28px', textAlign: 'center' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--brown)', marginBottom: '10px', fontSize: '28px', textAlign: 'center' }}>
               🐾 Create Pet Profile
             </h2>
             <p style={{ color: 'var(--text-soft)', textAlign: 'center', marginBottom: '30px', fontSize: '15px' }}>
@@ -203,19 +203,19 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
             <form onSubmit={handleNextStep}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div className="auth-field" style={{ marginBottom: 0 }}>
-                  <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700 }}>Dog's Name *</label>
+                  <label style={{ fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-medium)' }}>Dog's Name *</label>
                   <input 
                     type="text" 
                     value={name} 
                     onChange={(e) => setName(e.target.value)} 
-                    placeholder="e.g. Max, Bella" 
-                    required 
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                    placeholder="e.g. Max, Bella"
+                    required
+                    style={{ fontFamily: 'var(--font-body-family)' }}
                   />
                 </div>
 
                 <div className="auth-field" style={{ marginBottom: 0 }}>
-                  <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700 }}>Gender *</label>
+                  <label style={{ fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-medium)' }}>Gender *</label>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
                     {['Male', 'Female'].map(g => (
                       <button
@@ -229,9 +229,9 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                           background: gender === g ? 'var(--orange-pale)' : 'white',
                           color: gender === g ? 'var(--orange)' : 'var(--text-soft)',
                           borderRadius: '12px',
-                          fontWeight: 'bold',
+                          fontWeight: 'var(--weight-semibold)',
                           cursor: 'pointer',
-                          fontFamily: "'Poppins', sans-serif",
+                          fontFamily: 'var(--font-display)',
                           transition: 'all 0.2s'
                         }}
                       >
@@ -244,32 +244,32 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div className="auth-field" style={{ marginBottom: 0, position: 'relative' }}>
-                  <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700 }}>Date of Birth (DOB) *</label>
+                  <label style={{ fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-medium)' }}>Date of Birth (DOB) *</label>
                   <input 
                     type="date" 
-                    value={dob} 
-                    onChange={(e) => setDob(e.target.value)} 
-                    required 
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                    value={dob}
+                    onChange={(e) => setDob(e.target.value)}
+                    required
+                    style={{ fontFamily: 'var(--font-body-family)' }}
                   />
                   {ageDisplay && (
-                    <div style={{ fontSize: '12px', color: 'var(--orange)', fontWeight: 600, marginTop: '5px', paddingLeft: '2px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--orange)', fontWeight: 'var(--weight-medium)', marginTop: '5px', paddingLeft: '2px' }}>
                       🎂 {ageDisplay}
                     </div>
                   )}
                 </div>
 
                 <div className="auth-field" style={{ marginBottom: 0, position: 'relative' }}>
-                  <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700 }}>Breed *</label>
+                  <label style={{ fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-medium)' }}>Breed *</label>
                   <input 
                     type="text" 
                     value={breedQuery} 
                     onChange={(e) => { setBreedQuery(e.target.value); setBreed(e.target.value); setShowBreedSuggestions(true); }}
                     onFocus={() => setShowBreedSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowBreedSuggestions(false), 200)}
-                    placeholder="Search breed..." 
-                    required 
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                    placeholder="Search breed..."
+                    required
+                    style={{ fontFamily: 'var(--font-body-family)' }}
                   />
                   
                   <AnimatePresence>
@@ -293,7 +293,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                             onMouseOver={e => e.currentTarget.style.background = 'var(--cream)'}
                             onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                           >
-                            <span style={{ fontWeight: 600, color: 'var(--brown)', fontFamily: "'Poppins', sans-serif", fontSize: '14px' }}>{b.name}</span>
+                            <span style={{ fontWeight: 'var(--weight-regular)', color: 'var(--brown)', fontFamily: 'var(--font-body-family)', fontSize: '14px' }}>{b.name}</span>
                           </div>
                         ))}
                       </motion.div>
@@ -303,14 +303,14 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
               </div>
 
               <div className="auth-field" style={{ marginBottom: '25px' }}>
-                <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700 }}>Health Complications (Optional)</label>
+                <label style={{ fontFamily: 'var(--font-body-family)', fontWeight: 'var(--weight-medium)' }}>Health Complications (Optional)</label>
                 <textarea 
                   value={healthComplications} 
                   onChange={(e) => setHealthComplications(e.target.value)} 
                   placeholder="e.g. Food allergies, minor joint pain, surgery history..." 
                   style={{
                     width: '100%', minHeight: '80px', padding: '12px 16px', borderRadius: '12px',
-                    border: '2px solid #EAE4DE', fontSize: '14px', fontFamily: "'Poppins', sans-serif",
+                    border: '2px solid #EAE4DE', fontSize: '14px', fontFamily: 'var(--font-body-family)',
                     outline: 'none', resize: 'vertical'
                   }}
                 />
@@ -319,7 +319,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
               <button 
                 type="submit" 
                 className="auth-btn" 
-                style={{ fontFamily: "'Poppins', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                style={{ fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
                 Proceed to Vaccine Scanner →
               </button>
@@ -327,7 +327,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
           </div>
         ) : (
           <div>
-            <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', marginBottom: '10px', fontSize: '28px', textAlign: 'center' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--brown)', marginBottom: '10px', fontSize: '28px', textAlign: 'center' }}>
               🛡️ Vaccine Record Scanner
             </h2>
             <p style={{ color: 'var(--text-soft)', textAlign: 'center', marginBottom: '30px', fontSize: '15px' }}>
@@ -351,7 +351,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                 }}
               >
                 <div style={{ fontSize: '40px', marginBottom: '10px' }}>📄</div>
-                <h4 style={{ color: 'var(--brown)', marginBottom: '5px', fontFamily: "'Poppins', sans-serif" }}>
+                <h4 style={{ color: 'var(--brown)', marginBottom: '5px', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)' }}>
                   Drag & Drop vaccine records/PDF/Image here
                 </h4>
                 <p style={{ color: 'var(--text-soft)', fontSize: '12px', marginBottom: '20px' }}>
@@ -407,13 +407,13 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                     />
                     
                     <div style={{ fontSize: '40px', marginBottom: '15px', animation: 'pulse 1s infinite alternate' }}>🐕</div>
-                    <h3 style={{ color: 'var(--brown)', fontFamily: "'Fredoka', sans-serif", fontSize: '20px', marginBottom: '10px' }}>
+                    <h3 style={{ color: 'var(--brown)', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', fontSize: '20px', marginBottom: '10px' }}>
                       AI Matchmaker OCR Scanner
                     </h3>
                     <p style={{ color: 'var(--text-soft)', fontSize: '14px' }}>
                       Analyzing document: <strong>{uploadedFileName}</strong>
                     </p>
-                    <p style={{ color: 'var(--orange)', fontSize: '12px', fontWeight: 'bold', marginTop: '10px' }}>
+                    <p style={{ color: 'var(--orange)', fontSize: '12px', fontWeight: 'var(--weight-medium)', marginTop: '10px' }}>
                       Extracting vaccine types and dates...
                     </p>
                   </div>
@@ -421,11 +421,11 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                   <div>
                     {scanResult && (
                       <div style={{ background: '#FCFAF7', border: '1px solid #EAE4DE', borderRadius: '16px', padding: '20px', marginBottom: '20px' }}>
-                        <div style={{ color: '#27AE60', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                        <div style={{ color: '#27AE60', fontWeight: 'var(--weight-medium)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
                           ✓ Records parsed successfully from {uploadedFileName}
                         </div>
                         
-                        <h4 style={{ color: 'var(--brown)', fontFamily: "'Poppins', sans-serif", borderBottom: '1px solid #EAE4DE', paddingBottom: '5px', marginBottom: '10px' }}>
+                        <h4 style={{ color: 'var(--brown)', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', borderBottom: '1px solid #EAE4DE', paddingBottom: '5px', marginBottom: '10px' }}>
                           💉 Extracted Vaccines
                         </h4>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
@@ -439,15 +439,15 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                           <tbody>
                             {scanResult.vaccines.map((v, idx) => (
                               <tr key={idx} style={{ borderBottom: '1px solid #F5F0EB' }}>
-                                <td style={{ padding: '8px 5px', fontWeight: 600 }}>{v.name}</td>
+                                <td style={{ padding: '8px 5px', fontWeight: 'var(--weight-semibold)' }}>{v.name}</td>
                                 <td style={{ padding: '8px 5px' }}>{v.date}</td>
-                                <td style={{ padding: '8px 5px', color: '#27AE60', fontWeight: 'bold' }}>{v.status}</td>
+                                <td style={{ padding: '8px 5px', color: '#27AE60', fontWeight: 'var(--weight-bold)' }}>{v.status}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
 
-                        <h4 style={{ color: 'var(--brown)', fontFamily: "'Poppins', sans-serif", borderBottom: '1px solid #EAE4DE', paddingBottom: '5px', marginBottom: '10px' }}>
+                        <h4 style={{ color: 'var(--brown)', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', borderBottom: '1px solid #EAE4DE', paddingBottom: '5px', marginBottom: '10px' }}>
                           📅 Calculated Calendar Reminders
                         </h4>
                         <div>
@@ -465,7 +465,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                                 <strong style={{ color: 'var(--brown)' }}>{rem.vaccine}</strong>
                                 <div style={{ fontSize: '11px', color: 'var(--text-soft)' }}>Booster due</div>
                               </div>
-                              <span style={{ fontWeight: 600, color: 'var(--brown)' }}>📅 {rem.date}</span>
+                              <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--brown)' }}>📅 {rem.date}</span>
                             </div>
                           ))}
                         </div>
@@ -481,7 +481,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                 type="button" 
                 onClick={() => handleSaveProfile(false)}
                 className="hero-btn hero-btn-secondary"
-                style={{ flex: 1, padding: '12px 20px', fontSize: '14px', fontFamily: "'Poppins', sans-serif" }}
+                style={{ flex: 1, padding: '12px 20px', fontSize: '14px', fontFamily: 'var(--font-display)' }}
               >
                 Skip Scanner
               </button>
@@ -491,7 +491,7 @@ const PetOnboarding = ({ onComplete, onCancel }) => {
                 onClick={() => handleSaveProfile(true)}
                 disabled={!fileUploaded || isScanning}
                 className="hero-btn"
-                style={{ flex: 2, padding: '12px 20px', fontSize: '14px', fontFamily: "'Poppins', sans-serif" }}
+                style={{ flex: 2, padding: '12px 20px', fontSize: '14px', fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)' }}
               >
                 Process & Save Profile
               </button>

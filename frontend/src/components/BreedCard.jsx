@@ -28,13 +28,14 @@ const BreedCard = ({ breed, rank, reason, onBuy, onCompare, onFullProfile, hideA
         {!hideActionButtons && (
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
             {!hideBuyButton && (
-              <button onClick={(e) => { e.stopPropagation(); onBuy && onBuy(breed); }} style={{ flex: 1, padding: '8px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>Buy</button>
+              /* High-emphasis CTA — literally the role table's "Buy" example. */
+              <button onClick={(e) => { e.stopPropagation(); onBuy && onBuy(breed); }} style={{ flex: 1, padding: '8px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: '50px', fontWeight: 'var(--weight-bold)', cursor: 'pointer', fontFamily: 'var(--font-display)' }}>Buy</button>
             )}
             {!hideCompareButton && (
-              <button onClick={(e) => { e.stopPropagation(); onCompare && onCompare(breed); }} style={{ flex: 1, padding: '8px', background: 'transparent', color: 'var(--orange)', border: '1px solid var(--orange)', borderRadius: '50px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>Compare</button>
+              <button onClick={(e) => { e.stopPropagation(); onCompare && onCompare(breed); }} style={{ flex: 1, padding: '8px', background: 'transparent', color: 'var(--orange)', border: '1px solid var(--orange)', borderRadius: '50px', fontWeight: 'var(--weight-semibold)', cursor: 'pointer', fontFamily: 'var(--font-display)' }}>Compare</button>
             )}
             {!hideFullProfileButton && (
-              <button onClick={(e) => { e.stopPropagation(); onFullProfile && onFullProfile(breed); }} style={{ flex: 1, padding: '8px', background: 'transparent', color: 'var(--brown)', border: '1px solid var(--brown)', borderRadius: '50px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>Full Profile</button>
+              <button onClick={(e) => { e.stopPropagation(); onFullProfile && onFullProfile(breed); }} style={{ flex: 1, padding: '8px', background: 'transparent', color: 'var(--brown)', border: '1px solid var(--brown)', borderRadius: '50px', fontWeight: 'var(--weight-semibold)', cursor: 'pointer', fontFamily: 'var(--font-display)' }}>Full Profile</button>
             )}
           </div>
         )}

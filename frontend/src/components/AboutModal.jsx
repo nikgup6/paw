@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 /* Premium "About PawBuddy" full-screen modal — fade + slide + scale in,
    blurred/darkened backdrop, staggered feature cards, glassmorphism.
-   Brand palette: cream / orange / brown, Fredoka + Poppins. */
+   Brand palette: cream / orange / brown, Jakarta Sans headings + Work Sans body. */
 
 const CORE = [
   {
@@ -147,7 +147,7 @@ const AboutModal = ({ isOpen, onClose, onTakeQuiz }) => {
               border-radius: 26px;
               padding: clamp(28px, 5vw, 56px);
               box-shadow: 0 40px 100px rgba(45, 30, 18, 0.4);
-              font-family: 'Poppins', sans-serif;
+              font-family: var(--font-body-family);
               margin: auto;
             }
             .about-close {
@@ -162,9 +162,9 @@ const AboutModal = ({ isOpen, onClose, onTakeQuiz }) => {
             .about-hero { text-align: center; margin-bottom: clamp(28px, 5vw, 44px); }
             .about-hero__paw { font-size: 46px; margin-bottom: 8px; }
             .about-hero h2 {
-              font-family: 'Fredoka', sans-serif;
+              font-family: var(--font-display);
               font-size: clamp(30px, 6vw, 46px);
-              font-weight: 800; color: var(--orange, #E66A1A);
+              font-weight: var(--weight-bold); color: var(--orange, #E66A1A);
               margin: 0 0 12px;
             }
             .about-hero p {
@@ -190,12 +190,12 @@ const AboutModal = ({ isOpen, onClose, onTakeQuiz }) => {
               display: flex; align-items: center; justify-content: center;
               margin-bottom: 14px;
             }
-            .about-card h3 { font-family: 'Fredoka', sans-serif; color: var(--brown, #5a4636); font-size: 19px; margin: 0 0 8px; }
-            .about-card h4 { font-family: 'Fredoka', sans-serif; color: var(--brown, #5a4636); font-size: 16px; margin: 0 0 6px; }
+            .about-card h3 { font-family: var(--font-display); font-weight: var(--weight-semibold); color: var(--brown, #5a4636); font-size: 19px; margin: 0 0 8px; }
+            .about-card h4 { font-family: var(--font-display); font-weight: var(--weight-semibold); color: var(--brown, #5a4636); font-size: 16px; margin: 0 0 6px; }
             .about-card p { color: var(--text-soft, #6e5646); font-size: 13.5px; line-height: 1.55; margin: 0; }
             .about-card--soon { background: rgba(255,255,255,0.55); }
             .about-soon-title {
-              text-align: center; font-family: 'Fredoka', sans-serif;
+              text-align: center; font-family: var(--font-display); font-weight: var(--weight-semibold);
               color: var(--brown, #5a4636); font-size: 24px; margin: 8px 0 18px;
             }
             .about-cta {
@@ -203,12 +203,12 @@ const AboutModal = ({ isOpen, onClose, onTakeQuiz }) => {
               padding-top: clamp(24px, 4vw, 36px);
               border-top: 1px solid rgba(230, 106, 26, 0.15);
             }
-            .about-cta h3 { font-family: 'Fredoka', sans-serif; color: var(--brown, #5a4636); font-size: clamp(22px, 4vw, 30px); margin: 0 0 18px; }
+            .about-cta h3 { font-family: var(--font-display); font-weight: var(--weight-semibold); color: var(--brown, #5a4636); font-size: clamp(22px, 4vw, 30px); margin: 0 0 18px; }
             .about-cta__btn {
               position: relative; overflow: hidden;
               padding: 15px 40px; border: none; border-radius: 50px;
               background: linear-gradient(135deg, #E66A1A 0%, #C45511 100%);
-              color: #fff; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 16px;
+              color: #fff; font-family: var(--font-display); font-weight: var(--weight-bold); font-size: 16px;
               cursor: pointer; box-shadow: 0 10px 28px rgba(208, 92, 25, 0.35);
               transition: transform 0.25s ease, box-shadow 0.25s ease;
             }
