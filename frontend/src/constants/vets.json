@@ -10,7 +10,7 @@
     "services": "Multispecialty; surgery; parvo/jaundice critical care",
     "equipment": "In-house blood diagnostics; ICU/critical care unit",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJLx_W6M2VyzsRwWbzZuVQJ6k",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=VETCARE%20Multispeciality%20Pet%20Hospital&query_place_id=ChIJLx_W6M2VyzsRwWbzZuVQJ6k",
     "id": "hyd-vet-1"
   },
   {
@@ -24,7 +24,7 @@
     "services": "Multispecialty; 15+ yr practice; 24hr",
     "equipment": "In-house OT (operating theatre); ambulance",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJKbyYm6WayzsRAgzNFGE6Do8",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Pawfex%20Multispeciality%20Pet%20Hospital&query_place_id=ChIJKbyYm6WayzsRAgzNFGE6Do8",
     "id": "hyd-vet-2"
   },
   {
@@ -38,7 +38,7 @@
     "services": "Surgery; tick-fever/kidney-liver critical care; 24hr",
     "equipment": "Critical-care unit (platelet/creatinine monitoring)",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJNYA8vyWRyzsRFVK7-qEUfaU",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Akshaya%20Pet%20Clinic&query_place_id=ChIJNYA8vyWRyzsRFVK7-qEUfaU",
     "id": "hyd-vet-3"
   },
   {
@@ -52,7 +52,7 @@
     "services": "Surgery incl. amputation; weekend/night hours",
     "equipment": "X-ray; USG (ultrasound); blood tests - in-house",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ3esVrwKiyzsR6bKqqPPU3nU",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dr%20Suresh%20Pet%20Care%20Hospital%20%26%20Surgical%20Center&query_place_id=ChIJ3esVrwKiyzsR6bKqqPPU3nU",
     "id": "hyd-vet-4"
   },
   {
@@ -66,7 +66,7 @@
     "services": "Parvo/tick-fever; long hours (6am-12:30am)",
     "equipment": "PCR diagnostic testing",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJef2Zgh2ZyzsRN0fkQku2bJY",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Pet%20Shine%20Clinic&query_place_id=ChIJef2Zgh2ZyzsRN0fkQku2bJY",
     "id": "hyd-vet-5"
   },
   {
@@ -80,7 +80,7 @@
     "services": "24/7 emergency; paralysis surgery",
     "equipment": "Multiple diagnostic test types (in-house)",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJtenY-NCTyzsR8BJVatj1_H0",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Mr.VET%20Animal%20Hospital%2024/7&query_place_id=ChIJtenY-NCTyzsR8BJVatj1_H0",
     "id": "hyd-vet-6"
   },
   {
@@ -94,7 +94,7 @@
     "services": "Eye surgery; tick-fever; 6+ yr relationships",
     "equipment": "In-house diagnostics",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJnzXbRMaYyzsR3COzJGDF0LM",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=PETPLANET%20DOG%20CLINIC%20AND%20ANIMAL%20DIAGNOSTICS&query_place_id=ChIJnzXbRMaYyzsR3COzJGDF0LM",
     "id": "hyd-vet-7"
   },
   {
@@ -108,7 +108,7 @@
     "services": "Neutering/spaying surgery; stray/emergency care",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJST8qCQCbyzsRMTSApUuyGH0",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Ivy%20Paws%20Super%20Specialty%20Veterinary%20Hospital%20%28Sainikpuri%29&query_place_id=ChIJST8qCQCbyzsRMTSApUuyGH0",
     "id": "hyd-vet-8"
   },
   {
@@ -122,7 +122,7 @@
     "services": "Pregnancy care; vaccination; parvo treatment",
     "equipment": "X-ray; ultrasound scanning; CBP (blood count) machine - in-house",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ8xT2jy-RyzsRTzbXymfHmU4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=vety%20dog%20clinic&query_place_id=ChIJ8xT2jy-RyzsRTzbXymfHmU4",
     "id": "hyd-vet-9"
   },
   {
@@ -136,7 +136,7 @@
     "services": "Urinary surgery; vaccination; grooming",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJeRqjnZyTyzsR938tmW6-xtA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=PULPA%27S%20Veterinary%20Clinic&query_place_id=ChIJeRqjnZyTyzsR938tmW6-xtA",
     "id": "hyd-vet-10"
   },
   {
@@ -150,7 +150,7 @@
     "services": "Emergency resuscitation; spinal surgery",
     "equipment": "MRI-referred diagnostics (external MRI, in-house surgery)",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJq7od3s6RyzsRPBCjI67Ewwc",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=MaxPetZ%20Hyderabad&query_place_id=ChIJq7od3s6RyzsRPBCjI67Ewwc",
     "id": "hyd-vet-11"
   },
   {
@@ -164,7 +164,7 @@
     "services": "Cherry-eye & spay surgery; pyometra + tick-fever; 24/7",
     "equipment": "Platelet monitoring for pre-surgery clearance",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJU__rFTSZyzsRRbSMxn1oGL8",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Medi%20Paws%20Pet%20Care%20Hospital&query_place_id=ChIJU__rFTSZyzsRRbSMxn1oGL8",
     "id": "hyd-vet-12"
   },
   {
@@ -178,7 +178,7 @@
     "services": "Tumor/pyometra/UTI surgery; anesthesia counseling",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJmwrgaFaRyzsRqsE5jFvMNzY",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Care%20%26%20Cure%20Animal%20Hospital%20%26%20Surgical%20Center&query_place_id=ChIJmwrgaFaRyzsRqsE5jFvMNzY",
     "id": "hyd-vet-13"
   },
   {
@@ -192,7 +192,7 @@
     "services": "Foreign-body & pyometra surgery; 24/7; multi-branch",
     "equipment": "X-ray",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJFZiH3_WXyzsRBfSyNse_czQ",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Crown%20Vet%20Banjara%20Hills&query_place_id=ChIJFZiH3_WXyzsRBfSyNse_czQ",
     "id": "hyd-vet-14"
   },
   {
@@ -206,7 +206,7 @@
     "services": "24/7 multi-specialty; intestinal obstruction surgery; GDV emergency surgery",
     "equipment": "Multi-doctor surgical team; named specialists per condition",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJdUyecC-RyzsR3YI7pLbn2bA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Seven%20Oaks%20Pet%20Hospital%2024/7%20Multi-Speciality&query_place_id=ChIJdUyecC-RyzsR3YI7pLbn2bA",
     "id": "hyd-vet-15"
   },
   {
@@ -220,7 +220,7 @@
     "services": "Hernia surgery; avian/exotic (birds); 24hr",
     "equipment": "Orthopedic surgical capability (fracture repair)",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJKf836L2ZyzsR5Yri9h2ehK4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sniffers%20Pet%20Clinic&query_place_id=ChIJKf836L2ZyzsR5Yri9h2ehK4",
     "id": "hyd-vet-16"
   },
   {
@@ -234,7 +234,7 @@
     "services": "24hr; spay; choke/emergency",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJW1oGmMiRyzsRElDlGOFsdts",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=The%20Jupiter%20Pet%20Hospital&query_place_id=ChIJW1oGmMiRyzsRElDlGOFsdts",
     "id": "hyd-vet-17"
   },
   {
@@ -248,7 +248,7 @@
     "services": "Deworming; tick bathing; surgery",
     "equipment": "24hr critical care unit (named in listing)",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJcweVWDaRyzsRXPYMcT6ol4g",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Vet%20Spot%20The%20Animal%20Hospital&query_place_id=ChIJcweVWDaRyzsRXPYMcT6ol4g",
     "id": "hyd-vet-18"
   },
   {
@@ -262,7 +262,7 @@
     "services": "Parvo critical care; 24hr",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ9RpjaAqRyzsRvAvBfTwCz7U",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=ANICARE%20Pet%20Clinic&query_place_id=ChIJ9RpjaAqRyzsRvAvBfTwCz7U",
     "id": "hyd-vet-19"
   },
   {
@@ -276,7 +276,7 @@
     "services": "Skin/derm; grooming; vaccination; app-based",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJp5daXruXyzsRn_62NwvwEp8",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Vetic%20Pet%20Clinic%20Banjara%20Hills&query_place_id=ChIJp5daXruXyzsRn_62NwvwEp8",
     "id": "hyd-vet-20"
   },
   {
@@ -290,7 +290,7 @@
     "services": "Surgery; accident/trauma care",
     "equipment": "Platelet-count monitoring (tick fever)",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ7fK7hQOTyzsR5m1g4iARLo4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=DC%20Pet%20Clinic&query_place_id=ChIJ7fK7hQOTyzsR5m1g4iARLo4",
     "id": "hyd-vet-21"
   },
   {
@@ -304,7 +304,7 @@
     "services": "Boarding + treatment + grooming combined",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJG_7N5sORyzsRXL0uT5ktZvo",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dr.D.VET%20Animal%20Hospital&query_place_id=ChIJG_7N5sORyzsRXL0uT5ktZvo",
     "id": "hyd-vet-22"
   },
   {
@@ -318,7 +318,7 @@
     "services": "General + emergency; multi-pet family practice",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJP96GbQCFyzsR02359pNtA-4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Seven%20Oaks%20Pet%20Hospital%20%28Kompally%29&query_place_id=ChIJP96GbQCFyzsR02359pNtA-4",
     "id": "hyd-vet-23"
   },
   {
@@ -332,7 +332,7 @@
     "services": "Tick-fever; avian/exotic (birds, guinea pigs)",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJZe9hYIqbyzsRZp-bQWQDCMk",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dr.Paws%20Pet%20%26%20Animal%20Clinic&query_place_id=ChIJZe9hYIqbyzsRZp-bQWQDCMk",
     "id": "hyd-vet-24"
   },
   {
@@ -346,7 +346,7 @@
     "services": "UTI treatment; spa + health checkup combined",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ8c8pZh6hyzsRBJ7JHZwwbGk",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Seven%20Oaks%20Pet%20Hospital%20%28Vanasthalipuram%29&query_place_id=ChIJ8c8pZh6hyzsRBJ7JHZwwbGk",
     "id": "hyd-vet-25"
   },
   {
@@ -360,7 +360,7 @@
     "services": "Giant-breed surgery (St. Bernard); 6+ yr relationships",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ0_w6p02WyzsR6EtXjcohSCA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Lifeline%20Veterinary%20Clinic&query_place_id=ChIJ0_w6p02WyzsR6EtXjcohSCA",
     "id": "hyd-vet-26"
   },
   {
@@ -374,7 +374,7 @@
     "services": "Rescue/kitten care; general",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJHzRECGeZyzsROCvfH5IoX5c",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Cura%20Veterinary%20Clinic&query_place_id=ChIJHzRECGeZyzsROCvfH5IoX5c",
     "id": "hyd-vet-27"
   },
   {
@@ -388,7 +388,7 @@
     "services": "Vaccination; injury; morning+evening",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJf8-ouBKbyzsRavkXF4c6NHA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=THE%20PET%20CARE%20HOSPITAL&query_place_id=ChIJf8-ouBKbyzsRavkXF4c6NHA",
     "id": "hyd-vet-28"
   },
   {
@@ -402,7 +402,7 @@
     "services": "24hr; grooming; general; app-based",
     "equipment": "Not specified",
     "city": "Hyderabad",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJnUkk3kiTyzsREZAnZL-DgdA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Vetic%20Pet%20Clinic%20HITEC%20City&query_place_id=ChIJnUkk3kiTyzsREZAnZL-DgdA",
     "id": "hyd-vet-29"
   },
   {
@@ -416,7 +416,7 @@
     "services": "Tick-fever; derm; honest counsel",
     "equipment": "Avian/exotic diagnostics (conure, cockatiel)",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJKx5-o6FlUjoRMNpFQO5Z5_I",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dr.%20Sathya%27s%20Veterinary%20Clinic&query_place_id=ChIJKx5-o6FlUjoRMNpFQO5Z5_I",
     "id": "che-vet-1"
   },
   {
@@ -430,7 +430,7 @@
     "services": "Ortho specialist; parvo; 7+ yr relationships",
     "equipment": "Named orthopedic diagnostic capability",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJKywmvZZdUjoRGXAu-a6qbEs",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Thanigai%20Pet%20Care%20Clinic&query_place_id=ChIJKywmvZZdUjoRGXAu-a6qbEs",
     "id": "che-vet-2"
   },
   {
@@ -444,7 +444,7 @@
     "services": "Tumor second-opinion; pharmacy; long hours",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJV3zs4ARnUjoRNGuhfKKwj1o",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=The%20Pet%27s%20Country&query_place_id=ChIJV3zs4ARnUjoRNGuhfKKwj1o",
     "id": "che-vet-3"
   },
   {
@@ -458,7 +458,7 @@
     "services": "Liver/infection critical care; 20+ yr practice",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJKeQtfORgUjoRvDXFpm2rQWo",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Deivayanai%20Pet%20Clinic&query_place_id=ChIJKeQtfORgUjoRvDXFpm2rQWo",
     "id": "che-vet-4"
   },
   {
@@ -472,7 +472,7 @@
     "services": "Panleukopenia critical care; derm; home visits",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ1dcdg7lnUjoR53H1UbxsfnE",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Madras%20Veterinary%20Clinic&query_place_id=ChIJ1dcdg7lnUjoR53H1UbxsfnE",
     "id": "che-vet-5"
   },
   {
@@ -486,7 +486,7 @@
     "services": "Spay/neuter surgery; genuine-care reputation",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJgTSWuFRmUjoR4WQFCLlPTbg",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Paws%20and%20Claws%20Pet%20Clinic&query_place_id=ChIJgTSWuFRmUjoR4WQFCLlPTbg",
     "id": "che-vet-6"
   },
   {
@@ -500,7 +500,7 @@
     "services": "Oral tumor surgery; derm; 12+ yr relationships",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJL6X2zFVvUjoRVYxyrEb70g8",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Raksha%20Pet%20Clinic%20Chromepet&query_place_id=ChIJL6X2zFVvUjoRVYxyrEb70g8",
     "id": "che-vet-7"
   },
   {
@@ -514,7 +514,7 @@
     "services": "Tick-fever; home check-up arranging; not commercial",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJVVVVxZZnUjoRhX8wAWmeJfM",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=JP%20Pet%20Speciality%20Hospital&query_place_id=ChIJVVVVxZZnUjoRhX8wAWmeJfM",
     "id": "che-vet-8"
   },
   {
@@ -528,7 +528,7 @@
     "services": "Parvo critical care; grooming; low-cost",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJpWERkKpgUjoR59V0s-Md7t4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Renu%20Pet%20Clinic%20and%20Grooming%20Studio&query_place_id=ChIJpWERkKpgUjoR59V0s-Md7t4",
     "id": "che-vet-9"
   },
   {
@@ -542,7 +542,7 @@
     "services": "Parvo care; grooming; app-based",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJn-TpwLFnUjoRqrZ8z1rJdlQ",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Vetic%20Pet%20Clinic%20Adyar&query_place_id=ChIJn-TpwLFnUjoRqrZ8z1rJdlQ",
     "id": "che-vet-10"
   },
   {
@@ -556,7 +556,7 @@
     "services": "Pancreatitis/IBS management; 2+ decades",
     "equipment": "Acupuncture/physiotherapy for chronic cases",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJtw26dKFmUjoRynCuXVyq754",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Ballo%20Multispeciality%20Pet%20Clinic&query_place_id=ChIJtw26dKFmUjoRynCuXVyq754",
     "id": "che-vet-11"
   },
   {
@@ -570,7 +570,7 @@
     "services": "Travel-cert; grooming; parvo; app-based",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJPaStTXllUjoRlafyAjP2YgU",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Vetic%20Pet%20Clinic%20Anna%20Nagar&query_place_id=ChIJPaStTXllUjoRlafyAjP2YgU",
     "id": "che-vet-12"
   },
   {
@@ -584,7 +584,7 @@
     "services": "Parvo critical care; kidney (creatinine) management",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJrQMFiRZfUjoRVyc_1Na9EB0",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Wonder%20Care%20Pet%20Clinic&query_place_id=ChIJrQMFiRZfUjoRVyc_1Na9EB0",
     "id": "che-vet-13"
   },
   {
@@ -598,7 +598,7 @@
     "services": "Rabbit/exotic; root-cause explanation",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJIaOcxSpjUjoRpLo3Es5mfPk",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Ambattur%20Pet%20Clinic&query_place_id=ChIJIaOcxSpjUjoRpLo3Es5mfPk",
     "id": "che-vet-14"
   },
   {
@@ -612,7 +612,7 @@
     "services": "Jaundice critical care; pharmacy; long hours",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJv65vpAhjUjoRTBD-TmoUPek",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=JPL%20Pets%20Hospital%20and%20Store&query_place_id=ChIJv65vpAhjUjoRTBD-TmoUPek",
     "id": "che-vet-15"
   },
   {
@@ -626,7 +626,7 @@
     "services": "Diagnosis specialist; affordable",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJAQAAFHNvUjoRyadToyXJWXU",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Chennai%20Veterinary%20Hospital%20%26%20Shelters&query_place_id=ChIJAQAAFHNvUjoRyadToyXJWXU",
     "id": "che-vet-16"
   },
   {
@@ -640,7 +640,7 @@
     "services": "Hematoma surgery; affordable; strays",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJO9KVwdtjUjoRdAvNjGaVq8w",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Metrovetz%20veterinary%20clinic&query_place_id=ChIJO9KVwdtjUjoRdAvNjGaVq8w",
     "id": "che-vet-17"
   },
   {
@@ -654,7 +654,7 @@
     "services": "Surgery; boarding; general",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJRW7xl2NkUjoRyxZ8YlREJiM",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Fine%20Pet%20Speciality%20Clinic&query_place_id=ChIJRW7xl2NkUjoRyxZ8YlREJiM",
     "id": "che-vet-18"
   },
   {
@@ -668,7 +668,7 @@
     "services": "Panleukopenia care; home visits; palliative care",
     "equipment": "Not specified",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJx31gaeJmUjoRqA1ZRFqfROM",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=KK%20Pet%20Clinic&query_place_id=ChIJx31gaeJmUjoRqA1ZRFqfROM",
     "id": "che-vet-19"
   },
   {
@@ -682,7 +682,7 @@
     "services": "Vaccination; medication; grooming",
     "equipment": "Sister brand of Auro Multispeciality (Tharamani)",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ9f_h5vNbUjoRVIOgf6Uqbgs",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Auropet%20Clinic%20%26%20Petstore%20%28Sholinganallur%29&query_place_id=ChIJ9f_h5vNbUjoRVIOgf6Uqbgs",
     "id": "che-vet-20"
   },
   {
@@ -696,7 +696,7 @@
     "services": "Laparoscopic/cataract surgery; endoscopy; jaw-tumor surgery",
     "equipment": "Endoscopy suite",
     "city": "Chennai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJVz9ZQ05kUjoRNDMwUt4wj54",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Barking%20Fine%20Hospital%20Perambur&query_place_id=ChIJVz9ZQ05kUjoRNDMwUt4wj54",
     "id": "che-vet-21"
   },
   {
@@ -710,7 +710,7 @@
     "services": "Abdominal tumor surgery; avian care; premium positioning",
     "equipment": "Multi-doctor surgical team",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJM8a4GoltrjsRQs0Eq8ztClE",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=ADVITHA%20PET%20HOSPITAL%20Electronic%20City&query_place_id=ChIJM8a4GoltrjsRQs0Eq8ztClE",
     "id": "blr-vet-1"
   },
   {
@@ -724,7 +724,7 @@
     "services": "Orthopedic surgery (FHO, ligament rupture); neutering",
     "equipment": "Well-equipped surgical facility (named by patients)",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJX4FT47w_rjsRBceV85TTwHs",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Supervet%20Multispeciality%20Veterinary%20Hospital%2024x7&query_place_id=ChIJX4FT47w_rjsRBceV85TTwHs",
     "id": "blr-vet-2"
   },
   {
@@ -738,7 +738,7 @@
     "services": "Hind-leg mobility diagnosis; X-ray; CT-scan referral",
     "equipment": "X-ray in-house; CT scan by referral",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ5UhlYe0VrjsRzoT7c-BVKFk",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Advitha%20Pet%20Hospital%20-%20HSR&query_place_id=ChIJ5UhlYe0VrjsRzoT7c-BVKFk",
     "id": "blr-vet-3"
   },
   {
@@ -752,7 +752,7 @@
     "services": "Spay surgery; vaccination schedule counseling",
     "equipment": "Not specified",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJVct6IAkVrjsRiuOC9nwadms",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Leela%20Pet%20Clinic%20%28HSR%20Layout%29&query_place_id=ChIJVct6IAkVrjsRiuOC9nwadms",
     "id": "blr-vet-4"
   },
   {
@@ -766,7 +766,7 @@
     "services": "Feline Panleukopenia critical stabilization; spa/boarding",
     "equipment": "Stabilization protocol for 104.8F fever case",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ1QtkF1k9rjsRl7fMfriZa2o",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=RMV%20Multi-Speciality%20Veterinary%20Clinic%20%28Mahalakshmi%20Layout%29&query_place_id=ChIJ1QtkF1k9rjsRl7fMfriZa2o",
     "id": "blr-vet-5"
   },
   {
@@ -780,7 +780,7 @@
     "services": "Vaccination; grooming; boarding; UTI diagnosis",
     "equipment": "Not specified",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ1cIsQBIRrjsR6Y4SSg4EWjI",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Lucky%20Paws%20Veterinary%20Hospital%20%28Budigere%20Cross%29&query_place_id=ChIJ1cIsQBIRrjsR6Y4SSg4EWjI",
     "id": "blr-vet-6"
   },
   {
@@ -794,7 +794,7 @@
     "services": "Laparoscopic spaying (via visiting surgeon); free stray care",
     "equipment": "Not specified",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ1W4-Wt8WrjsRcFJc5B5TJ04",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Anu%20Pet%20Clinic&query_place_id=ChIJ1W4-Wt8WrjsRcFJc5B5TJ04",
     "id": "blr-vet-7"
   },
   {
@@ -808,7 +808,7 @@
     "services": "Grooming-forward; vaccination; membership packages",
     "equipment": "Not specified",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJTQ3poIJrrjsRCRDB0Mx1mzI",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Vetic%20Pet%20Clinic%20Electronic%20City&query_place_id=ChIJTQ3poIJrrjsRCRDB0Mx1mzI",
     "id": "blr-vet-8"
   },
   {
@@ -822,7 +822,7 @@
     "services": "Femur fracture surgery (plating); broken-paw trauma care",
     "equipment": "In-house lab; ICU services; 24/7 emergency (explicitly named)",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJrxy7fMwZrjsRUb1DIwAWf_o",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Silicon%20City%20Pet%20Hospital%2024x7%20Multi-speciality&query_place_id=ChIJrxy7fMwZrjsRUb1DIwAWf_o",
     "id": "blr-vet-9"
   },
   {
@@ -836,7 +836,7 @@
     "services": "Spaying; microchipping; toxin-ingestion response",
     "equipment": "Updated equipment (cited by patients)",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJy5UewvFrrjsRKEkVBT9F42s",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Lucky%20Paws%20Veterinary%20Hospital%20%28Electronic%20City%29&query_place_id=ChIJy5UewvFrrjsRKEkVBT9F42s",
     "id": "blr-vet-10"
   },
   {
@@ -850,7 +850,7 @@
     "services": "Spay surgery incl. complex kidney-risk cases",
     "equipment": "Not specified",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ6bJKvHgVrjsRWsxkm9oGaMM",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=LeelaVet%20Multispeciality%20Veterinary%20Hospital&query_place_id=ChIJ6bJKvHgVrjsRWsxkm9oGaMM",
     "id": "blr-vet-11"
   },
   {
@@ -864,7 +864,7 @@
     "services": "Grooming-forward; general; multiple facilities on site",
     "equipment": "Not specified",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ8Vs5FeEXrjsRzAp2hRdAXjA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=RMV%20Multi-Speciality%20Veterinary%20Clinic%20%28RMV%202nd%20Stage%29&query_place_id=ChIJ8Vs5FeEXrjsRzAp2hRdAXjA",
     "id": "blr-vet-12"
   },
   {
@@ -878,7 +878,7 @@
     "services": "Spay/neuter; fracture repair (18-day-old fracture, small breed)",
     "equipment": "Not specified",
     "city": "Bangalore",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJOXry-WwVrjsRJM7ZyeosAOE",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Pampapathi%20Multi%20Speciality%20Pet%20Hospital&query_place_id=ChIJOXry-WwVrjsRJM7ZyeosAOE",
     "id": "blr-vet-13"
   },
   {
@@ -892,7 +892,7 @@
     "services": "Cat-focused care; eye infection treatment; international relocation support",
     "equipment": "Not specified",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJgTUJzGzDwjsRAllK1ggEG5s",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Small%20Paws%20Vet%20Clinic&query_place_id=ChIJgTUJzGzDwjsRAllK1ggEG5s",
     "id": "pun-vet-1"
   },
   {
@@ -906,7 +906,7 @@
     "services": "All tests under one roof; canine distemper management",
     "equipment": "In-house testing (explicitly cited)",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ7UXGmiy_wjsR3qkvXQ3WHBc",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=PetFix%20Veterinary%20Clinic&query_place_id=ChIJ7UXGmiy_wjsR3qkvXQ3WHBc",
     "id": "pun-vet-2"
   },
   {
@@ -920,7 +920,7 @@
     "services": "Surgery (cat/dog); sanitized equipment; emergency accident services",
     "equipment": "Sanitized surgical equipment (explicitly cited)",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJI349rBzCwjsRaoczqzIX4u0",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Om%20Sai%20Pets%20Care%20Clinic&query_place_id=ChIJI349rBzCwjsRaoczqzIX4u0",
     "id": "pun-vet-3"
   },
   {
@@ -934,7 +934,7 @@
     "services": "Vaccination; tick removal; gastritis critical admission (3 days)",
     "equipment": "Advanced diagnostic facilities (explicitly cited)",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ9QCqY9i-wjsRn7w0lYM16zk",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Animal%20Profile%20Pet%20Clinic%20And%20Diagnostics&query_place_id=ChIJ9QCqY9i-wjsRn7w0lYM16zk",
     "id": "pun-vet-4"
   },
   {
@@ -948,7 +948,7 @@
     "services": "Chronic skin-condition resolution; 24/7 phone availability",
     "equipment": "Not specified",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ6Z5aFT_qwjsRDX0pYAVSJoM",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dr%20Brahmankar%27s%20Pet%20Clinic%20%28Undri%20%2B%20Handewadi%29&query_place_id=ChIJ6Z5aFT_qwjsRDX0pYAVSJoM",
     "id": "pun-vet-5"
   },
   {
@@ -962,7 +962,7 @@
     "services": "Life-threatening emergency stabilization; combined pet shop on-site",
     "equipment": "Not specified",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJgUccZhXDwjsRmE0stcUE4uc",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=VetXpert%20Multispeciality%20Clinic&query_place_id=ChIJgUccZhXDwjsRmE0stcUE4uc",
     "id": "pun-vet-6"
   },
   {
@@ -976,7 +976,7 @@
     "services": "Major surgery (dog + turtle); chronic skin disease management",
     "equipment": "Not specified",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJSXRekkS_wjsRGVJciOwQcyg",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Metro%20Vet%20-%20MultiSpeciality%20Pet%20Clinic&query_place_id=ChIJSXRekkS_wjsRGVJciOwQcyg",
     "id": "pun-vet-7"
   },
   {
@@ -990,7 +990,7 @@
     "services": "Heatstroke emergency response; homeopathy option for chronic skin issues",
     "equipment": "Not specified",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ9RmIdhnBwjsRqGV6B1vr7d4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=PET-AID%20by%20Dr.%20Hatekar%20and%20Dr.%20Nikhil&query_place_id=ChIJ9RmIdhnBwjsRqGV6B1vr7d4",
     "id": "pun-vet-8"
   },
   {
@@ -1004,7 +1004,7 @@
     "services": "Second-opinion spay surgery (post-failed first attempt elsewhere)",
     "equipment": "All diagnostic equipment in-house (explicitly cited)",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJiRaYX8q_wjsRfH1vBJFA6E4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Tailsmen%20Veterinary%20Specialty&query_place_id=ChIJiRaYX8q_wjsRfH1vBJFA6E4",
     "id": "pun-vet-9"
   },
   {
@@ -1018,7 +1018,7 @@
     "services": "Liver-failure recovery; saline/injection protocols",
     "equipment": "Not specified",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJa6ORa_jBwjsRnM-FiJowNo8",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=DOG%20%26%20CAT%20CLINIC&query_place_id=ChIJa6ORa_jBwjsRnM-FiJowNo8",
     "id": "pun-vet-10"
   },
   {
@@ -1032,7 +1032,7 @@
     "services": "General; affordable pricing; long-standing reputation",
     "equipment": "Not specified",
     "city": "Pune",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJUzUHwsC_wjsRptq_-DNTPM4",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dr.%20Gorhe%20Pet%20Cover%20Clinic&query_place_id=ChIJUzUHwsC_wjsRptq_-DNTPM4",
     "id": "pun-vet-11"
   },
   {
@@ -1046,7 +1046,7 @@
     "services": "Eye enucleation surgery; canine tumor removal; cat-focused expertise",
     "equipment": "Not specified",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ__9vKOK75zsR9lgXoXQn8sw",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Petvets%20Veterinary%20Clinic&query_place_id=ChIJ__9vKOK75zsR9lgXoXQn8sw",
     "id": "mum-vet-1"
   },
   {
@@ -1060,7 +1060,7 @@
     "services": "Oncology (tumor treatment); spay surgery; 48-day-old puppy critical care",
     "equipment": "Multi-floor hospital; named specialist per case (oncology, surgery)",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJy7J8gHPJ5zsRGSK-JIRmAgY",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=SUPERPETS%20-%20A%20Veterinary%20Multi-Speciality%20LLP%2024x7&query_place_id=ChIJy7J8gHPJ5zsRGSK-JIRmAgY",
     "id": "mum-vet-2"
   },
   {
@@ -1074,7 +1074,7 @@
     "services": "Emergency foreign-body surgery (wire removal); reptile/exotic capability",
     "equipment": "Upgraded surgical equipment (explicitly cited)",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJA95lJh-x5zsR5pTs8FgDRKw",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=BLUE%207%20VETS%20%28A%20Veterinary%20Multi%20Speciality%20Clinic%29&query_place_id=ChIJA95lJh-x5zsR5pTs8FgDRKw",
     "id": "mum-vet-3"
   },
   {
@@ -1088,7 +1088,7 @@
     "services": "Spinal surgery; rapid diagnostic turnaround (life-saving, within 1hr)",
     "equipment": "Fast in-house diagnostics (1-hour turnaround cited)",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJoabVO2HO5zsR6zDzl7z69dY",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=PetZone%20Mahalaxmi%20Veterinary%20Clinic&query_place_id=ChIJoabVO2HO5zsR6zDzl7z69dY",
     "id": "mum-vet-4"
   },
   {
@@ -1102,7 +1102,7 @@
     "services": "Endoscopy; critical low-WBC recovery; esophageal foreign-body case",
     "equipment": "Endoscopy equipment (explicitly cited); in-house diagnostic machinery",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJEQAAQJ7I5zsRtAL5kajtrjg",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Suyash%20Pet%27s%20Clinic%20%26%20Surgical%20Centre&query_place_id=ChIJEQAAQJ7I5zsRtAL5kajtrjg",
     "id": "mum-vet-5"
   },
   {
@@ -1116,7 +1116,7 @@
     "services": "Home blood-work visits; sterilization surgery",
     "equipment": "Not specified",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJuWGqCbTH5zsRLSdZi37kbG0",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Pet%20Well%20Soon%20Clinic%20%26%20Surgical%20Center&query_place_id=ChIJuWGqCbTH5zsRLSdZi37kbG0",
     "id": "mum-vet-6"
   },
   {
@@ -1130,7 +1130,7 @@
     "services": "Cardiac consult (echocardiogram); dental surgery",
     "equipment": "Echocardiogram (cardiology diagnostics)",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJl3sidQDP5zsRljyfILKkP1c",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Tata%20Trusts%20Small%20Animal%20Hospital%2C%20Mumbai&query_place_id=ChIJl3sidQDP5zsRljyfILKkP1c",
     "id": "mum-vet-7"
   },
   {
@@ -1144,7 +1144,7 @@
     "services": "Orthopedic referral consult; seizure management; oncology (ongoing cancer case)",
     "equipment": "Not specified",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJg1bEEw7G5zsRe3uhzDxYZmQ",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Happy%20Tails%20Veterinary%20Speciality&query_place_id=ChIJg1bEEw7G5zsRe3uhzDxYZmQ",
     "id": "mum-vet-8"
   },
   {
@@ -1158,7 +1158,7 @@
     "services": "24x7 emergency claim; grooming; general",
     "equipment": "Not specified",
     "city": "Mumbai",
-    "mapsUrl": "https://www.google.com/maps/place/?q=place_id:ChIJI-PGVPPJ5zsRZJdqIHyVVnY",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Vetic%20Pet%20Clinic%20Chembur&query_place_id=ChIJI-PGVPPJ5zsRZJdqIHyVVnY",
     "id": "mum-vet-9"
   }
 ]

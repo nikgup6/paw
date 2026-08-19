@@ -1,5 +1,8 @@
 import vets from '../constants/vets.json';
-import { telHref } from './breeders';
+import {
+  areasForCity as sharedAreasForCity, areasOf, ratingLabel, readCityPreference, reviewLabel,
+  shortServices, telHref, writeCityPreference,
+} from './directory';
 
 /* The vet services directory.
 
@@ -9,7 +12,8 @@ import { telHref } from './breeders';
    dropped, so they are not in the bundle and cannot be rendered by accident.
    The file arrives already ordered — do not re-sort it here.
 
-   Tier 3 entries are not in the file at all. */
+   Tier 3 entries are not in the file at all. Formatting/city-preference
+   helpers shared with the groomer directory live in utils/directory.js. */
 
 export const VET_CITIES = ['Hyderabad', 'Chennai', 'Bangalore', 'Pune', 'Mumbai'];
 
@@ -19,61 +23,9 @@ export const vetsForCity = (city) => vets.filter((v) => v.city === city);
 
 export const allVetCities = () => VET_CITIES.filter((c) => vets.some((v) => v.city === c));
 
-export { telHref };
+export { areasOf, ratingLabel, reviewLabel, shortServices, telHref };
 
-/** Remembered city choice, so the directory opens where they left it. */
-export const readVetCityPreference = () => {
-  try {
-    const saved = window.localStorage.getItem(CITY_PREF_KEY);
-    return VET_CITIES.includes(saved) ? saved : null;
-  } catch {
-    return null;
-  }
-};
+export const readVetCityPreference = () => readCityPreference(CITY_PREF_KEY, VET_CITIES);
+export const writeVetCityPreference = (city) => writeCityPreference(CITY_PREF_KEY, city);
 
-export const writeVetCityPreference = (city) => {
-  try {
-    if (city) window.localStorage.setItem(CITY_PREF_KEY, city);
-    else window.localStorage.removeItem(CITY_PREF_KEY);
-  } catch {
-    /* private mode — the directory still works, it just won't remember */
-  }
-};
-
-/** "4.9 / 5" plus a thousands-separated review count, or null when unrated. */
-export const ratingLabel = (vet) => (
-  vet.rating != null ? `${vet.rating.toFixed(1)} / 5` : null
-);
-
-/* Parenthesised so "4.9 / 5" and the count can't read as one number
-   ("4.9 / 5  2,306" scans as 52,306 at a glance). Matches the breeder card. */
-export const reviewLabel = (vet) => (
-  vet.reviews != null ? `(${vet.reviews.toLocaleString('en-IN')} Google reviews)` : null
-);
-
-/**
- * The real neighbourhood names a practice sits in — same rule the breeder
- * directory uses, so both directories filter by the places people actually
- * search. A locality cell can name more than one area ("Sector 17, Airoli"),
- * so every part is exposed rather than just the first.
- */
-export function areasOf(vet) {
-  return String(vet?.locality || '')
-    .split(/[/,]/)
-    .map((s) => s.replace(/\([^)]*\)/g, '').trim())
-    .filter(Boolean);
-}
-
-/** Every area in a city that actually has a vet, A–Z. */
-export const areasForCity = (city) =>
-  [...new Set(vetsForCity(city).flatMap(areasOf))]
-    .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-
-/** The card shows one short line of services; the profile shows the full text. */
-export const shortServices = (text, max = 68) => {
-  const value = String(text || '').trim();
-  if (value.length <= max) return value;
-  const cut = value.slice(0, max);
-  const stop = Math.max(cut.lastIndexOf(';'), cut.lastIndexOf(','), cut.lastIndexOf(' '));
-  return `${cut.slice(0, stop > 30 ? stop : max).trim()}…`;
-};
+export const areasForCity = (city) => sharedAreasForCity(vets, city);

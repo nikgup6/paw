@@ -1,10 +1,8 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import CitySelect from '../components/CitySelect';
 import PawRating from '../components/PawRating';
-import QuickLoginModal from '../components/QuickLoginModal';
-import { AuthContext } from '../context/AuthContext';
 import { useBreedList } from '../context/BreedsContext';
 import { zoneForCity } from '../utils/ownerTips';
 import { CATEGORY_ICON, fetchCareTips } from '../utils/careTips';
@@ -101,7 +99,6 @@ const OwnerSurvey = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const breeds = useBreedList();
-  const { user } = useContext(AuthContext);
 
   /* Testing only — lets the season-aware second pass be checked without
      waiting for the actual season (e.g. /owner-survey?test_month=July to see
@@ -120,9 +117,6 @@ const OwnerSurvey = () => {
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);   // survey saved successfully
   const [tips, setTips] = useState([]);                // Care Tips matched for it (may be empty)
-
-  // Post-survey login gate — shown after submission if the user isn't signed in
-  const [showLoginGate, setShowLoginGate] = useState(false);
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -156,14 +150,8 @@ const OwnerSurvey = () => {
         challenges: form.biggest_challenge, monthOverride: testMonth,
       });
       setTips(matched);
-
-      // If signed in, show tips directly. Otherwise gate on login first.
-      if (user) {
-        setSubmitted(true);
-        window.scrollTo(0, 0);
-      } else {
-        setShowLoginGate(true);
-      }
+      setSubmitted(true);
+      window.scrollTo(0, 0);
     } catch (e) {
       setError(e?.response?.data?.detail || 'Couldn’t save that. Please try again.');
     } finally {
@@ -363,17 +351,6 @@ const OwnerSurvey = () => {
         </div>
       </div>
       <Styles />
-
-      {/* Post-survey login gate — cannot be dismissed. Once the user signs in,
-          the tips view is revealed. */}
-      <QuickLoginModal
-        isOpen={showLoginGate}
-        onSuccess={() => {
-          setShowLoginGate(false);
-          setSubmitted(true);
-          window.scrollTo(0, 0);
-        }}
-      />
     </div>
   );
 };

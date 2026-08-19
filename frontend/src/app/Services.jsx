@@ -1,35 +1,72 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MapPinIcon, PhoneIcon } from './components/TabIcons';
-import {
-  VET_CITIES, areasForCity, areasOf, ratingLabel, readVetCityPreference, reviewLabel,
-  shortServices, telHref, vetsForCity, writeVetCityPreference,
-} from '../utils/vets';
+import { GROOMER_CITIES, groomersForCity, readGroomerCityPreference, writeGroomerCityPreference } from '../utils/groomers';
+import { areasForCity, areasOf, ratingLabel, reviewLabel, shortServices, telHref } from '../utils/directory';
+import { VET_CITIES, readVetCityPreference, vetsForCity, writeVetCityPreference } from '../utils/vets';
 
-/* Services — the vet directory.
+/* Services — the local business directory: vet care and groomers, one
+   toggle apart, sharing a single generic list/filter/profile component.
 
-   Every field rendered here comes from vets.json, which by construction only
-   contains user-facing columns. There is deliberately no Tier badge, no
-   confidence score and no internal notes anywhere in this file: that data is
-   not in the bundle to render. Nothing is labelled "verified" — these are
-   Google-listed practices we have collated, not practices we have inspected.
+   Every field rendered here comes from vets.json / groomers.json, which by
+   construction only contain user-facing columns. There is deliberately no
+   Tier badge, no confidence score and no internal notes anywhere in this
+   file: that data is not in the bundle to render. Nothing is labelled
+   "verified" — these are Google-listed practices we have collated, not
+   practices we have inspected.
 
-   Two actions per vet, both on the card and in the profile: Call dials the
-   listed number, Map opens the Google listing. */
+   Two actions per entry, both on the card and in the profile: Call dials
+   the listed number, Map opens the Google listing. */
 
-const StarRow = ({ vet }) => {
-  const rating = ratingLabel(vet);
+/* Section config — the only thing that differs between "Vet care" and
+   "Groomers" is which data file backs it and two field names (the person
+   line under the name, and the second detail section in the profile).
+   Everything else — filtering, cards, the profile modal, all CSS — is one
+   shared Directory component. */
+const SECTIONS = {
+  vets: {
+    key: 'vets',
+    tab: 'Vet care',
+    noun: 'vet',
+    nounPlural: 'vets',
+    subtitleNoun: 'Clinics and hospitals',
+    cities: VET_CITIES,
+    forCity: vetsForCity,
+    readCityPref: readVetCityPreference,
+    writeCityPref: writeVetCityPreference,
+    personField: 'leadVets',
+    extraField: 'equipment',
+    extraLabel: 'Equipment & specialty services',
+  },
+  groomers: {
+    key: 'groomers',
+    tab: 'Groomers',
+    noun: 'groomer',
+    nounPlural: 'groomers',
+    subtitleNoun: 'Groomers and pet spas',
+    cities: GROOMER_CITIES,
+    forCity: groomersForCity,
+    readCityPref: readGroomerCityPreference,
+    writeCityPref: writeGroomerCityPreference,
+    personField: 'groomers',
+    extraField: 'specialFeatures',
+    extraLabel: 'Special features',
+  },
+};
+
+const StarRow = ({ item }) => {
+  const rating = ratingLabel(item);
   if (!rating) return null;
   return (
     <p className="vt-rating">
       <span aria-hidden="true">★</span>
       <strong>{rating}</strong>
-      {reviewLabel(vet) && <span className="vt-rating__count">{reviewLabel(vet)}</span>}
+      {reviewLabel(item) && <span className="vt-rating__count">{reviewLabel(item)}</span>}
     </p>
   );
 };
 
-const Actions = ({ vet, size }) => {
-  const tel = telHref(vet.phone);
+const Actions = ({ item, size }) => {
+  const tel = telHref(item.phone);
   return (
     <div className={`vt-actions ${size === 'lg' ? 'vt-actions--lg' : ''}`}>
       {tel ? (
@@ -39,8 +76,8 @@ const Actions = ({ vet, size }) => {
       ) : (
         <span className="vt-btn vt-btn--off">No number listed</span>
       )}
-      {vet.mapsUrl ? (
-        <a className="vt-btn vt-btn--map" href={vet.mapsUrl} target="_blank" rel="noopener noreferrer">
+      {item.mapsUrl ? (
+        <a className="vt-btn vt-btn--map" href={item.mapsUrl} target="_blank" rel="noopener noreferrer">
           <MapPinIcon /> Map
         </a>
       ) : (
@@ -50,64 +87,66 @@ const Actions = ({ vet, size }) => {
   );
 };
 
-const Profile = ({ vet, onClose }) => (
-  <div className="pb-overlay" role="dialog" aria-modal="true" aria-label={vet.name} onClick={onClose}>
+const Profile = ({ item, section, onClose }) => (
+  <div className="pb-overlay" role="dialog" aria-modal="true" aria-label={item.name} onClick={onClose}>
     <div className="pb-modal" onClick={(e) => e.stopPropagation()}>
       <div className="pb-modal__bar">
-        <span>{vet.city}</span>
+        <span>{item.city}</span>
         <button type="button" onClick={onClose} aria-label="Close">×</button>
       </div>
       <div className="pb-modal__body">
-        <h3 className="vt-prof__name">{vet.name}</h3>
-        {vet.leadVets && <p className="vt-prof__vets">{vet.leadVets}</p>}
-        <StarRow vet={vet} />
+        <h3 className="vt-prof__name">{item.name}</h3>
+        {item[section.personField] && <p className="vt-prof__vets">{item[section.personField]}</p>}
+        <StarRow item={item} />
 
-        {vet.services && (
+        {item.services && (
           <section className="vt-prof__sec">
             <h4>Services</h4>
-            <p>{vet.services}</p>
+            <p>{item.services}</p>
           </section>
         )}
-        {vet.equipment && (
+        {item[section.extraField] && (
           <section className="vt-prof__sec">
-            <h4>Equipment &amp; specialty services</h4>
-            <p>{vet.equipment}</p>
+            <h4>{section.extraLabel}</h4>
+            <p>{item[section.extraField]}</p>
           </section>
         )}
         <section className="vt-prof__sec">
           <h4>Where</h4>
           <p>
-            {vet.locality && <strong>{vet.locality}</strong>}
-            {vet.address && <><br />{vet.address}</>}
+            {item.locality && <strong>{item.locality}</strong>}
+            {item.address && <><br />{item.address}</>}
           </p>
         </section>
 
-        <Actions vet={vet} size="lg" />
+        <Actions item={item} size="lg" />
       </div>
     </div>
   </div>
 );
 
-const Services = () => {
-  const [city, setCity] = useState(() => readVetCityPreference() || VET_CITIES[0]);
+const Directory = ({ section }) => {
+  const [city, setCity] = useState(() => section.readCityPref() || section.cities[0]);
   const [area, setArea] = useState('');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(null);
 
-  useEffect(() => { writeVetCityPreference(city); }, [city]);
+  useEffect(() => { section.writeCityPref(city); }, [city]);
 
-  /* Only areas that actually have a vet in the chosen city, so the dropdown
-     can never offer a filter that returns nothing. */
-  const areas = useMemo(() => areasForCity(city), [city]);
+  const items = useMemo(() => section.forCity(city), [city]);
+
+  /* Only areas that actually have an entry in the chosen city, so the
+     dropdown can never offer a filter that returns nothing. */
+  const areas = useMemo(() => areasForCity(items, city), [items, city]);
 
   const results = useMemo(() => {
-    let list = vetsForCity(city);
-    if (area) list = list.filter((v) => areasOf(v).includes(area));
+    let list = items;
+    if (area) list = list.filter((i) => areasOf(i).includes(area));
     const q = query.trim().toLowerCase();
     if (!q) return list;
-    return list.filter((v) => [v.name, v.locality, v.services, v.equipment, v.leadVets]
+    return list.filter((i) => [i.name, i.locality, i.services, i[section.extraField], i[section.personField]]
       .some((f) => String(f || '').toLowerCase().includes(q)));
-  }, [city, area, query]);
+  }, [items, area, query, section]);
 
   const changeCity = (next) => {
     setCity(next);
@@ -115,26 +154,31 @@ const Services = () => {
     setQuery('');
   };
 
-  return (
-    <div className="pb-page pb-fade">
-      <div className="pb-page__head">
-        <div>
-          <h2 className="pb-page__title">Vet care</h2>
-          <p className="pb-page__sub">
-            Clinics and hospitals in {city}{area ? ` · ${area}` : ''}.
-          </p>
+  if (!city) {
+    return (
+      <section className="pb-card">
+        <div className="pb-empty" style={{ padding: '22px 8px' }}>
+          No {section.nounPlural} listed yet — check back soon.
         </div>
-      </div>
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <p className="pb-page__sub">
+        {section.subtitleNoun} in {city}{area ? ` · ${area}` : ''}.
+      </p>
 
       <section className="pb-card">
         <div className="vt-bar">
-          <label className="vt-bar__label" htmlFor="vt-city">City</label>
-          <select id="vt-city" className="vt-city" value={city} onChange={(e) => changeCity(e.target.value)}>
-            {VET_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          <label className="vt-bar__label" htmlFor={`vt-city-${section.key}`}>City</label>
+          <select id={`vt-city-${section.key}`} className="vt-city" value={city} onChange={(e) => changeCity(e.target.value)}>
+            {section.cities.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
 
-          <label className="vt-bar__label" htmlFor="vt-area">Area</label>
-          <select id="vt-area" className="vt-city" value={area} onChange={(e) => setArea(e.target.value)}>
+          <label className="vt-bar__label" htmlFor={`vt-area-${section.key}`}>Area</label>
+          <select id={`vt-area-${section.key}`} className="vt-city" value={area} onChange={(e) => setArea(e.target.value)}>
             <option value="">All areas ({areas.length})</option>
             {areas.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
@@ -156,26 +200,26 @@ const Services = () => {
 
         {results.length === 0 ? (
           <div className="pb-empty" style={{ padding: '22px 8px' }}>
-            No vets match {query ? `“${query}”` : 'that filter'} in {area || city}.
+            No {section.nounPlural} match {query ? `“${query}”` : 'that filter'} in {area || city}.
           </div>
         ) : (
           <ul className="vt-list">
-            {results.map((vet, i) => (
-              <li key={vet.id}>
+            {results.map((item, i) => (
+              <li key={item.id}>
                 <article className="vt-card" style={{ animationDelay: `${Math.min(i, 8) * 70}ms` }}>
                   <span className="vt-card__sheen" aria-hidden="true" />
                   <button
                     type="button"
                     className="vt-card__main"
-                    onClick={() => setOpen(vet)}
-                    aria-label={`${vet.name} — full details`}
+                    onClick={() => setOpen(item)}
+                    aria-label={`${item.name} — full details`}
                   >
-                    <h3 className="vt-card__name">{vet.name}</h3>
-                    <StarRow vet={vet} />
-                    {vet.services && <p className="vt-card__svc">{shortServices(vet.services)}</p>}
-                    {vet.locality && <p className="vt-card__loc">{vet.locality}</p>}
+                    <h3 className="vt-card__name">{item.name}</h3>
+                    <StarRow item={item} />
+                    {item.services && <p className="vt-card__svc">{shortServices(item.services)}</p>}
+                    {item.locality && <p className="vt-card__loc">{item.locality}</p>}
                   </button>
-                  <Actions vet={vet} />
+                  <Actions item={item} />
                 </article>
               </li>
             ))}
@@ -183,14 +227,62 @@ const Services = () => {
         )}
 
         <p className="vt-foot">
-          Showing {results.length} {results.length === 1 ? 'vet' : 'vets'} in {city}.
-          Listings are collated from public Google listings — call ahead to confirm timings and emergency cover.
+          Showing {results.length} {results.length === 1 ? section.noun : section.nounPlural} in {city}.
+          Listings are collated from public Google listings — call ahead to confirm timings{section.key === 'vets' ? ' and emergency cover' : ''}.
         </p>
       </section>
 
-      {open && <Profile vet={open} onClose={() => setOpen(null)} />}
+      {open && <Profile item={open} section={section} onClose={() => setOpen(null)} />}
+    </>
+  );
+};
+
+const Services = () => {
+  const [tab, setTab] = useState('vets');
+  const section = SECTIONS[tab];
+
+  return (
+    <div className="pb-page pb-fade">
+      <div className="pb-page__head">
+        <div>
+          <h2 className="pb-page__title">Services</h2>
+          <div className="pb-seg" role="tablist" aria-label="Service type">
+            {Object.values(SECTIONS).map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                role="tab"
+                aria-selected={tab === s.key}
+                className={`pb-seg__btn ${tab === s.key ? 'is-on' : ''}`}
+                onClick={() => setTab(s.key)}
+              >
+                {s.tab}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <Directory key={section.key} section={section} />
 
       <style>{`
+        .pb-seg {
+          display: inline-flex; gap: 4px; margin-top: 10px; padding: 4px;
+          background: #F6F1EB; border-radius: 50px;
+        }
+        .pb-seg__btn {
+          border: none; background: none; cursor: pointer; font-family: inherit;
+          padding: 8px 16px; border-radius: 50px; font-size: 13px;
+          font-weight: var(--weight-bold); color: var(--text-soft);
+          transition: background .2s ease, color .2s ease;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .pb-seg__btn.is-on { background: var(--orange); color: #fff; }
+        .pb-seg__btn:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+        @media (hover: hover) {
+          .pb-seg__btn:not(.is-on):hover { background: #EFE6DC; }
+        }
+
         .vt-bar { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
         .vt-bar__label { font-size: 12px; font-weight: var(--weight-bold); color: var(--text-soft); }
         .vt-city, .vt-search {

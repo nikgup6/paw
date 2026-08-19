@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import questionsData from '../constants/questions.json';
 import CitySelect from '../components/CitySelect';
-import QuickLoginModal from '../components/QuickLoginModal';
-import { AuthContext } from '../context/AuthContext';
 import { READINESS_LEVELS } from '../utils/breedUtils';
 import { rememberReadiness, saveProgress, track } from '../utils/analytics';
 import {
@@ -64,7 +62,6 @@ function deriveActivityTier(answers) {
 const Quiz = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading: authLoading } = useContext(AuthContext);
   const resetOnMount = shouldResetQuiz(location);
   const skipSaveRef = useRef(resetOnMount);
 
@@ -80,11 +77,6 @@ const Quiz = () => {
     if (resetOnMount) return {};
     return loadQuizState().answers;
   });
-
-  // Post-quiz login gate — shown when the quiz is done but the user isn't signed in
-  const [showLoginGate, setShowLoginGate] = useState(false);
-  // When the quiz is finished but auth hasn't resolved yet, we park here
-  const quizCompletedRef = useRef(false);
 
   // Clean up reset signals after mount so refresh does not re-reset
   useEffect(() => {
@@ -210,38 +202,8 @@ const Quiz = () => {
 
     track('quiz_completed');
     saveProgress({ status: 'completed', current_question: currentQ });
-
-    // If the user is already signed in, go straight to results.
-    // Otherwise show the login gate — it cannot be skipped.
-    if (!authLoading && user) {
-      navigate('/results');
-    } else if (!authLoading && !user) {
-      setShowLoginGate(true);
-    } else {
-      // Auth is still loading — park the intent and let the effect handle it
-      quizCompletedRef.current = true;
-    }
+    navigate('/results');
   };
-
-  // Once auth resolves after quiz completion, either redirect or show the gate
-  useEffect(() => {
-    if (!quizCompletedRef.current) return;
-    if (authLoading) return;
-    quizCompletedRef.current = false;
-    if (user) {
-      navigate('/results');
-    } else {
-      setShowLoginGate(true);
-    }
-  }, [authLoading, user, navigate]);
-
-  // Once auth resolves and the gate is open, redirect if the user is now signed in
-  useEffect(() => {
-    if (showLoginGate && !authLoading && user) {
-      setShowLoginGate(false);
-      navigate('/results');
-    }
-  }, [showLoginGate, authLoading, user, navigate]);
 
   const handleBack = () => {
     if (currentQ > 0) {
@@ -347,16 +309,6 @@ const Quiz = () => {
         </div>
       </div>
     </section>
-
-      {/* Post-quiz login gate — cannot be dismissed, shown only when the
-          quiz is complete and the user isn't signed in yet. */}
-      <QuickLoginModal
-        isOpen={showLoginGate}
-        onSuccess={() => {
-          setShowLoginGate(false);
-          navigate('/results');
-        }}
-      />
     </div>
   );
 };

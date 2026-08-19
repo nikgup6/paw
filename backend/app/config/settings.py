@@ -16,12 +16,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # The one real credential in the product. Ordinary accounts sign in with a
-    # mobile number alone (there is no password UX, and every account was
-    # created with the same placeholder string), so the ADMIN account is the
-    # only one where a password means anything — and it is the account that can
-    # read every user's record. Unset means admin sign-in is refused outright
-    # rather than left open; see routes/auth.py.
+    # No longer read anywhere (admin sign-in is mobile-only, same as every
+    # other account) — kept as a declared field only so the existing
+    # backend/.env entry doesn't crash Settings() under extra_forbidden.
     ADMIN_PASSWORD: Optional[str] = None
 
     ANTHROPIC_API_KEY: Optional[str] = None  # set in backend/.env for the AI Matchmaker
