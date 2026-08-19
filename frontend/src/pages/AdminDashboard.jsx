@@ -50,34 +50,53 @@ const AdminDashboard = () => {
   /* Everything on the page, in one pass. Runs on mount and on Refresh — NOT on
      every keystroke in the city box, which is what it used to do: each letter
      re-fetched all six endpoints, so typing "Bengaluru" fired ~54 requests and
-     pulled the whole 122-row visitor list nine times over. */
+     pulled the whole 122-row visitor list nine times over.
+
+     Uses allSettled so one failing endpoint (e.g. 401 on /api/buy) doesn't
+     kill the entire dashboard — the other five still render their data. */
   const loadAll = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setRefreshing(true);
-    try {
-      const auth = authHeader();
-      const city = cityFilterRef.current;
-      const [statsRes, usersRes, buyRes, leadsRes, feedbackRes, anonRes] = await Promise.all([
-        axios.get(`${API_URL}/api/admin/dashboard`, auth),
-        axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
-        axios.get(`${API_URL}/api/buy`, auth),
-        axios.get(`${API_URL}/api/admin/leads`, auth),
-        axios.get(`${API_URL}/api/feedback`, auth),
-        axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
-      ]);
-      setStats(statsRes.data);
-      setUsers(usersRes.data);
-      setBuyRequests(buyRes.data);
-      setLeads(leadsRes.data);
-      setFeedbacks(feedbackRes.data);
-      setAnonymousVisitors(anonRes.data);
+    const auth = authHeader();
+    const city = cityFilterRef.current;
+
+    const keys = ['stats', 'users', 'buy', 'leads', 'feedback', 'anon'];
+    const results = await Promise.allSettled([
+      axios.get(`${API_URL}/api/admin/dashboard`, auth),
+      axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
+      axios.get(`${API_URL}/api/buy`, auth),
+      axios.get(`${API_URL}/api/admin/leads`, auth),
+      axios.get(`${API_URL}/api/feedback`, auth),
+      axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
+    ]);
+
+    let hadAuthError = false;
+    const data = {};
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        data[keys[i]] = r.value.data;
+      } else {
+        data[keys[i]] = keys[i] === 'stats' ? null : [];
+        const status = r.reason?.response?.status;
+        if (status === 401 || status === 403) hadAuthError = true;
+        else console.error(`Admin fetch ${keys[i]} failed:`, r.reason);
+      }
+    });
+
+    if (hadAuthError) {
+      setAuthError('Your administrator session has expired. Please sign in again.');
+    } else {
       setAuthError('');
-      setRefreshedAt(new Date());
-    } catch (error) {
-      handleFetchError(error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
+
+    setStats(data.stats);
+    setUsers(data.users);
+    setBuyRequests(data.buy);
+    setLeads(data.leads);
+    setFeedbacks(data.feedback);
+    setAnonymousVisitors(data.anon);
+    setRefreshedAt(new Date());
+    setLoading(false);
+    setRefreshing(false);
   }, []);
 
   useEffect(() => { loadAll({ silent: true }); }, [loadAll]);
