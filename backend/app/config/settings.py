@@ -21,6 +21,18 @@ class Settings(BaseSettings):
     # backend/.env entry doesn't crash Settings() under extra_forbidden.
     ADMIN_PASSWORD: Optional[str] = None
 
+    # Whether boot-time database setup (indexes, readiness seed, legacy-tier
+    # migration) runs inside the app's startup event.
+    #
+    # Leave True for a long-lived server, where it runs once and costs nothing.
+    # Set False on serverless — on Vercel every cold start is a fresh process,
+    # so this work is redone before the first request can be served: ~51
+    # create_index round trips to Atlas plus a seed and a migration, which is
+    # seconds of latency charged to whichever user happened to arrive first.
+    # With it False, run `python init_db.py` once per deploy instead; the
+    # operations are idempotent, so running it more often is harmless.
+    RUN_STARTUP_MIGRATIONS: bool = True
+
     ANTHROPIC_API_KEY: Optional[str] = None  # set in backend/.env for the AI Matchmaker
 
     # Cloudinary — stores uploaded vaccination documents. Set either the three

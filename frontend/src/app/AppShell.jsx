@@ -2,6 +2,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { DogsProvider, useDogs } from '../context/DogsContext';
 import { HealthIcon, HomeIcon, MoreIcon, ServicesIcon, SwitchDogIcon } from './components/TabIcons';
+import FeedbackModal from '../components/FeedbackModal';
 import { thumb } from '../utils/images';
 import '../styles/app.css';
 
@@ -177,10 +178,14 @@ const MobileTabs = ({ onSwitchDog, onMore, activeDogId }) => (
   </nav>
 );
 
-/* "More" — the two destinations that don't earn a permanent tab: this dog's
-   profile, and the public site. Built from the same overlay/modal shell the
-   dog switcher uses, so it is one interaction pattern, not a new one. */
-const MoreSheet = ({ dog, onClose, onProfile, onAddDog, onSite }) => (
+/* "More" — the destinations that don't earn a permanent tab: this dog's
+   profile, adding a dog, leaving feedback, and the public site. Built from the
+   same overlay/modal shell the dog switcher uses, so it is one interaction
+   pattern, not a new one.
+
+   Feedback sits above "Paw Buddy home" deliberately: that last row leaves the
+   app, and an exit belongs at the end of a list. */
+const MoreSheet = ({ dog, onClose, onProfile, onAddDog, onFeedback, onSite }) => (
   <div className="pb-overlay" role="dialog" aria-modal="true" aria-label="More" onClick={onClose}>
     <div className="pb-modal pb-modal--sheet" onClick={(e) => e.stopPropagation()}>
       <div className="pb-modal__bar">
@@ -203,6 +208,13 @@ const MoreSheet = ({ dog, onClose, onProfile, onAddDog, onSite }) => (
             <span>
               <strong>Add another dog</strong>
               <em>Start a new profile</em>
+            </span>
+          </button>
+          <button type="button" className="pb-more__item" onClick={onFeedback}>
+            <span aria-hidden="true">💬</span>
+            <span>
+              <strong>Feedback</strong>
+              <em>Tell us how Paw Buddy is working for you</em>
             </span>
           </button>
           <button type="button" className="pb-more__item" onClick={onSite}>
@@ -238,6 +250,7 @@ const Shell = () => {
   const [offline, setOffline] = useState(!navigator.onLine);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { dogs, selectedDogId, selectDog } = useDogs();
@@ -311,9 +324,14 @@ const Shell = () => {
           onClose={() => setMoreOpen(false)}
           onProfile={() => { setMoreOpen(false); navigate(`/app/dogs/${activeDogId}/profile`); }}
           onAddDog={() => { setMoreOpen(false); navigate('/app/dogs/new'); }}
+          onFeedback={() => { setMoreOpen(false); setFeedbackOpen(true); }}
           onSite={() => { setMoreOpen(false); navigate('/'); }}
         />
       )}
+
+      {/* Rendered at shell level, not inside a page: the survey is about the
+          app as a whole, so it must survive whatever route is underneath. */}
+      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 
       {/* The app's existing overlay/modal shell wrapping the dashboard's own
           dog-picker markup — no new interaction pattern, and selecting here

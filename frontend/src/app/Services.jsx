@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MapPinIcon, PhoneIcon } from './components/TabIcons';
+import { useDogs } from '../context/DogsContext';
 import { GROOMER_CITIES, groomersForCity, readGroomerCityPreference, writeGroomerCityPreference } from '../utils/groomers';
-import { areasForCity, areasOf, ratingLabel, reviewLabel, shortServices, telHref } from '../utils/directory';
+import { areasForCity, areasOf, ratingLabel, resolveDirectoryCity, reviewLabel, shortServices, telHref } from '../utils/directory';
 import { VET_CITIES, readVetCityPreference, vetsForCity, writeVetCityPreference } from '../utils/vets';
 
 /* Services — the local business directory: vet care and groomers, one
@@ -125,13 +126,46 @@ const Profile = ({ item, section, onClose }) => (
   </div>
 );
 
-const Directory = ({ section }) => {
-  const [city, setCity] = useState(() => section.readCityPref() || section.cities[0]);
+const Directory = ({ section, dogCity }) => {
+  /* Where this list opens, in precedence order:
+       1. a city they picked themselves before — an explicit choice outranks
+          anything we infer, and it is why the picker is remembered at all;
+       2. the selected dog's own city, resolved to the nearest city we cover;
+       3. whatever this directory actually has.
+     Before this, it was `cities[0]` — literally always Hyderabad — so an owner
+     whose dog lives in Nellore was shown Hyderabad vets with nothing saying
+     why, while their dog profile said Nellore two taps away. */
+  const resolved = useMemo(
+    () => resolveDirectoryCity(dogCity, section.cities),
+    [dogCity, section],
+  );
+  const [city, setCity] = useState(() => section.readCityPref() || resolved.city);
   const [area, setArea] = useState('');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(null);
+  //: Set once they touch the picker; from then on we stop re-seeding from the
+  //  dog, so switching dogs cannot yank the list out from under them mid-browse.
+  const [picked, setPicked] = useState(false);
 
-  useEffect(() => { section.writeCityPref(city); }, [city]);
+  /* Follow the dog when the selection changes — but never over an explicit
+     choice, and never after they have used the picker on this screen. */
+  useEffect(() => {
+    if (picked || section.readCityPref()) return;
+    if (resolved.city) setCity(resolved.city);
+  }, [resolved.city, picked, section]);
+
+  /* Persist ONLY a city they chose themselves. Writing the auto-seeded value
+     too would make the stored preference indistinguishable from a real choice
+     — and since it lands on the very first render, before the dog list has
+     even loaded, it would immediately look like "they already picked
+     Hyderabad" and permanently block the dog's own city from ever seeding. */
+  useEffect(() => {
+    if (picked) section.writeCityPref(city);
+  }, [city, picked, section]);
+
+  /* Only worth saying while they are actually looking at the substituted city;
+     once they pick somewhere themselves the notice is just noise. */
+  const showFallbackNotice = resolved.isFallback && city === resolved.city && resolved.userCity;
 
   const items = useMemo(() => section.forCity(city), [city]);
 
@@ -150,6 +184,7 @@ const Directory = ({ section }) => {
 
   const changeCity = (next) => {
     setCity(next);
+    setPicked(true);   // their choice now owns this list, not the dog's city
     setArea('');       // an area from the old city would match nothing here
     setQuery('');
   };
@@ -169,6 +204,16 @@ const Directory = ({ section }) => {
       <p className="pb-page__sub">
         {section.subtitleNoun} in {city}{area ? ` · ${area}` : ''}.
       </p>
+
+      {/* Says plainly that this is not their city and why. Substituting the
+          nearest list silently is what made the app look like it had simply
+          forgotten where the dog lives. */}
+      {showFallbackNotice && (
+        <p className="vt-nearest" role="status">
+          No {section.nounPlural} listed in {resolved.userCity} yet — showing {city},
+          the nearest city we cover. You can change this above.
+        </p>
+      )}
 
       <section className="pb-card">
         <div className="vt-bar">
@@ -240,6 +285,9 @@ const Directory = ({ section }) => {
 const Services = () => {
   const [tab, setTab] = useState('vets');
   const section = SECTIONS[tab];
+  /* The selected dog is the app's own answer to "whose city is this?" — the
+     same dog the dashboard, health records and tips are all scoped to. */
+  const { selectedDog } = useDogs();
 
   return (
     <div className="pb-page pb-fade">
@@ -263,9 +311,14 @@ const Services = () => {
         </div>
       </div>
 
-      <Directory key={section.key} section={section} />
+      <Directory key={section.key} section={section} dogCity={selectedDog?.city} />
 
       <style>{`
+        .vt-nearest {
+          margin: 0 0 14px; padding: 10px 13px;
+          background: #FFFBF4; border: 1px solid #E9D8B8; border-radius: 11px;
+          color: #9A6B1F; font-size: 12.5px; line-height: 1.55;
+        }
         .pb-seg {
           display: inline-flex; gap: 4px; margin-top: 10px; padding: 4px;
           background: #F6F1EB; border-radius: 50px;

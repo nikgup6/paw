@@ -107,16 +107,22 @@ const Results = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const { user } = useContext(AuthContext);
-  /* Breeds are fetched now, not bundled. Scoring must wait for them —
-     computeMatches against an empty catalogue returns an empty ranking. */
-  const { breeds: breedsData, loading: breedsLoading } = useBreeds();
+  /* Breeds are fetched now, not bundled — but `breeds` is never empty: it holds
+     the bundled catalogue from the very first render and is replaced in place if
+     the API answers. So scoring does NOT wait. It used to, and on a deploy where
+     the API is unreachable that meant staring at a spinner for the whole timeout
+     before seeing results that the browser already had the data to produce.
+
+     Scoring instead runs immediately against whatever is loaded, and this effect
+     re-runs if the API later swaps the catalogue, recomputing against the
+     authoritative copy. `results_viewed` is ref-guarded, so a recompute cannot
+     log the visit twice. */
+  const { breeds: breedsData } = useBreeds();
   const navigate = useNavigate();
   const compareRef = useRef(null);
   const viewedRef = useRef(false);   // results_viewed is logged once per visit
 
   useEffect(() => {
-    if (breedsLoading) return;          // catalogue still arriving
-
     const savedState = localStorage.getItem('pb_quiz_state');
     if (!savedState) {
       navigate('/quiz');
@@ -174,7 +180,7 @@ const Results = () => {
     };
 
     fetchResults();
-  }, [navigate, user, breedsLoading, breedsData]);
+  }, [navigate, user, breedsData]);
 
   useEffect(() => {
     if (modalType || showFeedback) {
@@ -404,6 +410,16 @@ const Results = () => {
               <p style={{ fontSize: '14px', color: 'white', marginTop: '8px', lineHeight: 1.5, background: 'rgba(255,107,43,0.1)', padding: '10px', borderRadius: '8px', borderLeft: '3px solid var(--orange)' }}>
                 {generateReason(topBreeds[0])}
               </p>
+
+              {/* The #1 slot is the most persuasive thing on the page, so any
+                  caveat the engine raised belongs here rather than only in the
+                  Full Profile the owner may never open. */}
+              {topBreeds[0].warnings?.length > 0 && (
+                <p style={{ fontSize: '13px', color: 'white', marginTop: '8px', lineHeight: 1.5, background: 'rgba(0,0,0,0.16)', padding: '9px 12px', borderRadius: '8px', display: 'inline-block' }}>
+                  ⚠ {topBreeds[0].warnings[0]}
+                </p>
+              )}
+
               <div className="match-tags" style={{ marginTop: '15px' }}>
                 {topBreeds[0].tags?.map(tag => (
                   <span key={tag} className="match-tag">{tag}</span>
@@ -638,7 +654,7 @@ const Results = () => {
                       <div className="pros" style={{ background: '#f0fdf4', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
                         <h5 style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Pros</h5>
                         <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                          {generateProsCons(selectedBreed).pros.map((pro, i) => (
+                          {generateProsCons(selectedBreed, answers).pros.map((pro, i) => (
                             <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
                               <span style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✓</span>{pro}
                             </li>
@@ -648,7 +664,7 @@ const Results = () => {
                       <div className="cons" style={{ background: '#fef2f2', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
                         <h5 style={{ color: 'var(--red)', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Cons</h5>
                         <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                          {generateProsCons(selectedBreed).cons.map((con, i) => (
+                          {generateProsCons(selectedBreed, answers).cons.map((con, i) => (
                             <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
                               <span style={{ color: 'var(--red)', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✕</span>{con}
                             </li>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useBreedList } from '../context/BreedsContext';
@@ -6,12 +6,19 @@ import { buildLivingConditions } from '../utils/breedUtils';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from './WhatsAppButton';
 import BreederDirectory from './BreederDirectory';
+import { loadQuizState } from '../utils/quizState';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
   const breedsData = useBreedList();
   const navigate = useNavigate();
+  /* Read at open time rather than held in state: this modal is mounted from
+     Explore, Home and FeaturedPuppies, none of which carry the quiz answers. */
+  const quizCity = useMemo(() => {
+    const answers = loadQuizState().answers || {};
+    return (Array.isArray(answers.city) ? answers.city[0] : answers.city) || null;
+  }, [modalType]);
   const [compareList, setCompareList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [waLink, setWaLink] = useState('');
@@ -99,7 +106,12 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
               </div>
             ) : (
               <BreederDirectory
-                userCity={user?.city || null}
+                /* There is no login, so `user` is null for everyone and this
+                   prop was always null — which is why the breeder list opened
+                   on the default city no matter what the owner had told us.
+                   The quiz city is the real answer, and it is the same source
+                   Results and BreedProfileModal already pass. */
+                userCity={quizCity || user?.city || null}
                 breedName={breed.name}
                 topBreeds={[]}
                 onContact={logBreederContact}

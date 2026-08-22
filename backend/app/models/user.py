@@ -20,10 +20,3 @@ class UserInDB(UserBase):
 class UserResponse(UserBase):
     id: str
     created_at: datetime
-
-
-class QuickRegisterRequest(BaseModel):
-    """Lightweight registration — name + mobile are required, email is optional."""
-    name: str
-    mobile: str
-    email: Optional[str] = None

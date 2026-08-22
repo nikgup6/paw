@@ -1,0 +1,11 @@
+# SPA fallback for Netlify-style hosts (Netlify, Cloudflare Pages).
+#
+# Without this, only "/" exists as a real file: every other route is created by
+# React Router in the browser, so a hard refresh, a bookmark or a pasted link to
+# /app, /quiz or /results asks the host for a file that was never built and gets
+# a 404. The dev server hides this — Vite serves index.html for unknown paths
+# itself — so it only ever appears once deployed.
+#
+# 200, not 301: the browser must keep the original URL so the router can read it.
+# Vercel is configured separately in ../vercel.json; this file is inert there.
+/*    /index.html   200

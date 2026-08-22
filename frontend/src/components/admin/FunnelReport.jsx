@@ -75,10 +75,7 @@ const FunnelReport = () => {
     setLoading(true);
     try {
       const params = start || end ? { start: start || undefined, end: end || undefined } : { days };
-      const { data } = await axios.get(`${API_URL}/api/funnel/report`, {
-        params,
-        headers: { Authorization: `Bearer ${localStorage.getItem('pb_token') || ''}` },
-      });
+      const { data } = await axios.get(`${API_URL}/api/funnel/report`, { params });
       setReport(data);
       setError('');
     } catch {

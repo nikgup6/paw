@@ -22,43 +22,6 @@ const TIMELINE_QUESTION = 'timeline';
     (free text). Events and the progress row want the plain value. */
 const flatten = (value) => (Array.isArray(value) ? (value.length === 1 ? value[0] : value) : value);
 
-/* Question 5 used to be a single self-rating ("How active is your daily
-   lifestyle?" — Relaxed/Moderately Active/Highly Active). Chintan flagged it
-   for removal: people over- or under-rate themselves, and one label was
-   quietly standing in for two different things — how much TIME they have,
-   and how INTENSE that time actually is. A calm hour of leisurely walking and
-   a calm hour of trail running are not the same lifestyle.
-
-   Replaced with two behavioural questions ("activity_time",
-   "activity_intensity") that ask what actually happens. Grounded in the
-   breed database's own vocabulary — breeds.json's `energy` field already
-   separates duration ("20-30 min", "1-2 hrs") from character ("gentle daily
-   walk" vs "vigorous daily"), so this mirrors a distinction the data already
-   makes, rather than inventing a new one.
-
-   breedUtils.js was never touched: it still expects `answers.activity` as an
-   array holding one of relaxed/moderate/high (see config/enums.js
-   ACTIVITY_BAND). The two raw answers are combined into that same shape
-   right here, in the question layer, the moment both are known — see
-   deriveActivityTier below and its call site in handleOptionSelect. */
-const ACTIVITY_TIME_POINTS = { under30: 0, '30to60': 1, '1to2h': 2, '2hplus': 3 };
-const ACTIVITY_INTENSITY_POINTS = { slow: 0, brisk: 1, vigorous: 2 };
-
-/** Raw time + intensity answers -> the single relaxed/moderate/high tier the
-    engine has always consumed. Sum range is 0-5; the two cuts below are a
-    judgment call (no external benchmark backs them) — simple point-sum to
-    tier, as agreed, not a claim of clinical precision. Returns null until
-    both raw answers exist, so a half-answered pair never writes a guess. */
-function deriveActivityTier(answers) {
-  const time = flatten(answers.activity_time);
-  const intensity = flatten(answers.activity_intensity);
-  if (!(time in ACTIVITY_TIME_POINTS) || !(intensity in ACTIVITY_INTENSITY_POINTS)) return null;
-  const score = ACTIVITY_TIME_POINTS[time] + ACTIVITY_INTENSITY_POINTS[intensity];
-  if (score <= 1) return 'relaxed';
-  if (score <= 3) return 'moderate';
-  return 'high';
-}
-
 const Quiz = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -147,23 +110,14 @@ const Quiz = () => {
       const currentAns = prev[qId] || [];
       const qConfig = questionsData.find(x => x.id === qId);
 
-      const nextForQ = qConfig && qConfig.multi === false
-        ? (currentAns.includes(val) ? [] : [val])
-        : (currentAns.includes(val) ? currentAns.filter(a => a !== val) : [...currentAns, val]);
-
-      const next = { ...prev, [qId]: nextForQ };
-
-      /* Recomputed inside the SAME update that answers either half of the
-         pair, so `activity` is written well before the quiz's real last
-         question — never dependent on handleNext's own timing, which for the
-         final question runs synchronously right before navigate() and would
-         race a separate setAnswers call. */
-      if (qId === 'activity_time' || qId === 'activity_intensity') {
-        const tier = deriveActivityTier(next);
-        next.activity = tier ? [tier] : [];
+      if (qConfig && qConfig.multi === false) {
+        return { ...prev, [qId]: currentAns.includes(val) ? [] : [val] };
       }
 
-      return next;
+      const newAns = currentAns.includes(val)
+        ? currentAns.filter(a => a !== val)
+        : [...currentAns, val];
+      return { ...prev, [qId]: newAns };
     });
   };
 

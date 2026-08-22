@@ -262,6 +262,31 @@ const experienceWarning = (tier) =>
    preference. Everything else scores low and stays visible with a flag. */
 const isEliminated = (a, breed) => a.home === 'apt-1bhk' && breed.minApartmentSize === 'House only';
 
+/* Does this breed need more indoor space than they actually have?
+
+   The sentence above promises that a breed which survives elimination "stays
+   visible WITH A FLAG", and for space there was no such flag — a 2BHK-min
+   breed shown to a 1BHK owner scored lower (scoreHome gives 5 instead of 15)
+   but said nothing, while the copy layer cheerfully called it "Apartment
+   Friendly" and the Full Profile said "needs at least a 2BHK". Same record,
+   two opposite claims, and the honest one was the one the owner had to go
+   looking for.
+
+   Only applies to apartment dwellers: `aptRank` is null for a house, and a
+   house is not short of room. */
+const hasSpaceGap = (a, nb) =>
+  !a.isHouse && a.aptRank != null && nb.aptRank > a.aptRank;
+
+/** "Needs at least a 2BHK — you told us 1BHK apartment." Specific on both
+    sides, because "needs more space" alone leaves them guessing how much. */
+const spaceWarning = (a, breed) => {
+  const needs = String(breed.minApartmentSize || '').trim();
+  const home = ANSWER_PHRASES.home[a.home] || 'your home';
+  if (needs === 'House only') return `Needs an independent house — you told us ${home}`;
+  const size = needs.replace(/\s*(min|OK)$/i, '').trim();   // "2BHK min" -> "2BHK"
+  return `Needs at least a ${size} — you told us ${home}`;
+};
+
 /* ==================== STEP 3 — FINAL SCORE + LABELS ====================== */
 
 const LABELS = [
@@ -277,10 +302,15 @@ const FLAG_TEXT = {
   HEAT: 'Serious heat risk in your city',
   SAFETY: 'Risky around young children or elderly family',
   EXPERIENCE: 'Demanding for a first-time owner',
+  //: Generic wording for `flagLabel`; the per-result warning is built by
+  //  spaceWarning(), which names the actual sizes on both sides.
+  SPACE: 'Needs more indoor space than your home has',
   BUDGET: 'Costs more per month than your budget',
 };
-/* Most severe first — Prompt 5 shows the single worst flag as a warning bullet. */
-const FLAG_SEVERITY = ['HEAT', 'SAFETY', 'EXPERIENCE', 'BUDGET'];
+/* Most severe first — Prompt 5 shows the single worst flag as a warning bullet.
+   SPACE sits above BUDGET: a flat too small for the dog is a daily welfare
+   problem, where an over-budget month is a number the owner can plan around. */
+const FLAG_SEVERITY = ['HEAT', 'SAFETY', 'EXPERIENCE', 'SPACE', 'BUDGET'];
 
 export function computeMatches(answers, allBreeds) {
   if (!answers || !Array.isArray(allBreeds)) return [];
@@ -313,6 +343,7 @@ export function computeMatches(answers, allBreeds) {
     if (g1 <= heatCfg.heatFlagThreshold) flags.push('HEAT');
     if (g2 <= 0.4) flags.push('SAFETY');
     if (g3 < 1) flags.push('EXPERIENCE');
+    if (hasSpaceGap(a, nb)) flags.push('SPACE');
     if (budget.flag) flags.push(budget.flag);
     flags.sort((x, y) => FLAG_SEVERITY.indexOf(x) - FLAG_SEVERITY.indexOf(y));
 
@@ -331,7 +362,11 @@ export function computeMatches(answers, allBreeds) {
       heatClass: nb.heatClass,
       flags,
       // kept: existing result UI reads .warnings
-      warnings: flags.map((f) => (f === 'EXPERIENCE' ? experienceWarning(nb.experience) : FLAG_TEXT[f])),
+      warnings: flags.map((f) => {
+        if (f === 'EXPERIENCE') return experienceWarning(nb.experience);
+        if (f === 'SPACE') return spaceWarning(a, breed);
+        return FLAG_TEXT[f];
+      }),
       climateWarning: flags.includes('HEAT'),
       finalScore,
       label,
@@ -375,12 +410,28 @@ export function climateTag(s = '') {
 }
 const riskTag = (s = '') => headToken(s);
 
-export function generateProsCons(breed) {
+/* `answers` is optional. With it, the space line is stated RELATIVE to the home
+   they gave; without it (a generic breed profile, no quiz taken) the line stays
+   absolute, which is still true of the breed. What it must never do again is
+   claim a 2BHK-min breed as a plus to someone who told us they live in a
+   1BHK — that is the sentence that contradicted the Full Profile. */
+export function generateProsCons(breed, answers = null) {
   const pros = [];
   const cons = [];
 
-  if (breed.minApartmentSize === '1BHK OK')  pros.push('Comfortable even in a 1BHK apartment.');
-  if (breed.minApartmentSize === '2BHK min') pros.push('Well suited to a typical 2BHK apartment.');
+  const home = answers ? firstAnswer(answers, 'home', null) : null;
+  const homeRank = home ? HOME_APT_RANK[home] : null;
+  const needRank = MIN_APT_RANK[String(breed.minApartmentSize || '').trim()];
+  // Only meaningful for an apartment: a house is not short of room.
+  const knowsHome = homeRank != null && needRank != null;
+
+  if (knowsHome && needRank > homeRank) {
+    cons.push(`Needs at least a ${String(breed.minApartmentSize).replace(/\s*(min|OK)$/i, '')} — larger than the home you told us about.`);
+  } else if (breed.minApartmentSize === '1BHK OK') {
+    pros.push('Comfortable even in a 1BHK apartment.');
+  } else if (breed.minApartmentSize === '2BHK min') {
+    pros.push('Well suited to a typical 2BHK apartment.');
+  }
   if (breed.experienceLevel === 'First-timer OK') pros.push('Easy to train and handle for first-time owners.');
   if (['Low', 'Low-Medium'].includes(breed.grooming)) pros.push('Low grooming and maintenance needs.');
   if ((breed.energy || '').startsWith('Low')) pros.push('Low exercise needs — workable for busy schedules.');
@@ -556,9 +607,23 @@ export function generateMatchReasons(breed, answers) {
   const pros = [];
   const cons = [];
 
+  /* "Apartment Friendly" has to mean friendly to THEIR apartment. It used to
+     fire for any 1BHK-OK or 2BHK-min breed regardless of the home answered,
+     so a 2BHK-min breed was tagged apartment-friendly for a 1BHK owner — the
+     same record the Full Profile describes as "needs at least a 2BHK". Now the
+     breed's requirement is compared against the home they actually gave. */
   const isApt = String(home).startsWith('apt-');
-  if (isApt && ['1BHK OK', '2BHK min'].includes(breed.minApartmentSize)) pros.push('Apartment Friendly');
-  if (isApt && breed.minApartmentSize === 'House only') cons.push('Requires More Space');
+  const homeRank = HOME_APT_RANK[home];
+  const needRank = MIN_APT_RANK[String(breed.minApartmentSize || '').trim()];
+  const fitsHome = isApt && homeRank != null && needRank != null && needRank <= homeRank;
+  const tooBig = isApt && homeRank != null && needRank != null && needRank > homeRank;
+
+  if (fitsHome) pros.push('Apartment Friendly');
+  if (tooBig) {
+    cons.push(breed.minApartmentSize === 'House only'
+      ? 'Requires More Space'
+      : `Needs a ${String(breed.minApartmentSize).replace(/\s*min$/i, '')} or larger`);
+  }
   if (home === 'house-yard' && (breed.house || '').startsWith('High')) pros.push('Loves Having a Yard');
 
   if (experience === 'none' && breed.experienceLevel === 'First-timer OK') pros.push('Beginner Friendly');

@@ -20,6 +20,18 @@ const BreedCard = ({ breed, rank, reason, onBuy, onCompare, onFullProfile, hideA
             {reason}
           </p>
         )}
+
+        {/* The single worst caveat, next to the reason that sells the breed.
+            The engine already computed these; this card just never showed them,
+            so a breed needing more space than the owner has read as a clean
+            recommendation here while the Full Profile said otherwise. Only the
+            first is shown — the card is a summary, and the profile carries the
+            rest. */}
+        {breed.warnings?.length > 0 && (
+          <p style={{ fontSize: '12.5px', color: '#9a6b1f', background: '#fdf3e0', border: '1px solid #f3ddb2', borderRadius: '8px', padding: '8px 10px', margin: '0 0 12px', lineHeight: 1.5 }}>
+            ⚠ {breed.warnings[0]}
+          </p>
+        )}
         <div className="breed-pills">
           {breed.tags?.slice(0, 3).map(tag => (
             <span key={tag} className="pill pill-orange">{tag}</span>

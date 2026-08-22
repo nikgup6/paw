@@ -1,4 +1,5 @@
 import { telHref } from './breeders';
+import cityCfg from '../config/breederCities.json';
 
 /* Shared helpers for any "local business directory" list — vets and
    groomers today, both generated from a workbook by the same extractor
@@ -46,6 +47,58 @@ export const shortServices = (text, max = 68) => {
   const stop = Math.max(cut.lastIndexOf(';'), cut.lastIndexOf(','), cut.lastIndexOf(' '));
   return `${cut.slice(0, stop > 30 ? stop : max).trim()}…`;
 };
+
+/* ------------------------- which city to open on ------------------------- */
+
+/* One nearest-city table for every directory, reused from the breeder config
+   rather than copied: a city is near Chennai whether you are looking for a
+   breeder, a vet or a groomer, and two tables would drift.
+
+   Coverage is checked per directory, which matters more than it looks — vets
+   cover five cities but groomers currently cover only Hyderabad, so "nearest
+   network" alone would hand a Nellore owner a Chennai groomer list that does
+   not exist. Resolution therefore walks: their own city -> nearest network we
+   cover -> the default -> whatever this directory actually has. */
+const NEAREST_OF = new Map();
+for (const [network, cities] of Object.entries(cityCfg.nearest || {})) {
+  for (const c of cities) NEAREST_OF.set(c, network);
+}
+
+const isRealCity = (value) => {
+  const city = typeof value === 'string' ? value.trim() : '';
+  return Boolean(city)
+    && !city.startsWith('zone:')
+    && !['hot', 'cold', 'mixed', 'moderate'].includes(city.toLowerCase());
+};
+
+/**
+ * Where a directory should open for this owner.
+ *
+ * `{ city, isFallback, userCity }` — `isFallback` true means we are showing
+ * somewhere other than where they live, which the UI is expected to SAY rather
+ * than quietly substitute. That silent substitution is the whole reason a
+ * Nellore owner saw a Hyderabad list with no explanation.
+ */
+export function resolveDirectoryCity(userCity, coveredCities) {
+  const covered = Array.isArray(coveredCities) ? coveredCities : [];
+  const fallbackCity = covered.includes(cityCfg.defaultCity) ? cityCfg.defaultCity : covered[0] || null;
+
+  if (!isRealCity(userCity)) {
+    return { city: fallbackCity, isFallback: false, userCity: null };
+  }
+  const city = userCity.trim();
+
+  // Their own city, if this directory has anything in it.
+  if (covered.includes(city)) return { city, isFallback: false, userCity: city };
+
+  // Otherwise the nearest network — but only if it is covered here too.
+  const nearest = NEAREST_OF.get(city);
+  if (nearest && covered.includes(nearest)) {
+    return { city: nearest, isFallback: true, userCity: city };
+  }
+
+  return { city: fallbackCity, isFallback: Boolean(fallbackCity), userCity: city };
+}
 
 /** Remembered city choice for a given directory, so it opens where they left it. */
 export const readCityPreference = (key, cities) => {

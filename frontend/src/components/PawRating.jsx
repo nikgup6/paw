@@ -30,7 +30,11 @@ const PawIcon = ({ filled }) => (
 
 const LABELS = ['Not at all', 'Not really', 'It’s okay', 'Happy', 'Perfect fit'];
 
-const PawRating = ({ value, onChange }) => {
+/* `label` names THIS rating for a screen reader. It defaults to the owner
+   survey's original wording so that call site is unchanged, but it has to be
+   settable: the feedback modal renders five of these at once, and five
+   radiogroups all announcing "Satisfaction with this breed" is unusable. */
+const PawRating = ({ value, onChange, label = 'Satisfaction with this breed' }) => {
   //: Which paw just got tapped — drives the one-shot pop + emoji, then clears
   //  itself so the animation can replay on the next tap.
   const [burst, setBurst] = useState(null);
@@ -43,7 +47,7 @@ const PawRating = ({ value, onChange }) => {
 
   return (
     <div className="pawrate">
-      <div className="pawrate__row" role="radiogroup" aria-label="Satisfaction with this breed">
+      <div className="pawrate__row" role="radiogroup" aria-label={label}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}

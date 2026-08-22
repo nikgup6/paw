@@ -16,6 +16,22 @@ import bundledBreeds from '../constants/breeds.json';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+/* How long to wait for the catalogue before giving up on it.
+
+   This number no longer controls anything the user waits on. Nothing blocks on
+   the fetch any more — `breeds` holds the bundled catalogue from the first
+   render and is swapped in place if the API answers — so the page is complete
+   immediately either way and this only decides whether the LIVE copy still
+   gets a chance to replace it.
+
+   Which is why it is generous rather than aggressive. The backend is a Vercel
+   Python function talking to Atlas, and its cold start is measured in seconds
+   (see the note in backend/app/main.py); a short timeout would abort a request
+   that was going to succeed, so a cold deploy would serve the bundled copy
+   essentially forever and never pick up a breed edit. Waiting costs the user
+   nothing here, and buys the authoritative data. */
+const BREEDS_TIMEOUT_MS = 8000;
+
 /** Fields the scoring engine reads. A response missing them would still render
     a ranked list — a meaningless one — so it's rejected in favour of the
     bundled copy instead of quietly producing bad recommendations. */
@@ -40,7 +56,7 @@ export async function fetchBreeds() {
 
   inFlight = (async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/api/breeds/`, { timeout: 10000 });
+      const { data } = await axios.get(`${API_URL}/api/breeds/`, { timeout: BREEDS_TIMEOUT_MS });
       if (isUsable(data)) {
         cache = { breeds: data, source: 'api', error: null };
         return cache;

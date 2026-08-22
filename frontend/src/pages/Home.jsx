@@ -29,37 +29,15 @@ import CitySelect from '../components/CitySelect';
 import { useBreeds } from '../context/BreedsContext';
 import questionsData from '../constants/questions.json';
 import { computeMatches } from '../utils/breedUtils';
-
-/* Question 5 was a self-rated activity label, replaced with two behavioural
-   proxies ("activity_time" + "activity_intensity") in questions.json. This
-   inline quiz shares that JSON but keeps its own separate answer state and
-   handler (handleQuizAnswer below, not Quiz.jsx's), so it needs the same
-   small derivation duplicated here — otherwise a quiz completed through this
-   widget would submit the two raw answers but never compute the
-   `activity` tier breedUtils.js's ACTIVITY_BAND (config/enums.js) expects,
-   and computeMatches below would silently default to 'moderate' regardless
-   of what was actually answered. See Quiz.jsx for the identical logic and
-   the full reasoning. */
-const ACTIVITY_TIME_POINTS = { under30: 0, '30to60': 1, '1to2h': 2, '2hplus': 3 };
-const ACTIVITY_INTENSITY_POINTS = { slow: 0, brisk: 1, vigorous: 2 };
-const flattenAnswer = (value) => (Array.isArray(value) ? (value.length === 1 ? value[0] : value) : value);
-
-function deriveActivityTier(answers) {
-  const time = flattenAnswer(answers.activity_time);
-  const intensity = flattenAnswer(answers.activity_intensity);
-  if (!(time in ACTIVITY_TIME_POINTS) || !(intensity in ACTIVITY_INTENSITY_POINTS)) return null;
-  const score = ACTIVITY_TIME_POINTS[time] + ACTIVITY_INTENSITY_POINTS[intensity];
-  if (score <= 1) return 'relaxed';
-  if (score <= 3) return 'moderate';
-  return 'high';
-}
 import { parsePrompt } from '../utils/matchmaker';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const Home = () => {
-  const { breeds: breedsData, loading: breedsLoading } = useBreeds();
+  /* No `loading` here on purpose — `breeds` is never empty, so this page has
+     nothing to wait for. See BreedsProvider. */
+  const { breeds: breedsData } = useBreeds();
   const { user, logout, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -173,20 +151,14 @@ const Home = () => {
       const currentAns = prev[qId] || [];
       const qConfig = questionsData.find(x => x.id === qId);
 
-      const nextForQ = qConfig && qConfig.multi === false
-        ? (currentAns.includes(val) ? [] : [val])
-        : (currentAns.includes(val) ? currentAns.filter(a => a !== val) : [...currentAns, val]);
-
-      const next = { ...prev, [qId]: nextForQ };
-
-      // See deriveActivityTier's own comment above — recomputed in the same
-      // update that answers either half of the pair.
-      if (qId === 'activity_time' || qId === 'activity_intensity') {
-        const tier = deriveActivityTier(next);
-        next.activity = tier ? [tier] : [];
+      if (qConfig && qConfig.multi === false) {
+        return { ...prev, [qId]: currentAns.includes(val) ? [] : [val] };
       }
 
-      return next;
+      const newAns = currentAns.includes(val)
+        ? currentAns.filter(a => a !== val)
+        : [...currentAns, val];
+      return { ...prev, [qId]: newAns };
     });
   };
 

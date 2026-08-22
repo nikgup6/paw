@@ -8,6 +8,170 @@ import CareTipsTable from '../components/admin/CareTipsTable';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+/* The five experience-survey questions, in the order they are asked. Short
+   column headings; the full question text is the header's tooltip, because a
+   table with five sentences across the top is unreadable. */
+const EXPERIENCE_COLUMNS = [
+  { key: 'reliability', label: 'Worked', full: 'Did everything work as expected?' },
+  { key: 'ease_of_use', label: 'Easy', full: 'How easy was it to find and use what you needed?' },
+  { key: 'match_accuracy', label: 'Match', full: 'How accurate did your breed match feel?' },
+  { key: 'unbiased', label: 'Unbiased', full: 'Did the advice feel unbiased and genuinely helpful?' },
+  { key: 'recommend', label: 'Recommend', full: 'How likely to recommend to another first-time owner?' },
+];
+
+const th = { padding: '12px 8px', fontWeight: 'var(--weight-semibold)', whiteSpace: 'nowrap' };
+const cell = { padding: '12px 8px', fontSize: '13px', verticalAlign: 'top' };
+
+/* A score reads as a number, with colour only as reinforcement — 1-2 is the
+   thing worth finding in this table. */
+const Score = ({ n }) => {
+  const tone = n <= 2 ? '#C62828' : n === 3 ? '#9A6B1F' : '#1B8046';
+  const bg = n <= 2 ? '#FDECEC' : n === 3 ? '#FBEFD8' : '#E7F6EC';
+  return (
+    <span style={{
+      display: 'inline-block', minWidth: '24px', textAlign: 'center',
+      padding: '3px 7px', borderRadius: '7px', background: bg, color: tone,
+      fontWeight: 'var(--weight-bold)', fontSize: '12.5px',
+    }}>{n}</span>
+  );
+};
+
+const ExperienceFeedbackPanel = ({ data, sort, onSort, owner, onOwner, score, onScore }) => {
+  const { entries = [], averages = {}, count = 0 } = data || {};
+  const input = {
+    padding: '8px 12px', borderRadius: '50px', border: '1px solid #EAE4DE',
+    fontFamily: 'var(--font-body-family)', fontSize: '13px', outline: 'none',
+  };
+
+  /* Clicking a column sorts by it; clicking the active one flips direction. */
+  const toggle = (key) => onSort(
+    sort.by === key
+      ? { by: key, order: sort.order === 'asc' ? 'desc' : 'asc' }
+      : { by: key, order: 'asc' },   // ascending first: worst scores to the top
+  );
+  const arrow = (key) => (sort.by === key ? (sort.order === 'asc' ? ' ▲' : ' ▼') : '');
+
+  return (
+    <div>
+      <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', marginBottom: '6px', color: 'var(--brown)' }}>
+        Experience surveys
+      </h3>
+      <p style={{ color: 'var(--text-soft)', fontSize: '13px', margin: '0 0 16px' }}>
+        The 5-question survey from the app’s “More” menu. Each score is stored separately —
+        click a column to sort by that question and find the weak dimension.
+      </p>
+
+      {/* Averages across whatever the filter currently selects, so "matching is
+          the low one" is visible without reading down the column. */}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+        {EXPERIENCE_COLUMNS.map((c) => (
+          <div key={c.key} title={c.full} style={{
+            flex: '1 1 120px', background: 'var(--cream)', borderRadius: '12px',
+            padding: '10px 12px', border: '1px solid #EFE6DC',
+          }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '3px' }}>{c.label}</div>
+            <div style={{ fontFamily: 'var(--font-accent)', fontSize: '21px', color: 'var(--brown)' }}>
+              {averages[c.key] == null ? '—' : averages[c.key]}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px', alignItems: 'center' }}>
+        <input
+          style={{ ...input, flex: '1 1 240px' }}
+          value={owner}
+          onChange={(e) => onOwner(e.target.value)}
+          placeholder="Filter by owner id…"
+        />
+        <select
+          style={input}
+          value={score.field}
+          onChange={(e) => onScore({ ...score, field: e.target.value })}
+        >
+          <option value="">Any question…</option>
+          {EXPERIENCE_COLUMNS.map((c) => <option key={c.key} value={c.key}>{c.full}</option>)}
+        </select>
+        <select
+          style={input}
+          value={score.max}
+          onChange={(e) => onScore({ ...score, max: e.target.value })}
+          disabled={!score.field}
+          title={score.field ? '' : 'Pick a question first'}
+        >
+          <option value="">scored…</option>
+          {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n} or below</option>)}
+        </select>
+        {(owner || score.field || score.max) && (
+          <button
+            onClick={() => { onOwner(''); onScore({ field: '', max: '' }); }}
+            style={{ ...input, cursor: 'pointer', background: 'white', color: 'var(--orange)', border: '1px solid var(--orange)' }}
+          >
+            Clear
+          </button>
+        )}
+        <span style={{ color: 'var(--text-soft)', fontSize: '12.5px' }}>{count} shown</span>
+      </div>
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '820px' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)', color: 'var(--text-soft)' }}>
+              <th style={th}>Owner</th>
+              {EXPERIENCE_COLUMNS.map((c) => (
+                <th
+                  key={c.key}
+                  style={{ ...th, cursor: 'pointer', color: sort.by === c.key ? 'var(--orange)' : undefined }}
+                  title={c.full}
+                  onClick={() => toggle(c.key)}
+                >
+                  {c.label}{arrow(c.key)}
+                </th>
+              ))}
+              <th style={{ ...th, width: '32%' }}>Comment</th>
+              <th
+                style={{ ...th, cursor: 'pointer', color: sort.by === 'created_at' ? 'var(--orange)' : undefined }}
+                onClick={() => toggle('created_at')}
+              >
+                Date{arrow('created_at')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.length > 0 ? entries.map((e) => (
+              <tr key={e._id} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                <td style={{ ...cell, fontFamily: 'monospace', fontSize: '11.5px' }}>
+                  {/* Truncated for width; the title carries the full id and the
+                      name, when an auth session happened to supply one. */}
+                  <span title={`${e.owner_id}${e.user_name ? ` · ${e.user_name}` : ''}`}>
+                    {String(e.owner_id || '').slice(0, 8)}…
+                  </span>
+                  {e.user_name && (
+                    <div style={{ fontFamily: 'var(--font-body-family)', color: 'var(--text-soft)', fontSize: '11.5px' }}>{e.user_name}</div>
+                  )}
+                </td>
+                {EXPERIENCE_COLUMNS.map((c) => (
+                  <td key={c.key} style={cell}><Score n={e[c.key]} /></td>
+                ))}
+                <td style={{ ...cell, color: 'var(--text-soft)', whiteSpace: 'pre-wrap' }}>{e.comment || '—'}</td>
+                <td style={{ ...cell, color: 'var(--text-soft)', whiteSpace: 'nowrap' }}>
+                  {new Date(e.created_at).toLocaleDateString()}
+                </td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={8} style={{ padding: '30px 0', textAlign: 'center', color: 'var(--text-soft)' }}>
+                  No survey responses{owner || score.field ? ' match that filter' : ' yet'}.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -15,6 +179,13 @@ const AdminDashboard = () => {
   const [leads, setLeads] = useState([]);
   const [buyRequests, setBuyRequests] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
+  /* The 5-question experience survey lives in its own collection, so it is its
+     own request — and its own sort/filter state, since the server does the
+     sorting (the whole set may exceed what one page holds). */
+  const [experience, setExperience] = useState({ entries: [], averages: {}, count: 0 });
+  const [expSort, setExpSort] = useState({ by: 'created_at', order: 'desc' });
+  const [expOwner, setExpOwner] = useState('');
+  const [expScore, setExpScore] = useState({ field: '', max: '' });
   const [anonymousVisitors, setAnonymousVisitors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'users', 'buy_requests', 'leads', 'anonymous'
@@ -50,56 +221,64 @@ const AdminDashboard = () => {
   /* Everything on the page, in one pass. Runs on mount and on Refresh — NOT on
      every keystroke in the city box, which is what it used to do: each letter
      re-fetched all six endpoints, so typing "Bengaluru" fired ~54 requests and
-     pulled the whole 122-row visitor list nine times over.
-
-     Uses allSettled so one failing endpoint (e.g. 401 on /api/buy) doesn't
-     kill the entire dashboard — the other five still render their data. */
+     pulled the whole 122-row visitor list nine times over. */
   const loadAll = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setRefreshing(true);
-    const auth = authHeader();
-    const city = cityFilterRef.current;
-
-    const keys = ['stats', 'users', 'buy', 'leads', 'feedback', 'anon'];
-    const results = await Promise.allSettled([
-      axios.get(`${API_URL}/api/admin/dashboard`, auth),
-      axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
-      axios.get(`${API_URL}/api/buy`, auth),
-      axios.get(`${API_URL}/api/admin/leads`, auth),
-      axios.get(`${API_URL}/api/feedback`, auth),
-      axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
-    ]);
-
-    let hadAuthError = false;
-    const data = {};
-    results.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        data[keys[i]] = r.value.data;
-      } else {
-        data[keys[i]] = keys[i] === 'stats' ? null : [];
-        const status = r.reason?.response?.status;
-        if (status === 401 || status === 403) hadAuthError = true;
-        else console.error(`Admin fetch ${keys[i]} failed:`, r.reason);
-      }
-    });
-
-    if (hadAuthError) {
-      setAuthError('Your administrator session has expired. Please sign in again.');
-    } else {
+    try {
+      const auth = authHeader();
+      const city = cityFilterRef.current;
+      const [statsRes, usersRes, buyRes, leadsRes, feedbackRes, anonRes] = await Promise.all([
+        axios.get(`${API_URL}/api/admin/dashboard`, auth),
+        axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
+        axios.get(`${API_URL}/api/buy`),
+        axios.get(`${API_URL}/api/admin/leads`, auth),
+        // Admin-gated server-side — without the header this 401s and the
+        // Feedback tab renders empty regardless of what is stored.
+        axios.get(`${API_URL}/api/feedback`, auth),
+        axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
+      ]);
+      setStats(statsRes.data);
+      setUsers(usersRes.data);
+      setBuyRequests(buyRes.data);
+      setLeads(leadsRes.data);
+      setFeedbacks(feedbackRes.data);
+      setAnonymousVisitors(anonRes.data);
       setAuthError('');
+      setRefreshedAt(new Date());
+    } catch (error) {
+      handleFetchError(error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-
-    setStats(data.stats);
-    setUsers(data.users);
-    setBuyRequests(data.buy);
-    setLeads(data.leads);
-    setFeedbacks(data.feedback);
-    setAnonymousVisitors(data.anon);
-    setRefreshedAt(new Date());
-    setLoading(false);
-    setRefreshing(false);
   }, []);
 
   useEffect(() => { loadAll({ silent: true }); }, [loadAll]);
+
+  /* Its own request, re-run whenever the sort or filter changes: the server
+     orders and filters the rows, so this cannot be done by sorting whatever
+     happened to be in the first page of a shared response. */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const params = new URLSearchParams({ sort_by: expSort.by, order: expSort.order });
+      if (expOwner.trim()) params.set('owner_id', expOwner.trim());
+      // A bound means nothing without the question it applies to, so both are
+      // sent together or neither is.
+      if (expScore.field && expScore.max) {
+        params.set('score_field', expScore.field);
+        params.set('score_max', expScore.max);
+      }
+      try {
+        const { data } = await axios.get(
+          `${API_URL}/api/feedback/experience?${params}`, authHeader());
+        if (!cancelled) setExperience(data);
+      } catch {
+        if (!cancelled) setExperience({ entries: [], averages: {}, count: 0 });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [expSort, expOwner, expScore, refreshedAt]);
 
   /* The city box filters the USERS list and nothing else, so only that request
      is repeated — debounced, so it fires when you stop typing rather than on
@@ -375,7 +554,14 @@ const AdminDashboard = () => {
 
         {activeTab === 'feedback' && (
           <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: 'var(--shadow)', minHeight: '500px' }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', marginBottom: '20px', color: 'var(--brown)' }}>User Feedback</h3>
+            <ExperienceFeedbackPanel
+              data={experience}
+              sort={expSort} onSort={setExpSort}
+              owner={expOwner} onOwner={setExpOwner}
+              score={expScore} onScore={setExpScore}
+            />
+
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', margin: '38px 0 20px', color: 'var(--brown)' }}>One-tap & other feedback</h3>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
                 <thead>
