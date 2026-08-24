@@ -11,7 +11,6 @@ import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import OwnerSurvey from './pages/OwnerSurvey';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AuthProvider } from './context/AuthContext';
 import { BreedsProvider } from './context/BreedsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -65,7 +64,7 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
+    <>
       {/* One breed fetch for the whole app; consumers read it via useBreeds(). */}
       <BreedsProvider>
       <ErrorBoundary>
@@ -118,7 +117,7 @@ function App() {
         </Suspense>
       </ErrorBoundary>
       </BreedsProvider>
-    </AuthProvider>
+    </>
   );
 }
 

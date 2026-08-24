@@ -224,33 +224,47 @@ const AdminDashboard = () => {
      pulled the whole 122-row visitor list nine times over. */
   const loadAll = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setRefreshing(true);
-    try {
-      const auth = authHeader();
-      const city = cityFilterRef.current;
-      const [statsRes, usersRes, buyRes, leadsRes, feedbackRes, anonRes] = await Promise.all([
-        axios.get(`${API_URL}/api/admin/dashboard`, auth),
-        axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
-        axios.get(`${API_URL}/api/buy`),
-        axios.get(`${API_URL}/api/admin/leads`, auth),
-        // Admin-gated server-side — without the header this 401s and the
-        // Feedback tab renders empty regardless of what is stored.
-        axios.get(`${API_URL}/api/feedback`, auth),
-        axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
-      ]);
-      setStats(statsRes.data);
-      setUsers(usersRes.data);
-      setBuyRequests(buyRes.data);
-      setLeads(leadsRes.data);
-      setFeedbacks(feedbackRes.data);
-      setAnonymousVisitors(anonRes.data);
-      setAuthError('');
-      setRefreshedAt(new Date());
-    } catch (error) {
-      handleFetchError(error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    const auth = authHeader();
+    const city = cityFilterRef.current;
+
+    /* Promise.allSettled, not Promise.all: one failing endpoint (e.g. /api/buy
+       when the token is stale) used to reject the whole batch, leaving every
+       tab empty. Now each endpoint succeeds or fails on its own, and a 401/403
+       on any admin-gated route still shows the auth banner. */
+    const results = await Promise.allSettled([
+      axios.get(`${API_URL}/api/admin/dashboard`, auth),
+      axios.get(`${API_URL}/api/admin/users${city ? `?city=${encodeURIComponent(city)}` : ''}`, auth),
+      axios.get(`${API_URL}/api/buy`, auth),
+      axios.get(`${API_URL}/api/admin/leads`, auth),
+      axios.get(`${API_URL}/api/feedback`, auth),
+      axios.get(`${API_URL}/api/admin/anonymous-visitors`, auth),
+    ]);
+
+    const unwrap = (result, fallback) =>
+      result.status === 'fulfilled' ? result.value.data : fallback;
+
+    let authFailed = false;
+    for (const r of results) {
+      if (r.status === 'rejected' && (r.reason?.response?.status === 401 || r.reason?.response?.status === 403)) {
+        authFailed = true;
+      }
     }
+
+    setStats(unwrap(results[0], null));
+    setUsers(unwrap(results[1], []));
+    setBuyRequests(unwrap(results[2], []));
+    setLeads(unwrap(results[3], []));
+    setFeedbacks(unwrap(results[4], []));
+    setAnonymousVisitors(unwrap(results[5], []));
+
+    if (authFailed) {
+      setAuthError('Your administrator session has expired. Please sign in again.');
+    } else {
+      setAuthError('');
+    }
+    setRefreshedAt(new Date());
+    setLoading(false);
+    setRefreshing(false);
   }, []);
 
   useEffect(() => { loadAll({ silent: true }); }, [loadAll]);

@@ -5,6 +5,7 @@ import { useBreeds } from '../context/BreedsContext';
 import BreedCard from '../components/BreedCard';
 import FeedbackModal from '../components/FeedbackModal';
 import QuickFeedback from '../components/QuickFeedback';
+import QuickLoginModal from '../components/QuickLoginModal';
 import { AuthContext } from '../context/AuthContext';
 import { buildLivingConditions, computeMatches, computeReadiness, generateProsCons, generatePersonalizedReason } from '../utils/breedUtils';
 import { clearQuizState } from '../utils/quizState';
@@ -106,7 +107,8 @@ const Results = () => {
   const [compareList, setCompareList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
-  const { user } = useContext(AuthContext);
+  const [showLoginGate, setShowLoginGate] = useState(false);
+  const { user, loading: authLoading } = useContext(AuthContext);
   /* Breeds are fetched now, not bundled — but `breeds` is never empty: it holds
      the bundled catalogue from the very first render and is replaced in place if
      the API answers. So scoring does NOT wait. It used to, and on a deploy where
@@ -182,14 +184,33 @@ const Results = () => {
     fetchResults();
   }, [navigate, user, breedsData]);
 
+  /* Show the login gate BEFORE results are displayed — the user must sign in
+     or register to see their matches. The gate appears as soon as auth state
+     resolves (authLoading becomes false), not after breed scoring finishes.
+
+     We only wait for authLoading (AuthContext resolving from localStorage),
+     NOT for `loading` (breed scoring). The gate blocks the results until the
+     user logs in, so there's no point waiting for scoring to finish first.
+
+     No useRef guard here — in React StrictMode, effects are double-invoked
+     and a ref guard would block the second invocation, preventing the gate
+     from ever appearing. The effect is naturally idempotent: once the user
+     logs in, `user` becomes non-null and the gate won't re-trigger. */
   useEffect(() => {
-    if (modalType || showFeedback) {
+    if (authLoading) return;
+    if (!user) {
+      setShowLoginGate(true);
+    }
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (modalType || showFeedback || showLoginGate) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
     }
     return () => document.body.classList.remove('modal-open');
-  }, [modalType, showFeedback]);
+  }, [modalType, showFeedback, showLoginGate]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -239,6 +260,13 @@ const Results = () => {
   const prepCapture = showsPrepCapture(readiness.code);
 
   const handleAction = (type, breed) => {
+    // If the user isn't logged in, show the login gate instead of the action.
+    // This catches the case where someone dismisses the initial gate (e.g. by
+    // refreshing) and then clicks Buy / Compare / Full Profile.
+    if (!user) {
+      setShowLoginGate(true);
+      return;
+    }
     if (type === 'buy') {
       if (!canConnect) return;      // no breeder path for a cold lead, ever
       track('breeder_cta_clicked', { breed: breed?.name, city: quizCity, readiness_code: readiness.code });
@@ -348,8 +376,42 @@ const Results = () => {
     }
   };
 
+  /* ── Login gate (non-dismissible) ──
+     Rendered BEFORE any other content, exactly like OwnerSurvey. When the
+     gate is open the user sees ONLY the login form — no results, no spinner.
+     This is an imperative render path, not a modal layered on top, so it
+     cannot be defeated by React batching or render-ordering edge cases. */
+  if (showLoginGate) {
+    return (
+      <div style={{
+        minHeight: '100dvh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', padding: '20px',
+        fontFamily: 'var(--font-body-family)', background: '#fff9f5',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <span style={{ fontSize: '40px' }}>🐾</span>
+          <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--brown)', margin: '8px 0 4px' }}>
+            One last step!
+          </h2>
+          <p style={{ color: 'var(--text-soft)', fontSize: '14px', maxWidth: '360px', lineHeight: 1.6 }}>
+            Sign in or create an account to see your perfect dog matches.
+            Just your name and number — that's all we need.
+          </p>
+        </div>
+        <QuickLoginModal
+          isOpen={showLoginGate}
+          onSuccess={() => setShowLoginGate(false)}
+        />
+      </div>
+    );
+  }
+
   if (loading) {
-    return <div style={{ padding: '60px', textAlign: 'center', fontFamily: 'var(--font-body-family)' }}><h2>Analyzing your answers... 🐾</h2></div>;
+    return (
+      <div style={{ padding: '60px', textAlign: 'center', fontFamily: 'var(--font-body-family)' }}>
+        <h2>Analyzing your answers... 🐾</h2>
+      </div>
+    );
   }
 
   return (

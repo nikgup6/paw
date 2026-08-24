@@ -107,12 +107,34 @@ def _gemini_call(prompt: str, file_bytes: bytes, mime_type: str) -> str:
             api_key=settings.GEMINI_API_KEY,
             http_options=types.HttpOptions(timeout=60_000),
         )
-    response = _gemini_client.models.generate_content(
-        model=settings.GEMINI_MODEL,
-        contents=[types.Part.from_bytes(data=file_bytes, mime_type=mime_type), prompt],
-        config=types.GenerateContentConfig(response_mime_type="application/json"),
-    )
-    return response.text
+
+    # Retry with exponential backoff for transient 503s. Gemini's "model is
+    # currently experiencing high demand" is a capacity signal, not a permanent
+    # failure — waiting a few seconds and retrying often succeeds. Three
+    # attempts with 2s/4s/8s delays, then give up and let the document stay
+    # Pending for a manual Reprocess.
+    last_exc = None
+    for attempt in range(3):
+        try:
+            response = _gemini_client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=[types.Part.from_bytes(data=file_bytes, mime_type=mime_type), prompt],
+                config=types.GenerateContentConfig(response_mime_type="application/json"),
+            )
+            return response.text
+        except Exception as exc:
+            last_exc = exc
+            msg = str(exc).lower()
+            # Only retry on overload / transient errors, not on auth or quota.
+            if any(kw in msg for kw in ("503", "overloaded", "high demand", "unavailable", "429", "resource exhausted", "rate limit")):
+                if attempt < 2:
+                    delay = 2 ** (attempt + 1)  # 2, 4 seconds
+                    logger.warning("Gemini transient error (attempt %d/3), retrying in %ds: %s", attempt + 1, delay, exc)
+                    import time
+                    time.sleep(delay)
+                    continue
+            raise
+    raise last_exc
 
 
 # ------------------------------ Anthropic ----------------------------------- #

@@ -61,13 +61,18 @@ async def _get_document(db, document_id: str):
 
 async def ingest(db, dog_id: str, file_bytes: bytes, filename: str, mime_type: str,
                  document_type: str = DocumentType.VACCINATION.value) -> dict:
-    """Store the file in Cloudinary + the Health Vault, then run the matching AI
-    processor (if any), persisting extraction, summary, confidence, metadata,
-    structured records, and reminders. Returns the stored HealthDocument."""
+    """Store the file in Cloudinary + the Health Vault, then fire-and-forget the
+    AI processor. Returns the stored HealthDocument immediately — the caller
+    never waits for AI, so a provider outage or rate-limit never blocks upload.
+
+    The document starts as PENDING and the frontend polls or the user hits
+    "Reprocess" to retry. This is the key fix for the persistent 503s: Gemini
+    overload is a provider-side problem we cannot solve, but we CAN stop it from
+    failing the upload itself."""
     # 1. Cloudinary first — the permanently-kept original.
     uploaded = await cloudinary_service.upload_document(file_bytes, filename, mime_type)
 
-    # 2. Vault record (Processing).
+    # 2. Vault record — starts PENDING, not PROCESSING, because AI runs async.
     job_id = str(uuid.uuid4())
     document = HealthDocument(
         dog_id=dog_id,
@@ -78,14 +83,27 @@ async def ingest(db, dog_id: str, file_bytes: bytes, filename: str, mime_type: s
         original_filename=filename,
         mime_type=mime_type,
         file_size=len(file_bytes),
-        processing_status=ProcessingStatus.PROCESSING,
+        processing_status=ProcessingStatus.PENDING,
         ai_metadata={"processing_job_id": job_id},
     )
     await db[DOCUMENTS].insert_one(document.dict())
 
-    # 3. Process.
-    await _process(db, document.dict(), file_bytes, mime_type)
+    # 3. Fire-and-forget AI processing. The document is already stored and
+    #    returned — a provider 503 here only means the document stays Pending
+    #    until the user hits Reprocess or the next poll cycle picks it up.
+    import asyncio
+    asyncio.ensure_future(_process_safe(db, document.dict(), file_bytes, mime_type))
+
     return await _get_document(db, document.id)
+
+
+async def _process_safe(db, document: dict, file_bytes: bytes, mime_type: str) -> None:
+    """Wrapper that catches everything so an unhandled exception in the AI layer
+    never crashes the event loop (it runs in a fire-and-forget task)."""
+    try:
+        await _process(db, document, file_bytes, mime_type)
+    except Exception:
+        logger.exception("Background AI processing failed for document %s", document.get("id"))
 
 
 async def reprocess(db, document_id: str) -> Optional[dict]:
@@ -141,6 +159,10 @@ async def _process(db, document: dict, file_bytes: bytes, mime_type: str) -> Non
     document_id = document["id"]
     dog_id = document["dog_id"]
     job_id = (document.get("ai_metadata") or {}).get("processing_job_id") or str(uuid.uuid4())
+
+    # Mark as actively processing so the frontend can show a spinner.
+    await db[DOCUMENTS].update_one({"id": document_id},
+                                   {"$set": {"processing_status": ProcessingStatus.PROCESSING.value}})
 
     processor = get_processor(document.get("document_type"))
     if processor is None:

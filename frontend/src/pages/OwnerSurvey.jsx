@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useContext, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import CitySelect from '../components/CitySelect';
 import PawRating from '../components/PawRating';
+import QuickLoginModal from '../components/QuickLoginModal';
+import { AuthContext } from '../context/AuthContext';
 import { useBreedList } from '../context/BreedsContext';
 import { zoneForCity } from '../utils/ownerTips';
 import { CATEGORY_ICON, fetchCareTips } from '../utils/careTips';
@@ -99,6 +101,8 @@ const OwnerSurvey = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const breeds = useBreedList();
+  const { user } = useContext(AuthContext);
+  const [showLoginGate, setShowLoginGate] = useState(false);
 
   /* Testing only — lets the season-aware second pass be checked without
      waiting for the actual season (e.g. /owner-survey?test_month=July to see
@@ -117,6 +121,7 @@ const OwnerSurvey = () => {
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);   // survey saved successfully
   const [tips, setTips] = useState([]);                // Care Tips matched for it (may be empty)
+  const tipsRef = useRef([]);                          // holds tips across login gate
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -149,9 +154,17 @@ const OwnerSurvey = () => {
         breed: form.breed, city: form.city, climateZone, tenure: form.tenure,
         challenges: form.biggest_challenge, monthOverride: testMonth,
       });
-      setTips(matched);
+      tipsRef.current = matched;
       setSubmitted(true);
       window.scrollTo(0, 0);
+
+      // If the user isn't logged in, show the login gate BEFORE care tips.
+      // The tips are stashed in tipsRef and will be shown after login.
+      if (!user) {
+        setShowLoginGate(true);
+      } else {
+        setTips(matched);
+      }
     } catch (e) {
       setError(e?.response?.data?.detail || 'Couldn’t save that. Please try again.');
     } finally {
@@ -165,6 +178,30 @@ const OwnerSurvey = () => {
     navigate('/app/dogs/new', { state: { prefill: { breed: form.breed, city: form.city } } });
 
   if (submitted) {
+    // If the login gate is showing, render it FIRST — the user must sign in
+    // before seeing their care tips. The tips are stashed in tipsRef.
+    if (showLoginGate) {
+      return (
+        <div className="oswrap">
+          <div className="oscard ostip" style={{ textAlign: 'center' }}>
+            <span className="ostip__icon" aria-hidden="true">🐾</span>
+            <h1 className="ostip__title">One last step!</h1>
+            <p className="ostip__body" style={{ marginBottom: '24px' }}>
+              Sign in or create an account to see your personalised care tips for your {form.breed}.
+            </p>
+          </div>
+          <Styles />
+          <QuickLoginModal
+            isOpen={showLoginGate}
+            onSuccess={() => {
+              setShowLoginGate(false);
+              setTips(tipsRef.current);
+            }}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="oswrap">
         <div className="oscard ostip">
@@ -182,12 +219,26 @@ const OwnerSurvey = () => {
           ) : (
             <p className="ostip__body">Thanks — that helps. We’ll keep tailoring tips for your dog as our vet-reviewed library grows.</p>
           )}
-          <button type="button" className="osbtn osbtn--primary" onClick={continueToProfile}>
-            Add your dog’s details →
+          <button
+            type="button"
+            className="osbtn osbtn--primary"
+            onClick={() => {
+              if (!user) { setShowLoginGate(true); return; }
+              continueToProfile();
+            }}
+          >
+            Add your dog's details →
           </button>
-          <p className="ostip__foot">Takes under a minute. We’ve already filled in the breed and city.</p>
+          <p className="ostip__foot">Takes under a minute. We've already filled in the breed and city.</p>
         </div>
         <Styles />
+
+        {/* Post-survey login gate — appears when a logged-out user clicks
+            "Add your dog's details". Cannot be dismissed. */}
+        <QuickLoginModal
+          isOpen={showLoginGate}
+          onSuccess={() => { setShowLoginGate(false); continueToProfile(); }}
+        />
       </div>
     );
   }
