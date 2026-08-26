@@ -46,6 +46,24 @@ const DogForm = () => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const fileRef = useRef(null);
 
+  /* When the survey hands over a breed that isn't in the catalogue (e.g. the
+     owner typed "Street Dog" via the "Others" path), we show "Other" in the
+     dropdown and surface the custom name in a text field so the owner can see
+     and edit it. */
+  const knownBreeds = new Set([
+    ...breedsData.map((b) => b.name),
+    'Indie / Mixed breed',
+    'Other',
+  ]);
+  const isCustomBreed = Boolean(
+    prefill?.breed && !knownBreeds.has(prefill.breed) && prefill.breed !== '',
+  );
+  const [customBreedName, setCustomBreedName] = useState(
+    isCustomBreed ? prefill.breed : '',
+  );
+  // If the prefill breed is custom, the <select> shows "Other".
+  const selectBreed = isCustomBreed ? 'Other' : (form.breed || '');
+
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   useEffect(() => {
@@ -199,12 +217,35 @@ const DogForm = () => {
 
           <label className="pb-field">
             <span>Breed <span className="pb-field__req">*</span></span>
-            <select value={form.breed} onChange={(e) => set('breed', e.target.value)}>
+            <select
+              value={selectBreed}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === 'Other') {
+                  set('breed', customBreedName || '');
+                } else {
+                  set('breed', v);
+                  setCustomBreedName('');
+                }
+              }}
+            >
               <option value="">Select a breed</option>
               {breedsData.map((b) => <option key={b.name} value={b.name}>{b.name}</option>)}
               <option value="Indie / Mixed breed">Indie / Mixed breed</option>
               <option value="Other">Other / Not sure</option>
             </select>
+            {(selectBreed === 'Other' || isCustomBreed) && (
+              <input
+                type="text"
+                value={customBreedName}
+                placeholder="Enter breed name"
+                onChange={(e) => {
+                  setCustomBreedName(e.target.value);
+                  set('breed', e.target.value);
+                }}
+                style={{ marginTop: 8 }}
+              />
+            )}
           </label>
 
           <label className="pb-field">

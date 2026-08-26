@@ -117,6 +117,7 @@ const OwnerSurvey = () => {
   });
   const [breedQuery, setBreedQuery] = useState('');
   const [breedOpen, setBreedOpen] = useState(false);
+  const [customBreed, setCustomBreed] = useState(false);  // true when "Others" is picked
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);   // survey saved successfully
@@ -252,33 +253,68 @@ const OwnerSurvey = () => {
       answered: !!form.breed,
       body: (
         <div className="osq__typeahead">
-          <input
-            type="text"
-            inputMode="text"
-            value={form.breed || breedQuery}
-            placeholder="Start typing — e.g. Labrador"
-            onChange={(e) => { setBreedQuery(e.target.value); set('breed', ''); setBreedOpen(true); }}
-            onFocus={() => setBreedOpen(true)}
-            onBlur={() => window.setTimeout(() => setBreedOpen(false), 160)}
-            className="osq__input"
-          />
-          {breedOpen && breedMatches.length > 0 && (
-            <ul className="osq__list">
-              {breedMatches.map((b) => (
-                <li key={b.id || b.name}>
-                  <button
-                    type="button"
-                    className="osq__listitem"
-                    // mousedown, not click: blur would close the list first
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { set('breed', b.name); setBreedQuery(b.name); setBreedOpen(false); }}
-                  >
-                    {b.img && <img src={`/${b.img}`} alt="" loading="lazy" />}
-                    <span>{b.name}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+          {!customBreed ? (
+            <>
+              <input
+                type="text"
+                inputMode="text"
+                value={form.breed || breedQuery}
+                placeholder="Start typing — e.g. Labrador"
+                onChange={(e) => { setBreedQuery(e.target.value); set('breed', ''); setBreedOpen(true); }}
+                onFocus={() => setBreedOpen(true)}
+                onBlur={() => window.setTimeout(() => setBreedOpen(false), 160)}
+                className="osq__input"
+              />
+              {breedOpen && (
+                <ul className="osq__list">
+                  {breedMatches.map((b) => (
+                    <li key={b.id || b.name}>
+                      <button
+                        type="button"
+                        className="osq__listitem"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => { set('breed', b.name); setBreedQuery(b.name); setBreedOpen(false); }}
+                      >
+                        {b.img && <img src={`/${b.img}`} alt="" loading="lazy" />}
+                        <span>{b.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {/* "Others" — always visible at the bottom of the list */}
+                  <li>
+                    <button
+                      type="button"
+                      className="osq__listitem osq__listitem--other"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => { setCustomBreed(true); setBreedQuery(''); set('breed', ''); setBreedOpen(false); }}
+                    >
+                      <span className="osq__othericon" aria-hidden="true">✏️</span>
+                      <span>Others — enter breed name</span>
+                    </button>
+                  </li>
+                </ul>
+              )}
+            </>
+          ) : (
+            <div>
+              <input
+                type="text"
+                inputMode="text"
+                value={form.breed}
+                placeholder="Enter your dog's breed name"
+                onChange={(e) => set('breed', e.target.value)}
+                className="osq__input"
+                autoFocus
+              />
+              <button
+                type="button"
+                className="osq__backlink"
+                onClick={() => { setCustomBreed(false); set('breed', ''); }}
+                style={{ marginTop: 8, background: 'none', border: 'none', color: 'var(--orange)', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
+              >
+                ← Back to breed list
+              </button>
+            </div>
           )}
         </div>
       ),
@@ -474,6 +510,13 @@ const Styles = () => (
     .osq__listitem img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
     .osq__listitem:active { background: var(--orange-pale, #FDF1E8); }
     @media (hover: hover) { .osq__listitem:hover { background: var(--cream); } }
+
+    /* "Others" row — visually distinct from breed rows */
+    .osq__listitem--other {
+      border-top: 1px solid #EAE4DE; margin-top: 4px; padding-top: 12px;
+      color: var(--orange); font-weight: var(--weight-semibold);
+    }
+    .osq__othericon { font-size: 16px; flex-shrink: 0; }
 
     .osq__choices { display: flex; flex-direction: column; gap: 8px; }
     .osq__choice {

@@ -344,10 +344,14 @@ const Home = () => {
               <div style={{ maxWidth: '650px', width: '100%', background: 'white', borderRadius: '24px', padding: 'clamp(20px, 5vw, 40px)', boxShadow: 'var(--shadow-lg)', position: 'relative' }}>
                 <button 
                   onClick={() => setSubView('hero')}
+                  aria-label="Close"
                   style={{
-                    position: 'absolute', top: '20px', right: '25px',
-                    background: 'none', border: 'none', fontSize: '24px',
-                    cursor: 'pointer', color: 'var(--text-soft)', fontWeight: 'bold'
+                    position: 'absolute', top: '16px', right: '16px',
+                    background: 'none', border: 'none', fontSize: '28px',
+                    cursor: 'pointer', color: 'var(--text-soft)', fontWeight: 'bold',
+                    zIndex: 10, lineHeight: 1, width: '36px', height: '36px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '50%',
                   }}
                 >
                   &times;
@@ -365,7 +369,7 @@ const Home = () => {
                   <>
                     {dashboardTab === 'menu' && (
                       <div>
-                        <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '28px', textAlign: 'center', marginBottom: '10px' }}>
+                        <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '28px', textAlign: 'center', marginBottom: '10px', paddingRight: '36px' }}>
                           🐶 Choose Your Journey
                         </h2>
                         <p style={{ color: 'var(--text-soft)', textAlign: 'center', fontSize: '15px', marginBottom: '35px' }}>
