@@ -72,8 +72,34 @@ const QuickLoginModal = ({ isOpen, onSuccess }) => {
         <h2 className="auth-title">One last step!</h2>
         <p className="auth-sub">
           Save your results so you don't lose them. Just your name and number —
-          that's all we need.
+          that's all we need, and only this once.
         </p>
+
+        {/* The same three-up strip the /login screen shows, from the shared
+            .auth-strip rules in index.css. One component for both auth
+            surfaces: this gate and Welcome Back are the two places someone is
+            asked for a number, and they should not argue about what they get
+            for it.
+
+            Each label names something the product genuinely does. Note the
+            middle one is deliberately about vaccination RECORDS: uploading a
+            prescription creates no reminders (PrescriptionProcessor sets
+            creates_reminders = False), so promising otherwise would send
+            people down a dead end. */}
+        <div className="auth-strip">
+          <div className="auth-strip__item">
+            <span className="auth-strip__icon" aria-hidden="true">💉</span>
+            <span className="auth-strip__label">Vaccination reminders</span>
+          </div>
+          <div className="auth-strip__item">
+            <span className="auth-strip__icon" aria-hidden="true">🏥</span>
+            <span className="auth-strip__label">Verified services</span>
+          </div>
+          <div className="auth-strip__item">
+            <span className="auth-strip__icon" aria-hidden="true">🩺</span>
+            <span className="auth-strip__label">Personalized tips</span>
+          </div>
+        </div>
 
         {error && (
           <div className="auth-error" style={{ marginBottom: '15px' }}>

@@ -49,6 +49,51 @@ async def match(
     )
 
 
+@router.get("/teaser")
+async def teaser_tip(
+    breed: str = Query(..., description="The breed answered at Q1."),
+    city: Optional[str] = Query(None, description="The city answered at Q2."),
+    month_override: Optional[str] = Query(
+        None, description="Testing only — overrides the server's current month."),
+):
+    """Public: ONE tip for the survey's inline teaser, part-way through the form.
+
+    Deliberately the dashboard card's matcher (`match_tips_for_profile`) rather
+    than the survey's own `match_tips` above. The survey matcher filters on
+    Category, which is derived from Q7 — a question this teaser appears five
+    questions before, so there is nothing to filter on yet and it would return
+    nothing every time. The profile matcher takes no category, which is exactly
+    the shape of what is known at Q2.
+
+    No new query: `match_tips_for_profile` already takes breed/city/dob as
+    plain arguments — reading them off a stored dog is something the `/for-dog`
+    route does, not the service. Here `dob` is simply None, since no dog profile
+    exists yet; the age dimension then stops narrowing the match instead of
+    erroring, the same way it already does for a dog saved without a birthday.
+
+    Returns the breed-specific match only. `_combine` substitutes the generic
+    Fallback Tip when nothing matches a breed, and presenting that under
+    "based on what you've told us so far" would be a claim about their answers
+    that isn't true — so a fallback is reported as no tip, and the card is
+    simply not rendered."""
+    db = _require_db()
+    result = await care_tips_service.match_tips_for_profile(
+        db,
+        breed=breed,
+        city=city,
+        climate_zone=zone_for_city(city),
+        dob=None,
+        month_override=month_override,
+        # Stable per breed+city, so re-answering Q2 or stepping back and
+        # forward shows the same tip rather than reshuffling under them.
+        rotate_seed=f"{breed}|{city or ''}",
+    )
+    tips = result.get("tips") or []
+    if result.get("source") != "general" or not tips:
+        return {"tip": None}
+    return {"tip": tips[0]}
+
+
 @router.get("/for-dog/{dog_id}")
 async def match_for_dog(
     dog_id: str,

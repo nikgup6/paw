@@ -84,6 +84,27 @@ const Login = () => {
             : 'Log in to your Paw Buddy account'}
         </p>
 
+        {/* What an ordinary account is for, three words at a time.
+            Hidden entirely on the admin bounce: someone sent here to type a
+            password is mid-task on something else, and consumer feature copy
+            in that moment is noise between them and the dashboard. */}
+        {!bouncedFromAdmin && (
+          <div className="auth-strip">
+            <div className="auth-strip__item">
+              <span className="auth-strip__icon" aria-hidden="true">💉</span>
+              <span className="auth-strip__label">Vaccination reminders</span>
+            </div>
+            <div className="auth-strip__item">
+              <span className="auth-strip__icon" aria-hidden="true">🏥</span>
+              <span className="auth-strip__label">Verified services</span>
+            </div>
+            <div className="auth-strip__item">
+              <span className="auth-strip__icon" aria-hidden="true">🩺</span>
+              <span className="auth-strip__label">Personalized tips</span>
+            </div>
+          </div>
+        )}
+
         {/* Says plainly that a password is coming. Landing on a bare mobile
             field after clicking "Admin" is what made this look broken. */}
         {bouncedFromAdmin && !error && (

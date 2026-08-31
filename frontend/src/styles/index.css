@@ -1754,6 +1754,42 @@
     .auth-logo { text-align:center; font-size:40px; margin-bottom:8px; }
     .auth-title { font-family:var(--font-display); font-size:22px; font-weight:var(--weight-semibold); color:var(--brown); text-align:center; margin-bottom:4px; }
     .auth-sub { color:var(--text-soft); font-size:13px; text-align:center; margin-bottom:24px; }
+    /* Three-up feature strip under the subtitle on the ordinary login view.
+       Lives with the other .auth-* rules rather than in the page, so it uses
+       the same classes-and-tokens approach the rest of this box already does.
+       Deliberately lighter than .auth-title above it: cream fill, no shadow,
+       hairline dividers — it is context, not a call to action. */
+    .auth-strip {
+      display:flex; align-items:stretch;
+      background:var(--cream); border:1px solid var(--border, #EFE6DC);
+      border-radius:var(--radius-sm); overflow:hidden;
+      margin:0 0 20px;
+    }
+    .auth-strip__item {
+      flex:1 1 0; min-width:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:4px;
+      padding:10px 6px; text-align:center;
+    }
+    /* Hairline between items, drawn as a left border on all but the first so
+       there is no trailing divider to trim. */
+    .auth-strip__item + .auth-strip__item { border-left:1px solid var(--border, #EFE6DC); }
+    .auth-strip__icon { font-size:16px; line-height:1; color:var(--orange); }
+    .auth-strip__label {
+      font-family:var(--font-body-family); font-size:10.5px; line-height:1.3;
+      font-weight:var(--weight-medium); color:var(--text-soft);
+      /* Two short words per item, so they may wrap to two lines but never
+         stretch the strip wider than the box. */
+      overflow-wrap:anywhere;
+    }
+    /* Smallest supported phone: the strip gives up room first — never the
+       mobile field or the Log In button below it. */
+    @media (max-height: 700px), (max-width: 380px) {
+      .auth-strip { margin-bottom:14px; }
+      .auth-strip__item { padding:8px 4px; gap:3px; }
+      .auth-strip__icon { font-size:14px; }
+      .auth-strip__label { font-size:9.5px; }
+    }
+
     .auth-tabs { display:flex; background:var(--grey); border-radius:50px; padding:4px; margin-bottom:24px; }
     .auth-tab { flex:1; padding:9px; border:none; background:none; border-radius:50px; font-family:var(--font-display); font-weight:var(--weight-semibold); font-size:13px; cursor:pointer; color:var(--text-soft); transition:all .2s; }
     .auth-tab.active { background:var(--orange); color:white; }

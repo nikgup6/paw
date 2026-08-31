@@ -27,6 +27,26 @@ export async function fetchCareTips({ breed, city, climateZone, tenure, challeng
   }
 }
 
+/* The single tip teased inline part-way through the owner survey, once breed
+   and city are both known but no dog profile exists yet.
+
+   Returns the tip object or null — never throws and never a placeholder. The
+   caller renders nothing at all on null, so a breed with no approved tip and a
+   backend that is down look the same from the survey's point of view, which is
+   correct: neither is something to interrupt someone mid-form about. */
+export async function fetchTeaserTip({ breed, city, monthOverride } = {}) {
+  if (!breed) return null;
+  const qs = new URLSearchParams({ breed });
+  if (city) qs.set('city', city);
+  if (monthOverride) qs.set('month_override', monthOverride);
+  try {
+    const { data } = await axios.get(`${API_URL}/api/care-tips/teaser?${qs}`);
+    return data?.tip || null;
+  } catch {
+    return null;
+  }
+}
+
 /* Tips for a dog that already has a profile (the dashboard card).
 
    Breed, city and age are read server-side from the stored profile, so this

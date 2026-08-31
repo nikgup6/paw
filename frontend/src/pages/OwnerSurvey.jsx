@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import CitySelect from '../components/CitySelect';
@@ -7,7 +7,7 @@ import QuickLoginModal from '../components/QuickLoginModal';
 import { AuthContext } from '../context/AuthContext';
 import { useBreedList } from '../context/BreedsContext';
 import { zoneForCity } from '../utils/ownerTips';
-import { CATEGORY_ICON, fetchCareTips } from '../utils/careTips';
+import { CATEGORY_ICON, fetchCareTips, fetchTeaserTip } from '../utils/careTips';
 import { sessionId } from '../utils/analytics';
 
 /* Existing Dog Owner intake — eight questions, one per screen, then straight
@@ -28,6 +28,12 @@ import { sessionId } from '../utils/analytics';
    interactions anywhere. */
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+/* Zero-based index of the city question, which is the ONLY place the inline
+   teaser appears. Named rather than written as a bare 1 at the render site, so
+   that inserting a question ahead of it is a one-line change here instead of a
+   card that silently drifts onto the wrong screen. */
+const TEASER_STEP = 1;
 
 const CHOICES = {
   tenure: [
@@ -124,7 +130,29 @@ const OwnerSurvey = () => {
   const [tips, setTips] = useState([]);                // Care Tips matched for it (may be empty)
   const tipsRef = useRef([]);                          // holds tips across login gate
 
+  /* The one inline teaser, shown under Q2 once breed and city are both known.
+     Null until a real tip comes back, and null is also what a no-match and a
+     failed request produce — the card is simply not rendered in any of those
+     cases rather than reserving space or apologising. */
+  const [teaser, setTeaser] = useState(null);
+
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  /* Fires when both answers exist, and again if either is changed. Kept out of
+     the Next handler on purpose: it must not sit between the user and the next
+     question, so nothing here gates navigation or is awaited by submit. */
+  useEffect(() => {
+    if (!form.breed || !form.city) {
+      setTeaser(null);
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      const tip = await fetchTeaserTip({ breed: form.breed, city: form.city });
+      if (!cancelled) setTeaser(tip);
+    })();
+    return () => { cancelled = true; };
+  }, [form.breed, form.city]);
 
   /* Typeahead over the shared catalogue. Free text is allowed in the box for
      searching, but only a real breed can be committed — the tip lookup and any
@@ -414,6 +442,22 @@ const OwnerSurvey = () => {
         <Question n={currentQ + 1} title={step.title}>
           {step.hint && <p className="osq__hint">{step.hint}</p>}
           {step.body}
+
+          {/* The survey's only teaser, and only on the city question (index 1).
+              Inline and passive by design — no dismiss control, nothing to
+              close, and it never blocks Next. Rendered inside the question so
+              it sits directly under the city control on the same screen. */}
+          {currentQ === TEASER_STEP && teaser && (
+            <div className="osteaser" role="status">
+              <span className="osteaser__icon" aria-hidden="true">
+                {CATEGORY_ICON[teaser.category] || '🐾'}
+              </span>
+              <p className="osteaser__text">
+                <strong>Quick tip based on what you’ve told us so far →</strong>{' '}
+                {teaser.tip}
+              </p>
+            </div>
+          )}
         </Question>
 
         {error && <p className="oserr" role="alert">{error}</p>}
@@ -592,6 +636,34 @@ const Styles = () => (
     }
     .ostip__cardicon { flex-shrink: 0; font-size: 19px; line-height: 1.5; }
     .ostip__cardtext { margin: 0; color: var(--brown); font-size: 13.5px; line-height: 1.6; }
+
+    /* The single inline teaser under Q2. Quieter than the post-submit tip cards
+       above — this one appears while the user is mid-task, so it reads as an
+       aside rather than a result. Fades in instead of popping, so it does not
+       read as something that needs attention. */
+    .osteaser {
+      display: flex; gap: 10px; align-items: flex-start;
+      margin: 16px 0 0; padding: 12px 13px;
+      background: var(--orange-pale, #FDF1E8);
+      border: 1px solid #F3DDC6; border-radius: 12px;
+      animation: osteaserIn .32s cubic-bezier(.16,1,.3,1) both;
+    }
+    .osteaser__icon { flex-shrink: 0; font-size: 16px; line-height: 1.55; }
+    .osteaser__text {
+      margin: 0; color: var(--brown); font-size: 13px; line-height: 1.6;
+      /* Long tips wrap rather than stretching the card on a narrow phone. */
+      min-width: 0; overflow-wrap: anywhere;
+    }
+    .osteaser__text strong { color: var(--orange-strong, #C44E12); font-weight: var(--weight-semibold); }
+    @keyframes osteaserIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { .osteaser { animation: none; } }
+    @media (max-width: 480px) {
+      .osteaser { padding: 11px 12px; gap: 8px; }
+      .osteaser__text { font-size: 12.5px; }
+    }
   `}</style>
 );
 
