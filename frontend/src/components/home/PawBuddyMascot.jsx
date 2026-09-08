@@ -199,7 +199,7 @@ const PawBuddyMascot = () => {
           padding: 14px 16px 14px;
           box-shadow: 0 16px 40px rgba(61, 41, 28, 0.22);
           border: 1px solid rgba(230, 106, 26, 0.15);
-          font-family: 'Poppins', sans-serif;
+          font-family: var(--font-body-family);
         }
         .pb-mascot__bubble p {
           margin: 0;

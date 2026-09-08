@@ -62,6 +62,15 @@ class Settings(BaseSettings):
     # Anthropic / Claude (optional alternative provider; ANTHROPIC_API_KEY above)
     ANTHROPIC_MODEL: str = "claude-sonnet-4-5"
 
+    # Weather integration — live weather for the Dashboard Care Tips card,
+    # layered on top of the static zone_for_city() lookup. A blank key makes the
+    # Dashboard tips behave exactly as before (silent fallback to the static
+    # zone). Declared here so the .env entries load under the model's
+    # extra=forbid policy. WEATHER_API_PROVIDER selects the backend behind the
+    # single get_current_weather() function ("openweathermap" by default).
+    WEATHER_API_KEY: Optional[str] = None
+    WEATHER_API_PROVIDER: str = "openweathermap"
+
     class Config:
         # Absolute path: a bare ".env" resolves against the process working
         # directory, so starting uvicorn from anywhere other than backend/ would

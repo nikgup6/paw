@@ -283,7 +283,7 @@ const Home = () => {
                       style={{
                         position: 'absolute', top: '60px', right: '0', background: 'white', 
                         borderRadius: '15px', padding: '10px 0', minWidth: '180px',
-                        boxShadow: 'var(--shadow-lg)', zIndex: 100, fontFamily: "'Poppins', sans-serif"
+                        boxShadow: 'var(--shadow-lg)', zIndex: 100, fontFamily: 'var(--font-body-family)'
                       }}
                     >
                       <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', marginBottom: '5px' }}>
@@ -389,7 +389,7 @@ const Home = () => {
                           >
                             <span style={{ fontSize: '32px' }}>📝</span>
                             <div>
-                              <strong style={{ color: 'var(--brown)', fontSize: '16px', display: 'block', marginBottom: '2px', fontFamily: "'Poppins', sans-serif" }}>
+                              <strong style={{ color: 'var(--brown)', fontSize: '16px', display: 'block', marginBottom: '2px', fontFamily: 'var(--font-display)' }}>
                                 Find your recommended breed
                               </strong>
                               <span style={{ color: 'var(--text-soft)', fontSize: '13px' }}>
@@ -412,7 +412,7 @@ const Home = () => {
                           >
                             <span style={{ fontSize: '32px' }}>🔍</span>
                             <div>
-                              <strong style={{ color: 'var(--brown)', fontSize: '16px', display: 'block', marginBottom: '2px', fontFamily: "'Poppins', sans-serif" }}>
+                              <strong style={{ color: 'var(--brown)', fontSize: '16px', display: 'block', marginBottom: '2px', fontFamily: 'var(--font-display)' }}>
                                 Explore breeds
                               </strong>
                               <span style={{ color: 'var(--text-soft)', fontSize: '13px' }}>
@@ -486,7 +486,7 @@ const Home = () => {
                                       }}
                                     >
                                       <span style={{ fontSize: '18px' }}>{opt.icon}</span>
-                                      <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: "'Poppins', sans-serif" }}>{opt.label}</span>
+                                      <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-display)' }}>{opt.label}</span>
                                     </button>
                                   );
                                 })}
@@ -557,7 +557,7 @@ const Home = () => {
                             required
                             style={{
                               width: '100%', minHeight: '120px', padding: '15px', borderRadius: '16px',
-                              border: '2px solid #EAE4DE', fontSize: '15px', fontFamily: "'Poppins', sans-serif",
+                              border: '2px solid #EAE4DE', fontSize: '15px', fontFamily: 'var(--font-body-family)',
                               color: 'var(--brown)', outline: 'none', resize: 'vertical', marginBottom: '20px',
                               boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
                             }}
@@ -683,7 +683,7 @@ const Home = () => {
           padding: 7px 18px;
           border-radius: 50px;
           cursor: pointer;
-          font-family: 'Poppins', sans-serif;
+          font-family: var(--font-display);
           font-weight: 600;
           font-size: 14px;
           backdrop-filter: blur(4px);

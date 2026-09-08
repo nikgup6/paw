@@ -324,6 +324,24 @@ const AdminDashboard = () => {
 
   if (loading) return <div style={{ padding: '60px', textAlign: 'center', fontFamily: 'var(--font-body-family)' }}>Loading Dashboard...</div>;
 
+  /* An auth failure (expired/stale token, or a role flag without a valid
+     session) must NOT leave the admin shell — tabs, stat cards, tables —
+     rendered under a banner. Replace the whole screen with a blocked sign-in
+     prompt so nothing admin-shaped is shown to an unauthorised viewer. */
+  if (authError) {
+    return (
+      <div style={{ background: 'var(--cream)', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', fontFamily: 'var(--font-body-family)' }}>
+        <img src="/logo.png" alt="Paw Buddy" style={{ width: '150px', mixBlendMode: 'multiply', marginBottom: '24px' }} />
+        <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--brown)', margin: '0 0 8px' }}>Admin access required</h2>
+        <p style={{ color: 'var(--text-soft)', maxWidth: '360px', lineHeight: 1.6, margin: '0 0 24px' }}>{authError}</p>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button onClick={() => navigate('/login')} style={{ padding: '12px 26px', borderRadius: '50px', border: 'none', background: 'var(--orange)', color: 'white', fontWeight: 'var(--weight-bold)', fontFamily: 'var(--font-display)', cursor: 'pointer' }}>Sign in</button>
+          <button onClick={() => navigate('/')} style={{ padding: '12px 26px', borderRadius: '50px', border: '1px solid var(--border-strong)', background: 'white', color: 'var(--brown)', fontWeight: 'var(--weight-bold)', fontFamily: 'var(--font-display)', cursor: 'pointer' }}>Home</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ background: 'var(--cream)', minHeight: '100dvh', padding: '20px', position: 'relative' }}>
       

@@ -67,7 +67,18 @@ const DogForm = () => {
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   useEffect(() => {
-    if (!isEdit) return undefined;
+    if (!isEdit) {
+      /* "Add a dog" must start blank. This component is reused across the
+         /dogs/new and /dogs/:id/edit routes, so navigating from Edit Profile
+         straight to Add-a-dog (e.g. the sidebar link) would otherwise keep the
+         just-edited dog's data in the form — risking an accidental overwrite or
+         duplicate. Reset to empty; only the owner-survey prefill may seed it. */
+      setForm(prefill ? { ...EMPTY, ...prefill } : EMPTY);
+      setCustomBreedName(isCustomBreed ? prefill.breed : '');
+      setError('');
+      setLoading(false);
+      return undefined;
+    }
     let cancelled = false;
     (async () => {
       try {

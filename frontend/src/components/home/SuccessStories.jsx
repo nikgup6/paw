@@ -85,7 +85,7 @@ const SuccessStories = () => {
                   <p className="text-body-lg" style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', lineHeight: 1.5, marginBottom: '20px', fontStyle: 'italic' }}>
                     "{stories[current].quote}"
                   </p>
-                  <h4 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '16px', color: 'var(--orange)', fontWeight: 600, margin: 0, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--orange)', fontWeight: 600, margin: 0, letterSpacing: '1px', textTransform: 'uppercase' }}>
                     - {stories[current].family}
                   </h4>
                 </div>

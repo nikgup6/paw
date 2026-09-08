@@ -85,7 +85,7 @@ const QuizCTA = ({ user }) => {
               letter-spacing: -1px;
             }
             .quiz-desc {
-              font-family: 'Poppins', sans-serif;
+              font-family: var(--font-body-family);
               font-size: 20px;
               color: var(--text-soft);
               margin-bottom: 40px;
@@ -96,7 +96,7 @@ const QuizCTA = ({ user }) => {
               color: white;
               border: none;
               border-radius: 50px;
-              font-family: 'Poppins', sans-serif;
+              font-family: var(--font-display);
               font-size: 22px;
               font-weight: 700;
               cursor: pointer;

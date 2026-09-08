@@ -627,15 +627,18 @@ const Styles = () => (
     .ostip__body { color: var(--text-soft); font-size: 14.5px; line-height: 1.65; margin: 0; }
     .ostip__foot { color: var(--text-soft); font-size: 12px; margin: 10px 0 0; }
 
-    /* Up to 3 tips, each its own card — never one paragraph block. */
-    .ostip__list { display: flex; flex-direction: column; gap: 10px; text-align: left; margin: 4px 0 0; }
+    /* One card per tip — never one paragraph block. Sized for mobile first:
+       the text scales with the viewport so it's comfortable on a phone without
+       getting big on desktop, and the padding stays modest so a tip reads as a
+       tidy card rather than a wall. */
+    .ostip__list { display: flex; flex-direction: column; gap: 9px; text-align: left; margin: 4px 0 0; }
     .ostip__card {
-      display: flex; gap: 11px; align-items: flex-start;
-      padding: 14px 15px; border: 1px solid #EFE6DC; border-radius: 14px;
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 11px 13px; border: 1px solid #EFE6DC; border-radius: 12px;
       background: var(--cream);
     }
-    .ostip__cardicon { flex-shrink: 0; font-size: 19px; line-height: 1.5; }
-    .ostip__cardtext { margin: 0; color: var(--brown); font-size: 13.5px; line-height: 1.6; }
+    .ostip__cardicon { flex-shrink: 0; font-size: 15px; line-height: 1.5; }
+    .ostip__cardtext { margin: 0; color: var(--brown); font-size: clamp(12.5px, 3.5vw, 13.5px); line-height: 1.55; }
 
     /* The single inline teaser under Q2. Quieter than the post-submit tip cards
        above — this one appears while the user is mid-task, so it reads as an

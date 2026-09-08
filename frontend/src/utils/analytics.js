@@ -104,5 +104,5 @@ export const showsBreederCta = (code) => code === 'ready_now' || code === 'ready
     softer — they're buying, just not this week. */
 export const isSoftCta = (code) => code === 'ready_soon';
 
-/** Levels that get the email capture rather than a breeder. */
+/** Levels that get the prep-guide panel rather than a breeder. */
 export const showsPrepCapture = (code) => code === 'planning';

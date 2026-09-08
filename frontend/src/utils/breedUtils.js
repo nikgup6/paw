@@ -571,9 +571,20 @@ export function generatePersonalizedReason(breed, answers) {
   });
   const goal = matchedPurpose && PURPOSE_GOAL[matchedPurpose];
 
+  /* Never claim the home is a good fit when the breed actually needs more room
+     than the owner told us they have — that reads as a direct contradiction of
+     the space-gap warning shown right beside this copy. In that case the lead
+     drops the home reference and leans on lifestyle/purpose only, which stays
+     honest without turning the positive summary into a caveat. */
+  const isApt = String(home).startsWith('apt-');
+  const homeRank = HOME_APT_RANK[home];
+  const needRank = MIN_APT_RANK[String(breed.minApartmentSize || '').trim()];
+  const tooBig = isApt && homeRank != null && needRank != null && needRank > homeRank;
+  const fitPhrase = tooBig ? activityPhrase : `${homePhrase} and ${activityPhrase}`;
+
   const lead = goal
-    ? `You wanted ${goal}, and the ${breed.name} fits — a good match for your ${homePhrase} and ${activityPhrase}.`
-    : `For your ${homePhrase} and ${activityPhrase}, the ${breed.name} is a strong lifestyle match.`;
+    ? `You wanted ${goal}, and the ${breed.name} fits — a good match for your ${fitPhrase}.`
+    : `For your ${fitPhrase}, the ${breed.name} is a strong lifestyle match.`;
 
   // One genuine supporting trait — each gated on the actual answer so nothing contradicts.
   const heatClass = heatCfg.breeds[breed.name];

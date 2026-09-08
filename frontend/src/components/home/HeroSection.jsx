@@ -7,10 +7,6 @@ const HeroSection = ({ onSelectFriendPath, onDogOwner }) => {
   return (
     <section className="hero-section">
       <HeroParticles />
-      <div className="hero-socials">
-        <div className="hero-social-btn">FB</div>
-        <div className="hero-social-btn">IG</div>
-      </div>
 
       {/*
         hero-composition is the single sizing root.
@@ -186,7 +182,7 @@ const HeroSection = ({ onSelectFriendPath, onDogOwner }) => {
         }
 
         .hero-subtitle {
-          font-family: 'Poppins', sans-serif;
+          font-family: var(--font-body-family);
           font-weight: 600;
           color: #6e5646;
           line-height: 1.3;
@@ -221,7 +217,7 @@ const HeroSection = ({ onSelectFriendPath, onDogOwner }) => {
           color: white;
           border: none;
           border-radius: 50px;
-          font-family: 'Poppins', sans-serif;
+          font-family: var(--font-display);
           font-size: clamp(0.7rem, min(2vw, 15px), 0.95rem);
           font-weight: 600;
           cursor: pointer;

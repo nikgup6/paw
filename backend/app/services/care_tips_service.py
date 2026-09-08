@@ -174,8 +174,27 @@ async def _general_candidates(db, breed: str, categories: Optional[list], city_b
     ]
 
 
+# The fallback tip's stored copy is a long multi-sentence paragraph. It is
+# shown as a single tile on the survey result and dashboard card, where that
+# length reads as a wall of text (Vibhuvan, 5 Sep 2026: "shorten it"). We serve
+# a tightened two-sentence form here rather than rewriting the stored row, so
+# the original vet-reviewed copy stays verbatim in the DB and can be restored by
+# removing this override. It applies to every breed/city, since any breed with
+# no approved breed-specific tip falls through to this one record.
+_FALLBACK_SHORT = (
+    "In the first year, consistency matters most: keep meals, walks, and "
+    "training at the same times each day, and introduce anything new "
+    "(grooming, alone time, new people) gradually rather than all at once. "
+    "If a problem isn't covered here, a steady routine plus a vet visit to "
+    "rule out a medical cause is almost always the right first step."
+)
+
+
 async def _fallback_tip(db) -> Optional[dict]:
-    return _public(await db[CARE_TIP_FALLBACK].find_one({"is_approved": True}))
+    doc = _public(await db[CARE_TIP_FALLBACK].find_one({"is_approved": True}))
+    if doc and doc.get("tip"):
+        doc["tip"] = _FALLBACK_SHORT
+    return doc
 
 
 # --------------------------------------------------------------------------- #

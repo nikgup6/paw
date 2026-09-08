@@ -21,12 +21,34 @@ const Explore = () => {
   const [modalType, setModalType] = useState(null);
 
   const filteredBreeds = useMemo(() => {
-    if (!searchTerm) return breedsData;
-    return breedsData.filter(b => 
-      b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [searchTerm]);
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return breedsData;
+    /* Name + tags (original) PLUS a derived trait "haystack" so the searches
+       the placeholder actually advertises — "apartment", "playful", "low
+       shedding", "family", "guard", "small/large", "beginner" — return matches
+       instead of "No breeds found". Everything is derived from existing breed
+       fields; no new data. */
+    return breedsData.filter((b) => {
+      const energy = (b.energy || '').toLowerCase();
+      const size = (b.size || '');
+      const parts = [
+        b.name, ...(b.tags || []),
+        b.purpose, b.energy, b.grooming, b.shedding, b.climate, b.experienceLevel, b.idealCities,
+        (b.apt === 'Yes' || /1BHK|2BHK/i.test(b.minApartmentSize || '')) && 'apartment flat apartment-friendly',
+        /house only|3BHK/i.test(b.minApartmentSize || '') && 'house yard needs-space',
+        (energy.startsWith('high') || energy.startsWith('very high')) && 'playful energetic active high-energy',
+        energy.startsWith('low') && 'calm relaxed easygoing low-energy laid-back',
+        ['Low', 'Very Low'].includes(b.shedding) && 'low shedding low-shedding hypoallergenic',
+        (b.risk || '').startsWith('Low') && 'gentle friendly family kids child-friendly',
+        /guard/i.test(b.purpose || '') && 'guard guardian protective watchdog',
+        b.experienceLevel === 'First-timer OK' && 'beginner first-timer first-time easy',
+        /^S\b|small/i.test(size) && 'small small-breed',
+        /^M\b|medium/i.test(size) && 'medium medium-breed',
+        /^(L|XL|Giant)\b|large|giant/i.test(size) && 'large big large-breed',
+      ];
+      return parts.filter(Boolean).join(' ').toLowerCase().includes(q);
+    });
+  }, [searchTerm, breedsData]);
 
   const suggestions = useMemo(() => {
     if (!searchTerm) return [];

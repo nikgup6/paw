@@ -36,10 +36,6 @@ KNOWN_EVENTS = FUNNEL_EVENTS + (
     "timeline_selected",
     "login_started",
     "login_completed",
-    # A cool lead trading their email for the prep guide. Not a funnel step —
-    # they aren't being sent to a breeder — but it is the only signal we get
-    # from someone who is months out, so it has to be recoverable.
-    "prep_guide_requested",
 )
 
 
@@ -73,7 +69,3 @@ class ProgressIn(BaseModel):
     top_breed: Optional[str] = None
     city: Optional[str] = None
     status: Optional[str] = None
-    #: Volunteered by cool leads in exchange for the 90-day prep guide. Kept on
-    #: the row rather than only in the log so the dashboard tables can show who
-    #: left a way to reach them.
-    email: Optional[str] = None

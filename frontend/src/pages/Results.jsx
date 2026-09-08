@@ -13,6 +13,7 @@ import { isSoftCta, saveProgress, showsBreederCta, showsPrepCapture, track } fro
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from '../components/WhatsAppButton';
 import BreederDirectory from '../components/BreederDirectory';
+import { BuyConfirm } from '../components/BreedCheckGate';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -21,22 +22,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 /* What the page offers someone who isn't buying yet.
 
    Defined at module level so it isn't a fresh component type on every render.
-   Two shapes: "Planning Ahead" is three to six months out and worth staying in
-   touch with, so we trade a prep guide for an email. "Just Researching" hasn't
-   decided anything — they get the reading and nothing else. Neither sees a
-   breeder. Showing a "buy now" button to someone who just told us they haven't
-   decided is how a recommendation engine starts reading as a sales funnel. */
-const PrepPanel = ({ readinessCode, topBreed, onSubmitEmail }) => {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+   Two shapes: "Planning Ahead" is three to six months out, "Just Researching"
+   hasn't decided anything — both get the prep reading and a couple of links to
+   keep exploring, and neither sees a breeder. Showing a "buy now" button to
+   someone who just told us they haven't decided is how a recommendation engine
+   starts reading as a sales funnel. */
+const PrepPanel = ({ readinessCode, topBreed }) => {
   const cold = readinessCode === 'researching';
-
-  const submit = () => {
-    const value = email.trim();
-    if (!/^\S+@\S+\.\S+$/.test(value)) return;
-    onSubmitEmail(value);
-    setSent(true);
-  };
 
   return (
     <div style={{
@@ -60,37 +52,14 @@ const PrepPanel = ({ readinessCode, topBreed, onSubmitEmail }) => {
         <li>What your home needs before day one, and what can wait.</li>
       </ul>
 
-      {cold ? (
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link to="/explore" style={{ padding: '11px 20px', borderRadius: 'var(--radius-pill)', background: 'var(--orange)', color: 'white', fontWeight: 'var(--weight-bold)', textDecoration: 'none', fontSize: '14px' }}>
-            Read about the breeds
-          </Link>
-          <Link to="/app" style={{ padding: '11px 20px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-strong)', color: 'var(--brown)', fontWeight: 'var(--weight-bold)', textDecoration: 'none', fontSize: '14px' }}>
-            Health tracker
-          </Link>
-        </div>
-      ) : sent ? (
-        <p style={{ margin: 0, color: '#1B8046', fontSize: '14px', fontWeight: 'var(--weight-bold)' }}>
-          Sent. Check your inbox — we will not email you about anything else.
-        </p>
-      ) : (
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-            placeholder="you@example.com"
-            style={{ flex: '1 1 220px', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '2px solid var(--border-strong)', fontFamily: 'inherit', fontSize: '14px', color: 'var(--brown)', outline: 'none' }}
-          />
-          <button
-            onClick={submit}
-            style={{ padding: '12px 22px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--orange)', color: 'white', fontWeight: 'var(--weight-bold)', fontFamily: 'inherit', fontSize: '14px', cursor: 'pointer' }}
-          >
-            Send it to me
-          </button>
-        </div>
-      )}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <Link to="/explore" style={{ padding: '11px 20px', borderRadius: 'var(--radius-pill)', background: 'var(--orange)', color: 'white', fontWeight: 'var(--weight-bold)', textDecoration: 'none', fontSize: '14px' }}>
+          Read about the breeds
+        </Link>
+        <Link to="/app" style={{ padding: '11px 20px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-strong)', color: 'var(--brown)', fontWeight: 'var(--weight-bold)', textDecoration: 'none', fontSize: '14px' }}>
+          Health tracker
+        </Link>
+      </div>
     </div>
   );
 };
@@ -248,7 +217,7 @@ const Results = () => {
   /* The last question decides how hard this page sells:
 
        ready_now / ready_soon  → breeder CTA, ready_soon worded softer
-       planning                → prep-guide email capture, NO breeder CTA
+       planning                → prep-guide panel, NO breeder CTA
        researching             → Starter Kit only, NO breeder CTA
 
      Someone buying inside three months wants a breeder's number; someone
@@ -535,10 +504,6 @@ const Results = () => {
           <PrepPanel
             readinessCode={readiness.code}
             topBreed={topBreeds[0]?.name}
-            onSubmitEmail={(email) => {
-              track('prep_guide_requested', { email, readiness_code: readiness.code, top_breed: topBreeds[0]?.name });
-              saveProgress({ email });
-            }}
           />
         )}
 
@@ -656,6 +621,17 @@ const Results = () => {
               </div>
             )}
 
+            {/* Buy confirmation: diplomatic lifestyle-fit note before the breeder
+                list, for a searched breed outside the user's top 5. */}
+            {modalType === 'buy_confirm' && selectedBreed && (
+              <BuyConfirm
+                breed={selectedBreed}
+                answers={answers}
+                onProceed={() => handleAction('buy', selectedBreed)}
+                onBack={() => setModalType('searched_profile')}
+              />
+            )}
+
             {(modalType === 'full_profile' || modalType === 'searched_profile') && selectedBreed && (
               <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 250px' }}>
@@ -760,7 +736,13 @@ const Results = () => {
                   {canConnect && (
                     <div style={{ marginTop: '20px' }}>
                       <button
-                        onClick={() => handleAction('buy', selectedBreed)}
+                        onClick={() => {
+                          // Searched breed outside the top 5 → diplomatic
+                          // lifestyle-fit confirmation before the breeder list.
+                          const inTop5 = topBreeds.some((t) => t.name === selectedBreed.name);
+                          if (modalType === 'searched_profile' && !inTop5) { setModalType('buy_confirm'); return; }
+                          handleAction('buy', selectedBreed);
+                        }}
                         style={{ padding: '12px 24px', background: 'var(--orange)', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', fontFamily: 'var(--font-body-family)', width: '100%', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
                       >
                         {softCta ? 'See breeders for this breed' : 'Request to Buy'}

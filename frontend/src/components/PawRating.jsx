@@ -11,8 +11,8 @@ import React, { useState } from 'react';
    legend. Tap targets are 48px and nothing depends on hover, because this form
    is mostly going to be filled on a phone. */
 
-const PawIcon = ({ filled }) => (
-  <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" focusable="false">
+const PawIcon = ({ filled, size = 30 }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" focusable="false">
     {/* four toes + pad; one path set, filled or outlined by state */}
     <g
       fill={filled ? 'var(--orange)' : 'none'}
@@ -34,10 +34,31 @@ const LABELS = ['Not at all', 'Not really', 'It’s okay', 'Happy', 'Perfect fit
    survey's original wording so that call site is unchanged, but it has to be
    settable: the feedback modal renders five of these at once, and five
    radiogroups all announcing "Satisfaction with this breed" is unusable. */
-const PawRating = ({ value, onChange, label = 'Satisfaction with this breed' }) => {
+const PawRating = ({ value, onChange, label = 'Satisfaction with this breed', readOnly = false, size }) => {
   //: Which paw just got tapped — drives the one-shot pop + emoji, then clears
-  //  itself so the animation can replay on the next tap.
+  //  itself so the animation can replay on the next tap. (Declared before the
+  //  read-only early return so the hook order is stable per the Rules of Hooks.)
   const [burst, setBurst] = useState(null);
+
+  /* Read-only display mode: the same five paws, filled to `value`, but not a
+     control — no buttons, no tap targets, no burst, no "Tap to rate" label.
+     Used to show a fixed breed rating (e.g. the "ideal conditions" step on the
+     Results page). Deliberately a separate render path so the interactive
+     survey/feedback callers are untouched. */
+  if (readOnly) {
+    const px = size || 22;
+    const v = Number(value) || 0;
+    return (
+      <span className="pawrate-ro" role="img" aria-label={`${v} out of 5`}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <PawIcon key={n} filled={v >= n} size={px} />
+        ))}
+        <style>{`
+          .pawrate-ro { display: inline-flex; align-items: center; gap: 2px; line-height: 0; }
+        `}</style>
+      </span>
+    );
+  }
 
   const pick = (rating) => {
     onChange(rating);

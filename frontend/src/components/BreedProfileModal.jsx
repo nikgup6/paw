@@ -5,6 +5,7 @@ import { buildLivingConditions, generateProsCons } from '../utils/breedUtils';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from './WhatsAppButton';
 import BreederDirectory from './BreederDirectory';
+import { BuyConfirm } from './BreedCheckGate';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -20,9 +21,19 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
 
   if (!breed) return null;
 
-  const handleBuyClick = () => {
-    // Buy now opens the verified breeder network for the user's city instead of
-    // the old intent form. The lead is logged silently so we keep the signal.
+  /* A searched breed the user's own quiz did NOT rank in their top 5. We only
+     know this when we have both their answers and their top-5 list (the
+     searched/quiz path passes both; the marketing/Explore uses don't), so
+     those uses never see the confirmation. */
+  const inTopMatches = topBreeds.some((t) => (t?.name || t) === breed.name);
+  const needsBuyConfirm = Boolean(answers) && topBreeds.length > 0 && !inTopMatches;
+
+  const { pros, cons } = generateProsCons(breed, answers);
+
+  /* The actual "go to the breeder list" step, unchanged from before — the lead
+     is logged silently. Split out so both the direct Buy (top-5 breeds) and the
+     "Proceed anyway" confirmation button reach the same place. */
+  const proceedToBuy = () => {
     setView('buy');
     axios.post(`${API_URL}/api/buy`, {
       user_id: user?.id || null,
@@ -33,6 +44,13 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
       intent: 'Viewed breeder list',
       status: 'NEW',
     }).catch(() => { /* best effort — never blocks the user */ });
+  };
+
+  const handleBuyClick = () => {
+    // For a breed outside the user's own top matches, show the diplomatic
+    // lifestyle-fit confirmation first; a top-5 breed goes straight through.
+    if (needsBuyConfirm) { setView('confirm'); return; }
+    proceedToBuy();
   };
 
   /** Fired when the user actually opens a breeder's WhatsApp chat. */
@@ -117,6 +135,15 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
           />
         )}
 
+        {view === 'confirm' && (
+          <BuyConfirm
+            breed={breed}
+            answers={answers}
+            onProceed={proceedToBuy}
+            onBack={() => setView('profile')}
+          />
+        )}
+
         {view === 'profile' && (
           <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 250px' }}>
@@ -176,7 +203,30 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)', color: 'var(--brown)', marginBottom: '5px', fontSize: '28px' }}>{breed.name}</h3>
               <p style={{ color: 'var(--text-soft)', marginBottom: '20px', fontStyle: 'italic' }}>{breed.purpose}</p>
 
-
+              {/* Pros & cons, personalised to the user's quiz answers when we
+                  have them (generateProsCons references their home/lifestyle). */}
+              <div style={{ marginBottom: '25px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <div style={{ background: '#f0fdf4', padding: '15px', borderRadius: '12px' }}>
+                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#27AE60', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '15px', marginTop: 0 }}>Pros for you</h4>
+                  <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                    {pros.map((pro, i) => (
+                      <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                        <span style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>✓</span>{pro}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div style={{ background: '#fef2f2', padding: '15px', borderRadius: '12px' }}>
+                  <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--red, #D32F2F)', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '15px', marginTop: 0 }}>Cons for you</h4>
+                  <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                    {cons.map((con, i) => (
+                      <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                        <span style={{ color: 'var(--red, #D32F2F)', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>✕</span>{con}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
 
               <div style={{ marginBottom: '25px' }}>
                 <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--orange)', marginBottom: '15px', fontSize: '18px' }}>Best Living Conditions</h4>

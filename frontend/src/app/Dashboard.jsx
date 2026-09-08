@@ -413,6 +413,88 @@ const Dashboard = () => {
           </section>
         )}
 
+        {/* ---- Care tips ----
+             Placed right after Today's routine care (Vibhuvan's ordering):
+             the tips are the day's care context, so they sit with the routine.
+             Hidden entirely when nothing approved matches this dog, rather
+             than showing an empty shell. An owner reading "no tips" learns
+             nothing; a missing card asks no questions. */}
+        {tips.length > 0 && (
+          <section className="pb-card pb-tips-card">
+            <div className="pb-card__head">
+              <div>
+                <h3
+                  className="pb-card__title pb-card__title--tap"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setShowTipDetails(true)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowTipDetails(true); } }}
+                >
+                  Tips for {dog.name}
+                </h3>
+                <p className="pb-card__sub">From {dog.breed || 'your dog'}’s care guide.</p>
+              </div>
+            </div>
+            <ul className="pb-tips">
+              {tips.map((tip, index) => {
+                const key = tip.id || String(index);
+                const open = openTip === key;
+                /* What actually made this tip apply to THIS dog. Every value
+                   here is stored on the tip — nothing is inferred, and the
+                   dimensions that say "Any" are dropped because "applies to
+                   any city" is not a reason. */
+                const why = [
+                  tip.trait_trigger,
+                  tip.category && `${tip.category} guidance`,
+                  !['Any', '', null, undefined].includes(tip.ownership_duration_dependency)
+                    && `Age: ${tip.ownership_duration_dependency}`,
+                  !['Any', '', null, undefined].includes(tip.city_climate_dependency)
+                    && `Climate: ${tip.city_climate_dependency}`,
+                  !['Any', '', null, undefined].includes(tip.season_dependency)
+                    && `Season: ${tip.season_dependency}`,
+                ].filter(Boolean);
+
+                return (
+                  <li key={key} className={`pb-tips__row ${open ? 'is-open' : ''}`}>
+                    <button
+                      type="button"
+                      className="pb-tips__btn"
+                      aria-expanded={open}
+                      onClick={() => setOpenTip(open ? null : key)}
+                    >
+                      <span className="pb-tips__icon" aria-hidden="true">{CATEGORY_ICON[tip.category] || '🐾'}</span>
+                      <span className="pb-tips__text">{tip.tip}</span>
+                      <span className="pb-tips__chev" aria-hidden="true">{open ? '▲' : '▼'}</span>
+                    </button>
+
+                    {open && (
+                      <div className="pb-tips__detail">
+                        <p className="pb-tips__why-h">Why this applies to {dog.name}</p>
+                        <ul className="pb-tips__why">
+                          {why.map((w) => <li key={w}>{w}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Feedback is asked about the tip they OPENED, not the card as a
+                whole — the card rotates every 6 hours, so it has to point at
+                what they actually read. Only once a tip is opened, and only
+                when it has an id: a fallback tip has none, and unattributable
+                feedback isn't worth the interruption. */}
+            {openTip && tips.find((t) => (t.id || '') === openTip)?.id && (
+              <QuickFeedback
+                context="care_tip"
+                contextId={openTip}
+                question="Was this tip useful?"
+              />
+            )}
+          </section>
+        )}
+
         {/* ---- Seasonal conditions ----
              Its own card rather than a line inside the tips card, because the
              tips card hides when nothing approved matches this breed — and the
@@ -513,86 +595,6 @@ const Dashboard = () => {
             </ul>
           )}
         </section>
-
-        {/* ---- Care tips ----
-             Hidden entirely when nothing approved matches this dog, rather
-             than showing an empty shell. An owner reading "no tips" learns
-             nothing; a missing card asks no questions. */}
-        {tips.length > 0 && (
-          <section className="pb-card pb-tips-card">
-            <div className="pb-card__head">
-              <div>
-                <h3
-                  className="pb-card__title pb-card__title--tap"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setShowTipDetails(true)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowTipDetails(true); } }}
-                >
-                  Tips for {dog.name}
-                </h3>
-                <p className="pb-card__sub">From {dog.breed || 'your dog'}’s care guide.</p>
-              </div>
-            </div>
-            <ul className="pb-tips">
-              {tips.map((tip, index) => {
-                const key = tip.id || String(index);
-                const open = openTip === key;
-                /* What actually made this tip apply to THIS dog. Every value
-                   here is stored on the tip — nothing is inferred, and the
-                   dimensions that say "Any" are dropped because "applies to
-                   any city" is not a reason. */
-                const why = [
-                  tip.trait_trigger,
-                  tip.category && `${tip.category} guidance`,
-                  !['Any', '', null, undefined].includes(tip.ownership_duration_dependency)
-                    && `Age: ${tip.ownership_duration_dependency}`,
-                  !['Any', '', null, undefined].includes(tip.city_climate_dependency)
-                    && `Climate: ${tip.city_climate_dependency}`,
-                  !['Any', '', null, undefined].includes(tip.season_dependency)
-                    && `Season: ${tip.season_dependency}`,
-                ].filter(Boolean);
-
-                return (
-                  <li key={key} className={`pb-tips__row ${open ? 'is-open' : ''}`}>
-                    <button
-                      type="button"
-                      className="pb-tips__btn"
-                      aria-expanded={open}
-                      onClick={() => setOpenTip(open ? null : key)}
-                    >
-                      <span className="pb-tips__icon" aria-hidden="true">{CATEGORY_ICON[tip.category] || '🐾'}</span>
-                      <span className="pb-tips__text">{tip.tip}</span>
-                      <span className="pb-tips__chev" aria-hidden="true">{open ? '▲' : '▼'}</span>
-                    </button>
-
-                    {open && (
-                      <div className="pb-tips__detail">
-                        <p className="pb-tips__why-h">Why this applies to {dog.name}</p>
-                        <ul className="pb-tips__why">
-                          {why.map((w) => <li key={w}>{w}</li>)}
-                        </ul>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-
-            {/* Feedback is asked about the tip they OPENED, not the card as a
-                whole — the card rotates every 6 hours, so it has to point at
-                what they actually read. Only once a tip is opened, and only
-                when it has an id: a fallback tip has none, and unattributable
-                feedback isn't worth the interruption. */}
-            {openTip && tips.find((t) => (t.id || '') === openTip)?.id && (
-              <QuickFeedback
-                context="care_tip"
-                contextId={openTip}
-                question="Was this tip useful?"
-              />
-            )}
-          </section>
-        )}
 
       </div>
 

@@ -7,7 +7,7 @@
     "energy": "High – 1–2 hrs vigorous daily",
     "grooming": "Low – weekly brush, occasional bath; short dense double coat needs no trimming",
     "climate": "MEDIUM CLIMATE\nBest cities: Pune (avg 25–33°C), Bangalore (avg 22–31°C), Hyderabad (avg 25–40°C – needs shade in summer)\nManageable with: shade, water, AC rest area. Struggles in peak Chennai/Mumbai humidity or Rajasthan dry heat above 42°C.",
-    "apt": "No",
+    "apt": "Yes",
     "house": "High – thrives with yard/open space",
     "cost": "Rs.8,000 – Rs.14,000/month\n[Breakdown: Food Rs.3,000–5,000 | Grooming Rs.500–800 | Vet/vaccines Rs.1,500–3,000 | Supplies/toys Rs.500–1,000 | Misc Rs.500–1,200]\nSource: Heads Up For Tails India pricing guide; Supertails.com India breed cost estimates",
     "health": "Hip & elbow dysplasia, obesity, progressive retinal atrophy, exercise-induced collapse, chronic hepatitis (Wikipedia – Labrador Retriever)",
@@ -29,7 +29,7 @@
     "puppyPriceMax": 40000,
     "monthlyCostMin": 8000,
     "monthlyCostMax": 14000,
-    "minApartmentSize": "3BHK min",
+    "minApartmentSize": "2BHK min",
     "cuteness": "High"
   },
   {
@@ -72,7 +72,7 @@
     "energy": "High – 1–2 hrs daily",
     "grooming": "High – brush 3–5× week; professional groom every 6–8 weeks; long double coat mats if neglected",
     "climate": "COLD–MEDIUM CLIMATE\nBest cities: Bangalore (avg 22–31°C – good), Pune (avg 25–33°C – manageable), Shimla/Mussoorie/Dehradun (avg 10–25°C – ideal)\nManageable with: full-time AC in Hyderabad/Chennai/Mumbai; avoid outdoor activity in summer above 35°C. Double coat traps heat severely.",
-    "apt": "No",
+    "apt": "Yes",
     "house": "High – benefits from yard",
     "cost": "Rs.10,000 – Rs.18,000/month\n[Breakdown: Food Rs.4,000–7,000 | Grooming Rs.1,500–2,500 | Vet/vaccines Rs.2,000–4,000 | Supplies Rs.500–1,000 | Misc Rs.500–1,500]\nSource: Heads Up For Tails India; Supertails.com India breed cost estimates",
     "health": "Hip dysplasia, cancer (high rate vs other breeds), skin allergies, hypothyroidism, progressive retinal atrophy (Wikipedia – Golden Retriever; AKC)",
@@ -93,7 +93,7 @@
     "puppyPriceMax": 50000,
     "monthlyCostMin": 10000,
     "monthlyCostMax": 18000,
-    "minApartmentSize": "3BHK min",
+    "minApartmentSize": "2BHK min",
     "cuteness": "Very High"
   },
   {
