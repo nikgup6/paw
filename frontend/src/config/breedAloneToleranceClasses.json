@@ -1,0 +1,57 @@
+{
+  "_comment": [
+    "RIGHTBREED v4 — G6 daily-schedule risk gate. DRAFT, PENDING VET SIGN-OFF.",
+    "WEAKEST-EVIDENCED gate in the engine, and deliberately the smallest bite —",
+    "kept that way on explicit instruction. No peer-reviewed study validates a",
+    "breed-specific 'safe hours alone' figure for ANY breed (see the Gap",
+    "Research file's own methodology sheet). What exists: RSPCA/PDSA/Dogs",
+    "Trust/Blue Cross converge on a flat 4-hour welfare ceiling that does NOT",
+    "vary by breed — that ceiling is shown as a universal disclaimer at 8+ hrs",
+    "regardless of tier or breed, separate from this gate's math. The tier below",
+    "(NEEDS_COMPANY / AVERAGE / INDEPENDENT) reflects only descriptive,",
+    "non-peer-reviewed behavioural-literature signal (see Alone-Tolerance –",
+    "Source / Confidence column, Gap Research file) — max penalty capped at",
+    "0.90, roughly half the bite of G4/G5's worst case.",
+    "Every breed in breeds.json must appear in `breeds` or the build FAILS",
+    "(scripts/validate-data.mjs). Multipliers apply to the base score:",
+    "final = base x G1 x G2 x G3 x G4 x G5 x G6."
+  ],
+
+  "classes": {
+    "NEEDS_COMPANY": { "HOME": 1.00, "UP_TO_4H": 1.00, "4_TO_8H": 0.95, "8H_PLUS": 0.90 },
+    "AVERAGE":       { "HOME": 1.00, "UP_TO_4H": 1.00, "4_TO_8H": 0.98, "8H_PLUS": 0.95 },
+    "INDEPENDENT":   { "HOME": 1.00, "UP_TO_4H": 1.00, "4_TO_8H": 1.00, "8H_PLUS": 1.00 }
+  },
+
+  "classReasons": {
+    "NEEDS_COMPANY": "frequently cited in separation-anxiety-predisposition literature (non-peer-reviewed)",
+    "AVERAGE": "no strong behavioural-literature signal either way",
+    "INDEPENDENT": "widely described (non-peer-reviewed) as independent / higher solo tolerance"
+  },
+
+  "breeds": {
+    "Labrador Retriever": "AVERAGE",
+    "German Shepherd": "AVERAGE",
+    "Golden Retriever": "NEEDS_COMPANY",
+    "Beagle": "NEEDS_COMPANY",
+    "Pomeranian": "AVERAGE",
+    "Indie Dog": "INDEPENDENT",
+    "Pug": "AVERAGE",
+    "Shih Tzu": "AVERAGE",
+    "Indian Spitz": "INDEPENDENT",
+    "Doberman Pinscher": "NEEDS_COMPANY",
+    "Rottweiler": "AVERAGE",
+    "Dachshund": "AVERAGE",
+    "Cocker Spaniel": "NEEDS_COMPANY",
+    "Boxer": "AVERAGE",
+    "Rajapalayam": "INDEPENDENT",
+    "Siberian Husky": "NEEDS_COMPANY",
+    "Great Dane": "AVERAGE",
+    "Lhasa Apso": "INDEPENDENT",
+    "Mudhol Hound": "INDEPENDENT",
+    "Dalmatian": "AVERAGE",
+    "Poodle (Standard)": "AVERAGE",
+    "French Bulldog": "AVERAGE",
+    "Saint Bernard": "AVERAGE"
+  }
+}

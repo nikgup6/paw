@@ -6,13 +6,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // Existing Components
 import LoadingScreen from '../components/home/LoadingScreen';
 import HeroSection from '../components/home/HeroSection';
+import GoldenCircle from '../components/home/GoldenCircle';
 import TrustSection from '../components/home/TrustSection';
-import HowItWorks from '../components/home/HowItWorks';
 import FeaturedPuppies from '../components/home/FeaturedPuppies';
 import SuccessStories from '../components/home/SuccessStories';
 import CommunitySection from '../components/home/CommunitySection';
-import QuizCTA from '../components/home/QuizCTA';
-import PawBuddyMascot from '../components/home/PawBuddyMascot';
 import Reveal from '../components/home/Reveal';
 
 // New Revamped Components
@@ -28,11 +26,50 @@ import CitySelect from '../components/CitySelect';
 // Constants & Utilities
 import { useBreeds } from '../context/BreedsContext';
 import questionsData from '../constants/questions.json';
-import { computeMatches } from '../utils/breedUtils';
+import { computeMatches, selectTopMatches } from '../utils/breedUtils';
 import { parsePrompt } from '../utils/matchmaker';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+/* "Choose Your Journey" line icons — brown strokes with a single orange accent,
+   replacing the old emoji so they match the brand and render the same on every
+   device. Decorative only (the card text carries the meaning). */
+const JOURNEY_INK = 'var(--brown)';
+const JOURNEY_ACCENT = 'var(--orange)';
+
+const JourneyPawIcon = () => (
+  <svg width="34" height="34" viewBox="0 0 32 32" fill="none" aria-hidden="true"
+    stroke={JOURNEY_ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <ellipse cx="7.5" cy="13" rx="2.6" ry="3.4" />
+    <ellipse cx="12.5" cy="7" rx="2.7" ry="3.6" />
+    <ellipse cx="19.5" cy="7" rx="2.7" ry="3.6" />
+    <ellipse cx="24.5" cy="13" rx="2.6" ry="3.4" />
+    <path d="M16 15.5c-4 0-7.5 4.2-7.5 7.6 0 2.4 1.9 3.6 4 3.6 1.5 0 2.2-.7 3.5-.7s2 .7 3.5.7c2.1 0 4-1.2 4-3.6 0-3.4-3.5-7.6-7.5-7.6Z" />
+  </svg>
+);
+
+const JourneyQuizIcon = () => (
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {/* page with a folded corner and text lines */}
+    <path d="M26 17V8.5A2.5 2.5 0 0 0 23.5 6h-13A2.5 2.5 0 0 0 8 8.5v23A2.5 2.5 0 0 0 10.5 34H18" stroke={JOURNEY_INK} />
+    <path d="M13 13h8M13 18h8M13 23h4" stroke={JOURNEY_INK} />
+    {/* pencil */}
+    <path d="M22 34l1-4.5 9.5-9.5a2.1 2.1 0 0 1 3 3L26 32.5 22 34Z" stroke={JOURNEY_ACCENT} />
+    <path d="M30.5 22l3 3" stroke={JOURNEY_ACCENT} />
+  </svg>
+);
+
+const JourneyExploreIcon = () => (
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="17" cy="17" r="10" stroke={JOURNEY_INK} />
+    <path d="M24.5 24.5l8 8" stroke={JOURNEY_INK} strokeWidth="3" />
+    {/* lens highlight */}
+    <path d="M12 15a6 6 0 0 1 4-4" stroke={JOURNEY_ACCENT} />
+  </svg>
+);
 
 const Home = () => {
   /* No `loading` here on purpose — `breeds` is never empty, so this page has
@@ -180,7 +217,7 @@ const Home = () => {
     setTimeout(() => {
       try {
         const scoredBreeds = computeMatches(quizAnswers, breedsData);
-        const top5 = scoredBreeds.slice(0, 5);
+        const { matches: top5 } = selectTopMatches(scoredBreeds, 5);
 
         // Save to DB (asynchronously)
         axios.post(`${API_URL}/api/quiz/submit`, {
@@ -211,7 +248,7 @@ const Home = () => {
     try {
       const [{ answers }] = await Promise.all([parsePrompt(matchmakerPrompt), minDelay]);
       const scoredBreeds = computeMatches(answers, breedsData);
-      const top5 = scoredBreeds.slice(0, 5);
+      const { matches: top5 } = selectTopMatches(scoredBreeds, 5);
 
       // Save to DB (asynchronously)
       axios.post(`${API_URL}/api/quiz/submit`, {
@@ -244,18 +281,33 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoading ? 0 : 1 }}
         transition={{ duration: 0.8 }}
-        style={{ position: 'relative', background: 'var(--cream)', minHeight: '100dvh' }}
+        style={{ position: 'relative', background: subView === 'results' ? '#FFFFFF' : 'var(--cream)', minHeight: '100dvh' }}
       >
-        {/* Navigation / Header */}
+        {/* Navigation / Header — hidden on the hero view, which renders its own
+            white header bar inside HeroSection (the new landing design). */}
+        {subView !== 'hero' && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'clamp(10px, 2.5vw, 18px) clamp(14px, 3vw, 24px)', pointerEvents: 'none' }}>
           <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="Paw Buddy" style={{ width: 'clamp(90px, 8vw, 115px)', mixBlendMode: 'multiply', cursor: 'pointer' }} onClick={() => { setSubView('hero'); }} />
+            {subView === 'results' ? (
+              /* Results view: clean brand wordmark instead of the cartoon-dog logo. */
+              <div onClick={() => { setSubView('hero'); }} style={{ cursor: 'pointer', lineHeight: 1 }} role="link" aria-label="Paw Buddy home">
+                <div style={{ fontFamily: "'Clash Display', 'Sora', sans-serif", fontWeight: 700, fontSize: 'clamp(20px, 2.4vw, 26px)', letterSpacing: '0.01em' }}>
+                  <span style={{ color: '#011E4A' }}>PAW </span><span style={{ color: '#F57A1B' }}>BUDDY</span>
+                </div>
+                <div style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 500, fontSize: 'clamp(9px, 1vw, 11px)', color: '#011E4A', opacity: 0.75, marginTop: '3px' }}>
+                  India's #1 Dog Companion Platform
+                </div>
+              </div>
+            ) : (
+              <img src="/logo.png" alt="Paw Buddy" style={{ width: 'clamp(90px, 8vw, 115px)', mixBlendMode: 'multiply', cursor: 'pointer' }} onClick={() => { setSubView('hero'); }} />
+            )}
           </div>
           
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center', pointerEvents: 'auto' }}>
             <button
               onClick={() => setIsAboutOpen(true)}
               className="about-nav-btn"
+              style={subView === 'results' ? { background: '#FFFFFF', color: '#011E4A', border: '1.5px solid #011E4A', fontFamily: "'Satoshi', 'Inter', sans-serif", animation: 'none', boxShadow: 'none' } : undefined}
             >
               About
             </button>
@@ -306,6 +358,7 @@ const Home = () => {
             )}
           </div>
         </div>
+        )}
 
         {/* WORKFLOW VIEW OR HERO SECTIONS */}
         <AnimatePresence mode="wait">
@@ -320,15 +373,24 @@ const Home = () => {
               <HeroSection
                 onSelectFriendPath={() => handleFriendPathClick('menu')}
                 /* Existing owners go straight to the product area: dashboard,
-                   dog profiles and Health Records all live under /app now. */
+                   dog profiles and Health Records all live under /app now.
+                   Wired to the hero header's account icon. */
                 onDogOwner={handleDogOwnerClick}
+                /* Hero header's hamburger opens the About panel (the only
+                   nav item on this minimal landing for now). */
+                onMenu={() => setIsAboutOpen(true)}
+                /* Account dropdown (login / dashboard / profile / logout). */
+                user={user}
+                onLogin={() => navigate('/login')}
+                onProfile={() => navigate('/profile')}
+                onAdmin={() => navigate('/admin')}
+                onLogout={handleLogout}
               />
-              <Reveal><HowItWorks /></Reveal>
+              <GoldenCircle />
+              <Reveal><CommunitySection /></Reveal>
               <Reveal><TrustSection /></Reveal>
               <Reveal><FeaturedPuppies user={user} /></Reveal>
               <Reveal><SuccessStories /></Reveal>
-              <Reveal><CommunitySection /></Reveal>
-              <Reveal><QuizCTA user={user} /></Reveal>
             </motion.div>
           )}
 
@@ -369,8 +431,8 @@ const Home = () => {
                   <>
                     {dashboardTab === 'menu' && (
                       <div>
-                        <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '28px', textAlign: 'center', marginBottom: '10px', paddingRight: '36px' }}>
-                          🐶 Choose Your Journey
+                        <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '28px', textAlign: 'center', marginBottom: '10px', paddingRight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                          <JourneyPawIcon /> Choose Your Journey
                         </h2>
                         <p style={{ color: 'var(--text-soft)', textAlign: 'center', fontSize: '15px', marginBottom: '35px' }}>
                           Let's help you discover your future furry best friend!
@@ -387,7 +449,7 @@ const Home = () => {
                               display: 'flex', alignItems: 'center', gap: '20px'
                             }}
                           >
-                            <span style={{ fontSize: '32px' }}>📝</span>
+                            <span style={{ display: 'inline-flex', flexShrink: 0 }}><JourneyQuizIcon /></span>
                             <div>
                               <strong style={{ color: 'var(--brown)', fontSize: '16px', display: 'block', marginBottom: '2px', fontFamily: 'var(--font-display)' }}>
                                 Find your recommended breed
@@ -410,7 +472,7 @@ const Home = () => {
                               display: 'flex', alignItems: 'center', gap: '20px'
                             }}
                           >
-                            <span style={{ fontSize: '32px' }}>🔍</span>
+                            <span style={{ display: 'inline-flex', flexShrink: 0 }}><JourneyExploreIcon /></span>
                             <div>
                               <strong style={{ color: 'var(--brown)', fontSize: '16px', display: 'block', marginBottom: '2px', fontFamily: 'var(--font-display)' }}>
                                 Explore breeds
@@ -659,9 +721,6 @@ const Home = () => {
             setModalType={(t) => { if (!t) setCompareBreed(null); }}
           />
         )}
-
-        {/* Friendly mascot — hidden on the results view (Retake FAB lives there) */}
-        {!isLoading && subView !== 'results' && <PawBuddyMascot />}
 
         {/* About PawBuddy modal */}
         <AboutModal

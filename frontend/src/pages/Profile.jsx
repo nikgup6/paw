@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { saveQuizState } from '../utils/quizState';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -218,7 +219,7 @@ const Profile = () => {
               <div 
                 key={i} 
                 onClick={() => {
-                  localStorage.setItem('pb_quiz_state', JSON.stringify({ answers: q.answers || {}, currentQ: 9 }));
+                  saveQuizState({ answers: q.answers || {}, currentQ: 9 });
                   navigate('/results');
                 }}
                 style={{ marginBottom: '15px', padding: '15px', background: 'var(--cream)', borderRadius: '15px', cursor: 'pointer', transition: 'transform 0.2s' }}

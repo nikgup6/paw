@@ -1,0 +1,67 @@
+{
+  "_comment": [
+    "RIGHTBREED v4 — G4 flooring risk gate. DRAFT, PENDING VET SIGN-OFF.",
+    "Mechanism: van Hagen MA et al. (2005), Am J Vet Res, PMID 15757132 — slippery",
+    "pre-weaning flooring measured a 1.6x risk of developing clinical hip dysplasia",
+    "signs (n=1733 Boxers). Four tiers, not three, because the original 3-tier",
+    "version put a plain-hip-dysplasia Labrador in the same HIGH bucket as a",
+    "Shih Tzu with BOTH hip dysplasia and IVDD — real signal was being thrown",
+    "away. VERY_HIGH is reserved for genuine compounding risk: either two",
+    "documented conditions at once, or hip dysplasia in an XL/giant breed where",
+    "more body mass mechanically worsens the same joint-slip mechanism, not",
+    "just a correlated trait. MEDIUM covers conditions with a real but weaker",
+    "connection to slippery floors specifically — IVDD's better-established",
+    "driver is jumping/obesity, not floor slip, and patellar luxation is",
+    "primarily conformational rather than floor-triggered.",
+    "OPEN QUESTION for the vets: confirm the VERY_HIGH tier split — Shih Tzu,",
+    "French Bulldog (compounding hip+IVDD), Rottweiler, Great Dane, Saint",
+    "Bernard (XL/giant + hip dysplasia, mass-amplified). Also confirm Beagle",
+    "and Dachshund (IVDD-only, no hip flag) belong in MEDIUM rather than HIGH.",
+    "Every breed in breeds.json must appear in `breeds` or the build FAILS",
+    "(scripts/validate-data.mjs). Multipliers apply to the base score:",
+    "final = base x G1 x G2 x G3 x G4. Gate only bites on hard/slippery floors —",
+    "a breed with High or Very High concern on carpet/rugs scores the same as Low concern."
+  ],
+
+  "floorFlagThreshold": 0.75,
+
+  "classes": {
+    "LOW":       { "HARD": 1.00, "MIXED": 1.00, "CARPETED": 1.00 },
+    "MEDIUM":    { "HARD": 0.90, "MIXED": 0.95, "CARPETED": 1.00 },
+    "HIGH":      { "HARD": 0.80, "MIXED": 0.92, "CARPETED": 1.00 },
+    "VERY_HIGH": { "HARD": 0.60, "MIXED": 0.80, "CARPETED": 1.00 }
+  },
+
+  "classReasons": {
+    "LOW": "no documented joint or spinal predisposition",
+    "MEDIUM": "a real but less floor-specific condition — IVDD (jumping/obesity better-established as the driver) or patellar luxation (largely conformational)",
+    "HIGH": "documented hip/elbow dysplasia alone, ordinary build — slippery floors are a demonstrated risk factor",
+    "VERY_HIGH": "compounding risk — either hip dysplasia plus IVDD together, or hip dysplasia in an XL/giant breed where extra body mass mechanically worsens the same joint-slip risk"
+  },
+
+  "breeds": {
+    "Labrador Retriever": "HIGH",
+    "German Shepherd": "HIGH",
+    "Golden Retriever": "HIGH",
+    "Beagle": "MEDIUM",
+    "Pomeranian": "MEDIUM",
+    "Indie Dog": "LOW",
+    "Pug": "HIGH",
+    "Shih Tzu": "VERY_HIGH",
+    "Indian Spitz": "LOW",
+    "Doberman Pinscher": "HIGH",
+    "Rottweiler": "VERY_HIGH",
+    "Dachshund": "MEDIUM",
+    "Cocker Spaniel": "HIGH",
+    "Boxer": "HIGH",
+    "Rajapalayam": "LOW",
+    "Siberian Husky": "HIGH",
+    "Great Dane": "VERY_HIGH",
+    "Lhasa Apso": "HIGH",
+    "Mudhol Hound": "LOW",
+    "Dalmatian": "HIGH",
+    "Poodle (Standard)": "HIGH",
+    "French Bulldog": "VERY_HIGH",
+    "Saint Bernard": "VERY_HIGH"
+  }
+}

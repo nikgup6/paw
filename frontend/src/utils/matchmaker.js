@@ -1,8 +1,12 @@
 import axios from 'axios';
+import cityZonesCfg from '../config/cityZones.json';
+
+const CITY_NAMES = Object.keys(cityZonesCfg.cities).sort((a, b) => b.length - a.length);
+const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-/* The AI Matchmaker turns one natural-language prompt into the same 9
+/* The AI Matchmaker turns one natural-language prompt into the same
    structured answers the lifestyle quiz produces, then the RIGHTBREED
    engine scores breeds identically for both paths.
 
@@ -26,15 +30,23 @@ export function parsePromptLocally(prompt) {
   // Home
   if (has(t, ['1bhk', '1 bhk', 'studio', 'small flat', 'tiny apartment', 'small apartment'])) answers.home = ['apt-1bhk'];
   else if (has(t, ['3bhk', '3 bhk', '4bhk', '4 bhk', 'big apartment', 'large flat'])) answers.home = ['apt-3bhk'];
+  else if (has(t, ['paying guest', 'pg accommodation', 'shared accommodation', 'hostel']) || /\bpg\b/.test(t)) answers.home = ['pg'];
   else if (has(t, ['yard', 'garden', 'lawn', 'farmhouse', 'villa'])) answers.home = ['house-yard'];
   else if (has(t, ['independent house', 'bungalow', 'duplex'])) answers.home = ['house-no-yard'];
   else if (has(t, ['2bhk', '2 bhk', 'apartment', 'flat'])) answers.home = ['apt-2bhk'];
 
-  // Climate — city names first, then adjectives
-  if (has(t, ['mumbai', 'chennai', 'kolkata', 'kochi', 'goa', 'hyderabad', 'humid', 'hot city', 'hot weather', 'tropical'])) answers.city = ['hot'];
-  else if (has(t, ['shimla', 'dehradun', 'darjeeling', 'srinagar', 'ooty', 'hill station', 'cold', 'chilly'])) answers.city = ['cold'];
-  else if (has(t, ['delhi', 'gurgaon', 'gurugram', 'noida', 'jaipur', 'lucknow', 'ahmedabad', 'mixed season'])) answers.city = ['mixed'];
-  else if (has(t, ['bangalore', 'bengaluru', 'pune', 'chandigarh', 'mysore', 'pleasant', 'moderate'])) answers.city = ['moderate'];
+  // Climate — a real city name first, so the matchmaker and the quiz resolve
+  // the SAME city to the SAME zone through config/cityZones.json (before, the
+  // parser sent "hot" for Hyderabad, which maps to HOT_HUMID, while the quiz
+  // maps Hyderabad to HOT_DRY — one person, two different results). Longest
+  // names first so "Navi Mumbai" wins over "Mumbai"; whole-word match only.
+  const cityHit = CITY_NAMES.find((name) => new RegExp(`\\b${escapeRe(name.toLowerCase())}\\b`).test(t));
+  if (cityHit) answers.city = [cityHit];
+  else if (has(t, ['hill station', 'cold', 'chilly', 'snow'])) answers.city = ['zone:COLD'];
+  else if (has(t, ['humid', 'coastal', 'tropical'])) answers.city = ['zone:HOT_HUMID'];
+  else if (has(t, ['dry heat', 'desert'])) answers.city = ['zone:HOT_DRY'];
+  else if (has(t, ['hot city', 'hot weather'])) answers.city = ['zone:HOT_HUMID']; // unknown kind of hot -> the stricter zone
+  else if (has(t, ['pleasant', 'moderate'])) answers.city = ['zone:MODERATE'];
 
   // Experience
   if (has(t, ['first time', 'first-time', 'beginner', 'never owned', 'never had', 'new to dogs'])) answers.experience = ['none'];
@@ -65,8 +77,19 @@ export function parsePromptLocally(prompt) {
   else if (kids) answers.family = ['kids'];
   else if (seniors) answers.family = ['seniors'];
 
-  // Shedding
-  if (has(t, ['no shed', 'low shed', 'hypoallergenic', 'allerg', 'hate hair', 'clean home', "doesn't shed", 'less hair'])) answers.shedding = ['low'];
+  // Flooring — hard (tile/marble/stone) is the Indian default; only flip to
+  // carpeted/mixed on an explicit mention, matching the backend's own hint.
+  if (has(t, ['carpet', 'carpeted', 'rug', 'rugs', 'rugged floor'])) answers.flooring = ['carpeted'];
+  else if (has(t, ['tile', 'tiles', 'marble', 'granite', 'slippery floor', 'stone floor'])) answers.flooring = ['hard'];
+
+  // Daily schedule — how long the dog is typically alone
+  if (has(t, ['work from home', 'wfh', 'always home', 'home most of the day', 'retired', 'stay at home', 'stay-at-home'])) answers.schedule = ['home'];
+  else if (has(t, ['full time job', 'full-time job', 'office all day', '9 to 5', '9-5', 'away most of the day', 'work long hours', 'long office hours'])) answers.schedule = ['8h-plus'];
+  else if (has(t, ['part time', 'part-time', 'hybrid work', 'few hours a day'])) answers.schedule = ['4-8h'];
+
+  // Training effort — how much time/effort they're signalling, not experience
+  if (has(t, ['no time to train', 'easy dog', 'low maintenance dog', "don't have time to train", 'minimal training'])) answers.trainingEffort = ['minimal'];
+  else if (has(t, ['hire a trainer', 'serious training', 'willing to train hard', 'committed to training', 'work hard on training'])) answers.trainingEffort = ['committed'];
 
   // Coat
   if (has(t, ['fluffy', 'long hair', 'long coat', 'furry'])) answers.hair = ['long'];

@@ -16,9 +16,16 @@ import { dirname, resolve } from 'node:path';
 
 import {
   headToken,
-  ENERGY_BAND, SHED_BAND, RISK_TIER, HAIR_VALUES, APT_FRIENDLY, MIN_APT_RANK, EXPERIENCE_LEVELS,
+  ENERGY_BAND, RISK_TIER, HAIR_VALUES, APT_FRIENDLY, MIN_APT_RANK, HOUSE_NEED_BAND, EXPERIENCE_LEVELS,
   ANSWER_MAP_BY_QUESTION, HOME_APT_RANK, HOME_IS_HOUSE,
 } from '../src/config/enums.js';
+
+/* SIZE_RANK lives in breedUtils.js (not enums.js), so redeclare it here
+   rather than importing the whole engine — same values, same token logic.
+   If SIZE_RANK changes in breedUtils.js, update this in sync.
+   sizeToken() mirrors breedUtils.js line-for-line. */
+const SIZE_RANK = { XS: 0, 'XS\u2013S': 0.5, S: 1, 'S\u2013M': 1.5, M: 2, 'M\u2013L': 2.5, L: 3, XL: 4 };
+const sizeToken = (s) => String(s ?? '').trim().split(/[\s(]/)[0];
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const readJSON = (rel) => JSON.parse(readFileSync(resolve(HERE, '..', rel), 'utf8'));
@@ -27,6 +34,9 @@ const breeds = readJSON('src/constants/breeds.json');
 const questions = readJSON('src/constants/questions.json');
 const cityZones = readJSON('src/config/cityZones.json');
 const heat = readJSON('src/config/breedHeatClasses.json');
+const floor = readJSON('src/config/breedFlooringClasses.json');
+const train = readJSON('src/config/breedTrainabilityClasses.json');
+const alone = readJSON('src/config/breedAloneToleranceClasses.json');
 
 const errors = [];
 const err = (msg) => errors.push(msg);
@@ -55,7 +65,17 @@ for (const b of breeds) {
 
   check(ENERGY_BAND, b.energy, `${at} energy`, { parse: true });
   check(RISK_TIER, b.risk, `${at} risk`, { parse: true });
-  check(SHED_BAND, b.shedding, `${at} shedding`);
+  check(HOUSE_NEED_BAND, b.house, `${at} house`, { parse: true });
+  // Size field — G7 (senior-strength gate) reads breed.size via sizeToken().
+  // A bad value doesn't crash; it silently returns undefined and the gate
+  // never fires, so a large aggressive breed looks safe for elderly owners
+  // with no warning. Validate it here so a future breed with a missing or
+  // malformed size column fails the build instead of shipping silently wrong.
+  const sizeTok = sizeToken(b.size);
+  if (!Object.prototype.hasOwnProperty.call(SIZE_RANK, sizeTok)) {
+    err(`${at} size: "${b.size}" → token "${sizeTok}" not in SIZE_RANK. ` +
+        `Expected one of: ${Object.keys(SIZE_RANK).join(', ')}.`);
+  }
   check(HAIR_VALUES, b.hair, `${at} hair`);
   check(APT_FRIENDLY, b.apt, `${at} apt`);
   check(MIN_APT_RANK, b.minApartmentSize, `${at} minApartmentSize`);
@@ -70,6 +90,19 @@ for (const b of breeds) {
   if (!has(heat.breeds, name)) {
     err(`${at}: no heat classification. Add it to src/config/breedHeatClasses.json ` +
         `(one of: ${Object.keys(heat.classes).join(' | ')}).`);
+  }
+  // G4/G5/G6 classes are equally mandatory — same "no silent default" rule.
+  if (!has(floor.breeds, name)) {
+    err(`${at}: no flooring classification. Add it to src/config/breedFlooringClasses.json ` +
+        `(one of: ${Object.keys(floor.classes).join(' | ')}).`);
+  }
+  if (!has(train.breeds, name)) {
+    err(`${at}: no trainability classification. Add it to src/config/breedTrainabilityClasses.json ` +
+        `(one of: ${Object.keys(train.classes).join(' | ')}, or NO_DATA if never AKC/CKC obedience-evaluated).`);
+  }
+  if (!has(alone.breeds, name)) {
+    err(`${at}: no alone-tolerance classification. Add it to src/config/breedAloneToleranceClasses.json ` +
+        `(one of: ${Object.keys(alone.classes).join(' | ')}).`);
   }
 
   const score = Number(b.score);
@@ -105,6 +138,25 @@ for (const [cls, row] of Object.entries(heat.classes)) {
     }
   }
 }
+
+/* -------------- 2b/2c/2d. G4/G5/G6 config points only at real breeds ------ */
+function checkGateConfig(cfg, label, answerKeys) {
+  for (const [name, cls] of Object.entries(cfg.breeds)) {
+    if (!seenNames.has(name)) err(`${label} config lists "${name}", which is not in breeds.json.`);
+    if (!has(cfg.classes, cls)) err(`${label} config: "${name}" has unknown class ${JSON.stringify(cls)}.`);
+  }
+  for (const [cls, row] of Object.entries(cfg.classes)) {
+    for (const ans of answerKeys) {
+      const v = row[ans];
+      if (typeof v !== 'number' || v <= 0 || v > 1) {
+        err(`${label} class "${cls}" answer "${ans}": ${JSON.stringify(v)} is not a multiplier in (0, 1].`);
+      }
+    }
+  }
+}
+checkGateConfig(floor, 'flooring', ['HARD', 'MIXED', 'CARPETED']);
+checkGateConfig(train, 'trainability', ['MINIMAL', 'MODERATE', 'COMMITTED']);
+checkGateConfig(alone, 'alone-tolerance', ['HOME', 'UP_TO_4H', '4_TO_8H', '8H_PLUS']);
 
 /* ---------------------- 3. every city maps to a zone ---------------------- */
 const zoneSet = new Set(cityZones.zones);

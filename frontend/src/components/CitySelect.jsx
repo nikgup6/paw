@@ -18,6 +18,9 @@ const ZONE_GROUP_LABEL = {
   HOT_DRY: 'Hot & dry',
   MODERATE: 'Moderate & pleasant',
   COLD: 'Cool & cold',
+  // Hyderabad-region cities moved to this zone in the RightBreed final delivery;
+  // without a label here the city list threw on c.hint.toLowerCase().
+  HOT_SEMIARID: 'Hot & semi-arid',
 };
 const ZONE_FALLBACK_LABEL = {
   HOT_HUMID: 'Other — warm & humid (coastal/tropical)',
@@ -35,7 +38,7 @@ const CitySelect = ({ value, onChange, placeholder = 'Type your city…' }) => {
 
   const { cities, fallbacks } = useMemo(() => ({
     cities: Object.entries(cityZones.cities)
-      .map(([city, zone]) => ({ value: city, label: city, hint: ZONE_GROUP_LABEL[zone] }))
+      .map(([city, zone]) => ({ value: city, label: city, hint: ZONE_GROUP_LABEL[zone] || cityZones.zoneLabels?.[zone] || '' }))
       .sort((a, b) => a.label.localeCompare(b.label)),
     fallbacks: ZONE_ORDER.map((z) => ({
       value: `zone:${z}`, label: ZONE_FALLBACK_LABEL[z], hint: 'Climate fallback', isFallback: true,

@@ -7,8 +7,8 @@ import FeedbackModal from '../components/FeedbackModal';
 import QuickFeedback from '../components/QuickFeedback';
 import QuickLoginModal from '../components/QuickLoginModal';
 import { AuthContext } from '../context/AuthContext';
-import { buildLivingConditions, computeMatches, computeReadiness, generateProsCons, generatePersonalizedReason } from '../utils/breedUtils';
-import { clearQuizState } from '../utils/quizState';
+import { buildLivingConditions, computeMatches, computeReadiness, generateProsCons, generatePersonalizedReason, noExcellentMatch, selectTopMatches } from '../utils/breedUtils';
+import { clearQuizState, loadSavedAnswers } from '../utils/quizState';
 import { isSoftCta, saveProgress, showsBreederCta, showsPrepCapture, track } from '../utils/analytics';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from '../components/WhatsAppButton';
@@ -68,6 +68,7 @@ const PrepPanel = ({ readinessCode, topBreed }) => {
 const Results = () => {
   const [loading, setLoading] = useState(true);
   const [topBreeds, setTopBreeds] = useState([]);
+  const [hiddenCount, setHiddenCount] = useState(0); // top-5 slots withheld because the breed scored "Not recommended"
   const [modalType, setModalType] = useState(null); // 'buy', 'full_profile', 'compare', 'buy_success'
   const [showFab, setShowFab] = useState(true);
   const [waLink, setWaLink] = useState('');
@@ -94,28 +95,22 @@ const Results = () => {
   const viewedRef = useRef(false);   // results_viewed is logged once per visit
 
   useEffect(() => {
-    const savedState = localStorage.getItem('pb_quiz_state');
-    if (!savedState) {
+    // Only answers saved by the CURRENT quiz version are used; anything older
+    // (or unreadable) is cleared and the person is sent to retake the quiz.
+    const parsedAnswers = loadSavedAnswers();
+    if (!parsedAnswers) {
       navigate('/quiz');
       return;
     }
-
-    let parsedAnswers = {};
-    try {
-      const parsed = JSON.parse(savedState);
-      parsedAnswers = parsed.answers || {};
-      setAnswers(parsedAnswers);
-    } catch (e) {
-      console.error('Failed to parse saved state', e);
-      navigate('/quiz');
-      return;
-    }
+    setAnswers(parsedAnswers);
     
     const fetchResults = async () => {
       try {
         const scoredBreeds = computeMatches(parsedAnswers, breedsData);
-        const breeds = scoredBreeds.slice(0, 5);
+        // Never list a "Not recommended" breed as a match (see selectTopMatches).
+        const { matches: breeds, hiddenCount: hidden } = selectTopMatches(scoredBreeds, 5);
         setTopBreeds(breeds);
+        setHiddenCount(hidden);
 
         /* The top breed isn't known until the scoring runs, so results_viewed
            is fired here rather than on mount — otherwise the event carries no
@@ -411,6 +406,65 @@ const Results = () => {
           <p style={{ fontFamily: 'var(--font-body-family)' }}>Based on your lifestyle, here are the best companions for you to welcome home.</p>
         </div>
         
+        {/* Same gap as RecommendationResults.jsx, same fix — see that file's
+            comment for the full context. This is the standalone /results
+            page's own separate rendering path, so it needed the identical
+            block, not a shared one. */}
+
+                {/* Breeder availability note */}
+                <div style={{ background: '#FFF4EE', border: '1px solid #F4D0BC', borderRadius: '12px', padding: '12px 16px', fontSize: '13px', color: 'var(--brown)', lineHeight: 1.55, marginBottom: '16px' }}>
+                  🛒 <strong>About availability:</strong> if your first-choice breeder doesn't have this breed in stock right now, don\'t worry — other verified breeders on PAW BUDDY may have your match ready. Always check a second listing before giving up on your top pick.
+                </div>
+        {topBreeds.length > 0 && (() => {
+          const noExcellent = noExcellentMatch(topBreeds);
+          const allergyAns = Array.isArray(answers?.allergies) ? answers.allergies[0] : answers?.allergies;
+          const showAllergy = allergyAns === 'mild' || allergyAns === 'diagnosed';
+          const showSchedule = topBreeds[0].showsScheduleDisclaimer;
+          const showPg = topBreeds[0].showsPgDisclaimer;
+          const showUnsure = topBreeds[0].showsHomeUnsureDisclaimer;
+          if (!noExcellent && !showAllergy && !showSchedule && !showPg && !showUnsure) return null;
+          const boxStyle = { borderRadius: '14px', padding: '14px 18px', fontSize: '13.5px', lineHeight: 1.55 };
+          return (
+            <div style={{ marginBottom: '22px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {noExcellent && (
+                <div style={{ ...boxStyle, background: '#fff4e5', border: '1px solid #ffd699', color: 'var(--brown)' }}>
+                  <strong style={{ display: 'block', marginBottom: '4px' }}>{noExcellent.headline}</strong>
+                  <span style={{ color: 'var(--text-soft)' }}>{noExcellent.reasons.join(' · ')}</span>
+                </div>
+              )}
+              {showPg && (
+                <div style={{ ...boxStyle, background: '#f8f9fa', border: '1px dashed #d8d2ca', color: 'var(--text-soft)' }}>
+                  <strong style={{ color: 'var(--brown)' }}>PG / shared accommodation: </strong>
+                  most PG setups restrict or limit pets, and space here is scored tighter than a self-contained flat.
+                  Check your landlord's actual pet policy before anything else — this is a fit estimate, not a
+                  guarantee you're allowed a dog at all.
+                </div>
+              )}
+              {showUnsure && (
+                <div style={{ ...boxStyle, background: '#f8f9fa', border: '1px dashed #d8d2ca', color: 'var(--text-soft)' }}>
+                  <strong style={{ color: 'var(--brown)' }}>Home type not yet known: </strong>
+                  these results use a typical 2BHK as a neutral placeholder. Come back and answer this once you
+                  know — home type changes which breeds actually fit, in both directions.
+                </div>
+              )}
+              {showAllergy && (
+                <div style={{ ...boxStyle, background: '#f8f9fa', border: '1px dashed #d8d2ca', color: 'var(--text-soft)' }}>
+                  No dog breed is truly allergen-free, including ones marketed as "hypoallergenic" — two
+                  peer-reviewed studies found no meaningful difference in allergen protein between breeds. Spend
+                  real time with a specific dog before committing.
+                </div>
+              )}
+              {showSchedule && (
+                <div style={{ ...boxStyle, background: '#f8f9fa', border: '1px dashed #d8d2ca', color: 'var(--text-soft)' }}>
+                  General welfare note: RSPCA, PDSA, Dogs Trust and Blue Cross all recommend no more than 4 hours
+                  alone for any dog, regardless of breed — this applies to every result below, not just the ones
+                  flagged.
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {topBreeds.length > 0 && (
           <div className="top-match" id="top-match-container">
             <div className="top-match-media">
@@ -430,12 +484,21 @@ const Results = () => {
                   <span style={{ fontSize: '18px', opacity: 0.9, marginLeft: '6px' }}>Match</span>
                 </div>
                 <div style={{ fontSize: '14px', marginTop: '6px', fontWeight: 'var(--weight-semibold)', opacity: 0.9 }}>
-                  {topBreeds[0].matchPercentage >= 85 ? 'Exceptional Match' : (topBreeds[0].matchPercentage >= 75 ? 'Excellent Match' : (topBreeds[0].matchPercentage >= 60 ? 'Good Match' : 'Warning'))}
+                  {/* Was recomputing its own 85/75/60 thresholds, independent
+                      of the engine's own label — same issue as
+                      RecommendationResults.jsx, fixed the same way. */}
+                  {topBreeds[0].label}
                 </div>
               </div>
             </div>
             <div className="top-match-info">
-              <div className="top-badge" style={{ marginBottom: '10px' }}>#1 RECOMMENDED</div>
+              {/* Same fix as RecommendationResults.jsx — reflects the
+                  engine's actual label instead of a hardcoded claim. */}
+              <div className="top-badge" style={{ marginBottom: '10px', ...(topBreeds[0].label?.startsWith('Not recommended') ? { background: 'rgba(0,0,0,0.35)' } : topBreeds[0].label?.startsWith('Fair') ? { background: 'rgba(0,0,0,0.22)' } : {}) }}>
+                {topBreeds[0].label?.startsWith('Not recommended') ? 'BEST AVAILABLE — NOT RECOMMENDED'
+                  : topBreeds[0].label?.startsWith('Fair') ? '#1 MATCH — CHECK WARNINGS'
+                  : '#1 RECOMMENDED'}
+              </div>
               <h3 style={{ marginTop: '0' }}>{topBreeds[0].name}</h3>
               <p className="reason">{topBreeds[0].purpose}</p>
               <p style={{ fontSize: '14px', color: 'white', marginTop: '8px', lineHeight: 1.5, background: 'rgba(255,107,43,0.1)', padding: '10px', borderRadius: '8px', borderLeft: '3px solid var(--orange)' }}>
@@ -446,9 +509,15 @@ const Results = () => {
                   caveat the engine raised belongs here rather than only in the
                   Full Profile the owner may never open. */}
               {topBreeds[0].warnings?.length > 0 && (
-                <p style={{ fontSize: '13px', color: 'white', marginTop: '8px', lineHeight: 1.5, background: 'rgba(0,0,0,0.16)', padding: '9px 12px', borderRadius: '8px', display: 'inline-block' }}>
-                  ⚠ {topBreeds[0].warnings[0]}
-                </p>
+                <div style={{ marginTop: '8px' }}>
+                  {topBreeds[0].warnings.map((w, i) => (
+                    <div key={i} style={{ marginTop: i ? '6px' : 0 }}>
+                      <p style={{ fontSize: '13px', color: 'white', lineHeight: 1.5, background: 'rgba(0,0,0,0.16)', padding: '9px 12px', borderRadius: '8px', margin: 0, display: 'inline-block' }}>
+                        ⚠ {w}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               )}
 
               <div className="match-tags" style={{ marginTop: '15px' }}>
@@ -498,6 +567,11 @@ const Results = () => {
             />
           ))}
         </div>
+        {hiddenCount > 0 && (
+          <p style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-soft)', margin: '18px auto 0', maxWidth: '560px', lineHeight: 1.5 }}>
+            {hiddenCount} other breed{hiddenCount === 1 ? '' : 's'} scored "Not recommended" for your answers, so we haven't listed {hiddenCount === 1 ? 'it' : 'them'} as matches. You can still look any breed up in Compare.
+          </p>
+        )}
         {/* Cool and cold leads get something to take away instead of a hard
             sell. Hot and warm don't need it — they have the breeder list. */}
         {(prepCapture || readiness.code === 'researching') && (
@@ -687,30 +761,69 @@ const Results = () => {
                   <h3 style={{ color: 'var(--brown)', marginBottom: '5px', fontSize: '28px' }}>{selectedBreed.name}</h3>
                   <p style={{ color: 'var(--text-soft)', marginBottom: '20px', fontStyle: 'italic' }}>{selectedBreed.purpose}</p>
 
-                  {modalType === 'searched_profile' && (
-                    <div style={{ marginBottom: '25px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                      <div className="pros" style={{ background: '#f0fdf4', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
-                        <h5 style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Pros</h5>
-                        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                          {generateProsCons(selectedBreed, answers).pros.map((pro, i) => (
-                            <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
-                              <span style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✓</span>{pro}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="cons" style={{ background: '#fef2f2', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
-                        <h5 style={{ color: 'var(--red)', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '14px', marginTop: 0 }}>Cons</h5>
-                        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                          {generateProsCons(selectedBreed, answers).cons.map((con, i) => (
-                            <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
-                              <span style={{ color: 'var(--red)', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✕</span>{con}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
+                  {modalType === 'searched_profile' && (() => {
+                    const { matchedPros, matchedCons, generalPros, generalCons } = generateProsCons(selectedBreed, answers);
+                    return (
+                      <>
+                        {(matchedPros.length > 0 || matchedCons.length > 0) && (
+                          <div style={{ marginBottom: '16px' }}>
+                            <h5 style={{ color: 'var(--brown)', fontWeight: 'var(--weight-semibold)', marginBottom: '10px', fontSize: '13px' }}>Why This Matched You</h5>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                              {matchedPros.length > 0 && (
+                                <div className="matched-pros" style={{ background: '#f0fdf4', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
+                                  <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                                    {matchedPros.map((pro, i) => (
+                                      <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                                        <span style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✓</span>{pro}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {matchedCons.length > 0 && (
+                                <div className="matched-cons" style={{ background: '#fef2f2', padding: '15px', borderRadius: 'var(--radius-sm)' }}>
+                                  <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                                    {matchedCons.map((con, i) => (
+                                      <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                                        <span style={{ color: 'var(--red)', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>✕</span>{con}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ marginBottom: '25px' }}>
+                          <h5 style={{ color: 'var(--text-soft)', fontWeight: 'var(--weight-semibold)', marginBottom: '10px', fontSize: '13px' }}>Good to Know</h5>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                            {generalPros.length > 0 && (
+                              <div className="general-pros" style={{ background: '#f8f9fa', padding: '15px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                                <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                                  {generalPros.map((pro, i) => (
+                                    <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                                      <span style={{ color: 'var(--text-soft)', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>+</span>{pro}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {generalCons.length > 0 && (
+                              <div className="general-cons" style={{ background: '#f8f9fa', padding: '15px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                                <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                                  {generalCons.map((con, i) => (
+                                    <li key={i} style={{ fontSize: '13px', marginBottom: '6px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                                      <span style={{ color: 'var(--text-soft)', fontWeight: 'var(--weight-bold)', marginRight: '5px' }}>–</span>{con}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                   
                   <div style={{ marginBottom: '25px' }}>
                     <h4 style={{ color: 'var(--orange)', marginBottom: '15px', fontSize: '18px' }}>Best Living Conditions</h4>

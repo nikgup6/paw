@@ -1,0 +1,84 @@
+{
+  "_comment": [
+    "RIGHTBREED v4 — G5 training-effort risk gate. DRAFT, PENDING VET SIGN-OFF.",
+    "Source: Coren, S. (1994/2006), 'The Intelligence of Dogs' — a survey of 199",
+    "AKC/CKC obedience judges, NOT a peer-reviewed journal study. Bucketed using",
+    "Coren's own published tier bands: EASY = ranks 1-26 (Brightest + Excellent",
+    "Working), MODERATE = ranks 27-54 (Above Average + Average), HARD = ranks",
+    "55-79 (Fair + Lowest Degree). NO_DATA = the breed has never competed in an",
+    "AKC/CKC obedience trial, so no ranking of comparable rigor exists anywhere —",
+    "this is a genuine literature gap, not evidence of poor trainability, and it",
+    "NEVER carries a penalty (see 'NO_DATA' row below: always 1.00).",
+    "Every breed in breeds.json must appear in `breeds` or the build FAILS",
+    "(scripts/validate-data.mjs). Multipliers apply to the base score:",
+    "final = base x G1 x G2 x G3 x G4 x G5. Kept at the SAME severity scale as",
+    "G3 (experience) on explicit instruction — this factor has real survey data",
+    "behind it and should not be softened the way the weaker-evidenced G6 was.",
+    "CHANGED 29 Sep: Coren measures how fast a breed LEARNS in obedience trials, not how much training it NEEDS. Two groups were getting no penalty for a 'minimal training' owner when they should: (1) GUARDIAN_ONGOING — Rottweiler, Doberman, German Shepherd learn fast but, as large protective breeds, need lifelong training and socialisation regardless; (2) INDEPENDENT_HOUND — Mudhol Hound and Rajapalayam have no Coren rank (NO_DATA), but independent sighthound temperament is well described and the DB marks both 'Experienced only'. NO_DATA still means no penalty for every other breed. PENDING VET/TRAINER SIGN-OFF, like the rest of this file."
+  ],
+  "classes": {
+    "EASY": {
+      "MINIMAL": 1.0,
+      "MODERATE": 1.0,
+      "COMMITTED": 1.0
+    },
+    "MODERATE": {
+      "MINIMAL": 0.8,
+      "MODERATE": 1.0,
+      "COMMITTED": 1.0
+    },
+    "HARD": {
+      "MINIMAL": 0.6,
+      "MODERATE": 0.85,
+      "COMMITTED": 1.0
+    },
+    "NO_DATA": {
+      "MINIMAL": 1.0,
+      "MODERATE": 1.0,
+      "COMMITTED": 1.0
+    },
+    "GUARDIAN_ONGOING": {
+      "MINIMAL": 0.7,
+      "MODERATE": 1.0,
+      "COMMITTED": 1.0
+    },
+    "INDEPENDENT_HOUND": {
+      "MINIMAL": 0.6,
+      "MODERATE": 0.85,
+      "COMMITTED": 1.0
+    }
+  },
+  "classReasons": {
+    "EASY": "Coren rank in the top third — learns quickly, minimal effort needed",
+    "MODERATE": "Coren rank in the middle third — responds well with regular training",
+    "HARD": "Coren rank in the bottom third — genuinely needs sustained training effort",
+    "NO_DATA": "never evaluated in AKC/CKC obedience trials — no ranking exists, so no penalty applies",
+    "GUARDIAN_ONGOING": "learns quickly, but a large protective breed needs ongoing training and socialisation for life — minimal effort is a safety risk, not just an inconvenience",
+    "INDEPENDENT_HOUND": "never obedience-ranked, but an independent sighthound — recall and obedience take sustained, patient work"
+  },
+  "breeds": {
+    "Labrador Retriever": "EASY",
+    "German Shepherd": "GUARDIAN_ONGOING",
+    "Golden Retriever": "EASY",
+    "Beagle": "HARD",
+    "Pomeranian": "EASY",
+    "Indie Dog": "NO_DATA",
+    "Pug": "HARD",
+    "Shih Tzu": "HARD",
+    "Indian Spitz": "NO_DATA",
+    "Doberman Pinscher": "GUARDIAN_ONGOING",
+    "Rottweiler": "GUARDIAN_ONGOING",
+    "Dachshund": "MODERATE",
+    "Cocker Spaniel": "EASY",
+    "Boxer": "MODERATE",
+    "Rajapalayam": "INDEPENDENT_HOUND",
+    "Siberian Husky": "MODERATE",
+    "Great Dane": "MODERATE",
+    "Lhasa Apso": "HARD",
+    "Mudhol Hound": "INDEPENDENT_HOUND",
+    "Dalmatian": "MODERATE",
+    "Poodle (Standard)": "EASY",
+    "French Bulldog": "HARD",
+    "Saint Bernard": "HARD"
+  }
+}

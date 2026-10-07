@@ -28,7 +28,7 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
   const inTopMatches = topBreeds.some((t) => (t?.name || t) === breed.name);
   const needsBuyConfirm = Boolean(answers) && topBreeds.length > 0 && !inTopMatches;
 
-  const { pros, cons } = generateProsCons(breed, answers);
+  const { matchedPros, matchedCons, generalPros, generalCons } = generateProsCons(breed, answers);
 
   /* The actual "go to the breeder list" step, unchanged from before — the lead
      is logged silently. Split out so both the direct Buy (top-5 breeds) and the
@@ -201,30 +201,85 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
             </div>
             <div style={{ flex: '2 1 300px' }}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)', color: 'var(--brown)', marginBottom: '5px', fontSize: '28px' }}>{breed.name}</h3>
+              {/* The engine's overall verdict for THIS user, shown as-is (it is already on the
+                  breed object when it came from a scored quiz result; a raw catalogue breed has
+                  none, so nothing renders). Green = Excellent, amber = Good, red = Fair / Not recommended. */}
+              {breed.label && (() => {
+                const l = String(breed.label);
+                const tone = l.startsWith('Excellent') ? { fg: '#1e7a46', bg: '#e8f7ee', bd: '#bfe6cf' }
+                  : l.startsWith('Good') ? { fg: '#9a6b1f', bg: '#fdf3e0', bd: '#f3ddb2' }
+                  : { fg: '#b3261e', bg: '#fdecea', bd: '#f5c6c2' };
+                return (
+                  <span style={{ display: 'inline-block', margin: '2px 0 10px', padding: '5px 12px', borderRadius: '8px', fontSize: '12.5px', fontWeight: 'var(--weight-semibold)', lineHeight: 1.4, color: tone.fg, background: tone.bg, border: `1px solid ${tone.bd}` }}>
+                    {l}
+                  </span>
+                );
+              })()}
               <p style={{ color: 'var(--text-soft)', marginBottom: '20px', fontStyle: 'italic' }}>{breed.purpose}</p>
 
-              {/* Pros & cons, personalised to the user's quiz answers when we
-                  have them (generateProsCons references their home/lifestyle). */}
-              <div style={{ marginBottom: '25px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                <div style={{ background: '#f0fdf4', padding: '15px', borderRadius: '12px' }}>
-                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#27AE60', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '15px', marginTop: 0 }}>Pros for you</h4>
-                  <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                    {pros.map((pro, i) => (
-                      <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
-                        <span style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>✓</span>{pro}
-                      </li>
-                    ))}
-                  </ul>
+              {/* Split into two rows, not one — "Why This Matched You" is
+                  answer-driven and can never show something that didn't
+                  actually affect the score; "Good to Know" is true breed
+                  facts shown for context, not a personalized verdict. The
+                  old single Pros/Cons pair mixed both under "for you"
+                  language, which is what let a breed with several unrelated
+                  general facts (shedding, health, cost — none of them
+                  scored) read as though it had that many real strikes
+                  against a "top match." */}
+              {(matchedPros.length > 0 || matchedCons.length > 0) && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--brown)', marginBottom: '10px', fontSize: '14px' }}>Why This Matched You</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    {matchedPros.length > 0 && (
+                      <div style={{ background: '#f0fdf4', padding: '15px', borderRadius: '12px' }}>
+                        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                          {matchedPros.map((pro, i) => (
+                            <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                              <span style={{ color: '#27AE60', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>✓</span>{pro}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {matchedCons.length > 0 && (
+                      <div style={{ background: '#fef2f2', padding: '15px', borderRadius: '12px' }}>
+                        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                          {matchedCons.map((con, i) => (
+                            <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                              <span style={{ color: 'var(--red, #D32F2F)', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>✕</span>{con}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={{ background: '#fef2f2', padding: '15px', borderRadius: '12px' }}>
-                  <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--red, #D32F2F)', fontWeight: 'var(--weight-bold)', marginBottom: '10px', fontSize: '15px', marginTop: 0 }}>Cons for you</h4>
-                  <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                    {cons.map((con, i) => (
-                      <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
-                        <span style={{ color: 'var(--red, #D32F2F)', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>✕</span>{con}
-                      </li>
-                    ))}
-                  </ul>
+              )}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-soft)', marginBottom: '10px', fontSize: '14px' }}>Good to Know</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                  {generalPros.length > 0 && (
+                    <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                      <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                        {generalPros.map((pro, i) => (
+                          <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                            <span style={{ color: 'var(--text-soft)', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>+</span>{pro}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {generalCons.length > 0 && (
+                    <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                      <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
+                        {generalCons.map((con, i) => (
+                          <li key={i} style={{ fontSize: '13.5px', marginBottom: '7px', lineHeight: 1.5, color: 'var(--text-color)' }}>
+                            <span style={{ color: 'var(--text-soft)', fontWeight: 'var(--weight-bold)', marginRight: '6px' }}>–</span>{con}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
 

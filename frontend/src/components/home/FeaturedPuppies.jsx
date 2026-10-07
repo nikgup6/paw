@@ -11,7 +11,10 @@ const FeaturedPuppies = ({ user }) => {
   const [selectedBreed, setSelectedBreed] = useState(null);
   const [modalType, setModalType] = useState(null);
 
-  const puppies = breedsData.slice(0, 4);
+  // Curated variety instead of "the first four alphabetically": a family dog, a native
+  // Indian breed, an active breed and a small apartment breed — in this order.
+  const FEATURED = ['Labrador Retriever', 'Indian Spitz', 'Beagle', 'Pomeranian'];
+  const puppies = FEATURED.map((name) => breedsData.find((b) => b.name === name)).filter(Boolean);
 
   const handleFullProfile = (breed) => {
     setSelectedBreed(breed);

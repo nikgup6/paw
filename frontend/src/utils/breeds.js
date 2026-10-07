@@ -6,7 +6,7 @@ import bundledBreeds from '../constants/breeds.json';
    It used to be a synchronous `import breeds from 'breeds.json'` in ten
    different components. That worked, but it meant the catalogue existed in
    three places at once — the frontend bundle, backend/breeds.json, and the
-   Mongo collection — and they had already drifted: the Indian Pariah Dog was
+   Mongo collection — and they had already drifted: the Indie Dog was
    "2BHK min" in one copy and "3BHK min" in another, which is the field that
    decides whether a breed is eliminated outright in a small flat.
 

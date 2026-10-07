@@ -72,6 +72,13 @@ _ADVISORY = {
     ("COLD", "Mild"): "Mild for the region. Comfortable for most outdoor activity.",
 }
 
+# HOT_SEMIARID (Hyderabad region) follows the same hot / monsoon / cool-dry year as
+# HOT_DRY, so reuse that pattern rather than leaving those cities with no conditions.
+_ZONE_MONTHS["HOT_SEMIARID"] = _ZONE_MONTHS["HOT_DRY"]
+for (_z, _s), _text in list(_ADVISORY.items()):
+    if _z == "HOT_DRY":
+        _ADVISORY[("HOT_SEMIARID", _s)] = _text
+
 
 @lru_cache(maxsize=1)
 def _city_zones() -> dict:

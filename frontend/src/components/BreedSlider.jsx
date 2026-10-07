@@ -420,9 +420,13 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
               </p>
 
               {isResults && activeBreed.warnings?.length > 0 && (
-                <p style={{ color: '#9a6b1f', background: '#fdf3e0', border: '1px solid #f3ddb2', borderRadius: '12px', padding: '7px 14px', fontSize: '12.5px', lineHeight: 1.5, marginBottom: '12px', fontFamily: 'var(--font-body-family)', display: 'inline-block' }}>
-                  ⚠ {activeBreed.warnings[0]}
-                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                  {activeBreed.warnings.map((w, i) => (
+                    <p key={i} style={{ color: '#9a6b1f', background: '#fdf3e0', border: '1px solid #f3ddb2', borderRadius: '12px', padding: '7px 14px', fontSize: '12.5px', lineHeight: 1.5, margin: 0, fontFamily: 'var(--font-body-family)', display: 'inline-block' }}>
+                      ⚠ {w}
+                    </p>
+                  ))}
+                </div>
               )}
 
               {/* Mobile: Profile + Compare share a row, Buy is its own full-width

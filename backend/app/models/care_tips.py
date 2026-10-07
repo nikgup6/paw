@@ -70,6 +70,7 @@ TENURE_TO_DURATION_BUCKET = {
 CITY_ZONE_TO_CLIMATE_BUCKET = {
     "HOT_HUMID": "Hot",
     "HOT_DRY": "Hot",
+    "HOT_SEMIARID": "Hot",   # Hyderabad region (added in the RightBreed final delivery)
     "MODERATE": "Moderate",
     "COLD": None,
 }

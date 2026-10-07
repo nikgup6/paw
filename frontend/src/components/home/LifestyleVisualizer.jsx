@@ -29,7 +29,7 @@ const lifestyles = [
     desc: 'High-energy partners ready for hiking and running.',
     breeds: [
       { name: 'German Shepherd', img: '/assets/german_shepherd.jpg', traits: 'Loyal • Courageous' },
-      { name: 'Indian Pariah Dog', img: '/assets/indian_pariaha.jpg', traits: 'Hardy • Intelligent' }
+      { name: 'Indie Dog', img: '/assets/indian_pariaha.jpg', traits: 'Hardy • Intelligent' }
     ]
   }
 ];
@@ -45,7 +45,7 @@ const LifestyleVisualizer = () => {
   const handleBreedClick = (breedName) => {
     // Find full breed object from DB
     // Check various names for Indian Pariah since it might be named Indie
-    const b = allBreeds.find(x => x.name.toLowerCase().includes(breedName.toLowerCase().replace(' dog', '')) || (breedName === 'Indian Pariah Dog' && x.name.toLowerCase() === 'indie'));
+    const b = allBreeds.find(x => x.name.toLowerCase().includes(breedName.toLowerCase().replace(' dog', '')) || (breedName === 'Indie Dog' && x.name.toLowerCase() === 'indie'));
     if (b) {
       setSelectedBreed(b);
     } else {

@@ -4,17 +4,23 @@
     "cities here without touching the scoring code. Every value must be one of",
     "the four zones listed in `zones`. Anything the quiz submits that is not a",
     "key in `cities`, `legacyBands`, or a 'zone:<ZONE>' literal will FAIL LOUD",
-    "(build error via scripts/validate-data.mjs, throw at runtime)."
+    "(build error via scripts/validate-data.mjs, throw at runtime).",
+    "CHANGED 29 Sep: Secunderabad -> HOT_DRY to match Hyderabad (same city). Lookup is now case- and spacing-insensitive in breedUtils.js, so lower-case duplicates like 'hyderabad' are no longer needed."
   ],
-  "zones": ["HOT_HUMID", "HOT_DRY", "MODERATE", "COLD"],
-
+  "zones": [
+    "HOT_HUMID",
+    "HOT_DRY",
+    "MODERATE",
+    "COLD",
+    "HOT_SEMIARID"
+  ],
   "zoneLabels": {
     "HOT_HUMID": "warm & humid region",
     "HOT_DRY": "hot & dry region",
     "MODERATE": "moderate climate",
-    "COLD": "cool climate"
+    "COLD": "cool climate",
+    "HOT_SEMIARID": "hot semi-arid region"
   },
-
   "legacyBands": {
     "_comment": "Back-compat only: the AI Matchmaker (out of scope this task) and any saved quiz state still emit these four bands. Explicit entries, NOT a silent fallback. 'mixed' = sunny summers + monsoon + cool winters, i.e. the North Indian pattern, so it maps to HOT_DRY.",
     "hot": "HOT_HUMID",
@@ -22,7 +28,6 @@
     "moderate": "MODERATE",
     "cold": "COLD"
   },
-
   "cities": {
     "Chennai": "HOT_HUMID",
     "Mumbai": "HOT_HUMID",
@@ -30,8 +35,8 @@
     "Thane": "HOT_HUMID",
     "Kolkata": "HOT_HUMID",
     "Howrah": "HOT_HUMID",
-    "Hyderabad": "HOT_HUMID",
-    "Secunderabad": "HOT_HUMID",
+    "Hyderabad": "HOT_SEMIARID",
+    "Secunderabad": "HOT_SEMIARID",
     "Visakhapatnam": "HOT_HUMID",
     "Vijayawada": "HOT_HUMID",
     "Kakinada": "HOT_HUMID",
@@ -58,7 +63,6 @@
     "Vellore": "HOT_HUMID",
     "Puducherry": "HOT_HUMID",
     "Port Blair": "HOT_HUMID",
-
     "Delhi": "HOT_DRY",
     "New Delhi": "HOT_DRY",
     "Gurugram": "HOT_DRY",
@@ -102,7 +106,6 @@
     "Kurnool": "HOT_DRY",
     "Anantapur": "HOT_DRY",
     "Ballari": "HOT_DRY",
-
     "Bengaluru": "MODERATE",
     "Pune": "MODERATE",
     "Chandigarh": "MODERATE",
@@ -124,7 +127,6 @@
     "Coimbatore": "MODERATE",
     "Erode": "MODERATE",
     "Hosur": "MODERATE",
-
     "Shimla": "COLD",
     "Manali": "COLD",
     "Dharamshala": "COLD",
@@ -153,6 +155,22 @@
     "Kodaikanal": "COLD",
     "Yercaud": "COLD",
     "Munnar": "COLD",
-    "Mount Abu": "COLD"
+    "Mount Abu": "COLD",
+    "Bangalore": "MODERATE",
+    "Gurgaon": "HOT_DRY",
+    "Vizag": "HOT_HUMID",
+    "Bombay": "HOT_HUMID",
+    "Calcutta": "HOT_HUMID",
+    "Madras": "HOT_HUMID",
+    "Cochin": "HOT_HUMID",
+    "Baroda": "HOT_DRY",
+    "Poona": "MODERATE",
+    "Mysore": "MODERATE",
+    "Trivandrum": "HOT_HUMID",
+    "Pondicherry": "HOT_HUMID",
+    "Banjara Hills": "HOT_SEMIARID",
+    "Cyberabad": "HOT_SEMIARID",
+    "NCR": "HOT_DRY",
+    "Salt Lake": "HOT_HUMID"
   }
 }

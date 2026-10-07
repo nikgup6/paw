@@ -45,6 +45,15 @@
     "multi": true
   },
   {
+    "id": "city",
+    "type": "city",
+    "text": "Which city do you live in?",
+    "sub": "Heat is the single biggest health risk for dogs in India, and humid heat is far harder on them than dry heat. Your city tells us exactly which breeds can cope.",
+    "placeholder": "Type your city…",
+    "options": [],
+    "multi": false
+  },
+  {
     "id": "home",
     "text": "What type of home do you live in?",
     "sub": "Your living space helps us understand how comfortably different dog breeds can adapt to your daily environment, movement space and lifestyle.",
@@ -78,45 +87,87 @@
         "label": "Independent house with yard",
         "desc": "Excellent setup for energetic and playful breeds that enjoy outdoor activity and open areas.",
         "val": "house-yard"
+      },
+      {
+        "icon": "",
+        "label": "PG / shared accommodation",
+        "desc": "Most PG setups restrict or limit pets, and space is tight — we'll flag this clearly, but check with your landlord before anything else.",
+        "val": "pg"
+      },
+      {
+        "icon": "",
+        "label": "Still figuring it out",
+        "desc": "We'll estimate using a typical 2BHK for now — come back once you know, since home type changes which breeds actually fit.",
+        "val": "still-figuring-out"
       }
     ],
     "cols": 2,
     "multi": false
   },
   {
-    "id": "city",
-    "type": "city",
-    "text": "Which city do you live in?",
-    "sub": "Heat is the single biggest health risk for dogs in India, and humid heat is far harder on them than dry heat. Your city tells us exactly which breeds can cope.",
-    "placeholder": "Type your city…",
-    "options": [],
-    "multi": false
-  },
-  {
-    "id": "experience",
-    "text": "How familiar are you with caring for dogs?",
-    "sub": "Understanding your comfort level with dogs helps us recommend breeds that suit your experience and daily routine.",
+    "id": "flooring",
+    "text": "What's the flooring like at home?",
+    "sub": "Hard, slippery floors put real strain on a dog's joints and spine — especially in breeds already prone to hip or joint issues. This flags genuine physical risk, not just comfort.",
     "options": [
       {
         "icon": "",
-        "label": "First-Time Dog Parent",
-        "desc": "Perfect for discovering friendly and beginner-friendly breeds with easier care routines.",
-        "val": "none"
+        "label": "Mostly hard or slippery (tile, marble, polished wood)",
+        "desc": "Common in Indian homes, but the hardest surface for joint-sensitive breeds to move on safely.",
+        "val": "hard"
       },
       {
         "icon": "",
-        "label": "Some Experience",
-        "desc": "You already understand basic care, companionship and everyday dog routines.",
-        "val": "some"
+        "label": "A mix of hard flooring and rugs/carpets",
+        "desc": "Some cushioning where it matters, though most of the home is still a hard surface.",
+        "val": "mixed"
       },
       {
         "icon": "",
-        "label": "Experienced Dog Owner",
-        "desc": "Comfortable with training, handling and caring for a wide range of dog personalities.",
-        "val": "experienced"
+        "label": "Mostly carpeted or matted",
+        "desc": "The gentlest surface for joints — works well even for breeds with real joint risk.",
+        "val": "carpeted"
       }
     ],
     "cols": 3,
+    "multi": false
+  },
+  {
+    "id": "family",
+    "text": "Who lives at home with you?",
+    "sub": "Your home environment helps us recommend breeds that naturally fit your family structure and lifestyle.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Young children (under 5)",
+        "desc": "Toddlers and infants — we apply stricter safety filters for very young children.",
+        "val": "young-kids"
+      },
+      {
+        "icon": "",
+        "label": "Older children (5–17)",
+        "desc": "School-age children who can follow basic dog-safety rules.",
+        "val": "older-kids"
+      },
+      {
+        "icon": "",
+        "label": "Senior Family Members",
+        "desc": "Comfortable with calm and easygoing breeds suited for peaceful homes.",
+        "val": "seniors"
+      },
+      {
+        "icon": "",
+        "label": "Both Children & Seniors",
+        "desc": "Best matched with gentle and adaptable breeds that suit all age groups.",
+        "val": "both"
+      },
+      {
+        "icon": "",
+        "label": "Adults Only",
+        "desc": "Flexible home setup that supports a wide variety of dog personalities.",
+        "val": "adults"
+      }
+    ],
+    "cols": 2,
     "multi": false
   },
   {
@@ -147,9 +198,42 @@
     "multi": true
   },
   {
+    "id": "schedule",
+    "text": "What's your daily schedule like?",
+    "sub": "How long a dog is regularly left alone affects its wellbeing and behaviour. Be honest here — it helps us flag breeds that may struggle, not judge your lifestyle.",
+    "options": [
+      {
+        "icon": "",
+        "label": "Someone's usually home",
+        "desc": "The dog will rarely, if ever, be left completely alone.",
+        "val": "home"
+      },
+      {
+        "icon": "",
+        "label": "Away up to 4 hours",
+        "desc": "A manageable stretch alone for almost any breed.",
+        "val": "up-to-4h"
+      },
+      {
+        "icon": "",
+        "label": "Away 4 to 8 hours",
+        "desc": "A longer stretch that some breeds handle better than others.",
+        "val": "4-8h"
+      },
+      {
+        "icon": "",
+        "label": "Away 8+ hours regularly",
+        "desc": "The longest stretch — we'll flag breeds known to need more company, and show a general note on safe alone-time either way.",
+        "val": "8h-plus"
+      }
+    ],
+    "cols": 2,
+    "multi": false
+  },
+  {
     "id": "budget",
     "text": "What monthly care budget feels comfortable for you?",
-    "sub": "Different breeds have different grooming, nutrition and healthcare needs. We will suggest breeds that comfortably fit your preferred care style.",
+    "sub": "This covers everything — food, grooming, routine vet care and supplies. Different breeds have very different total monthly needs, so we'll match you to ones that comfortably fit.",
     "options": [
       {
         "icon": "",
@@ -180,60 +264,82 @@
     "multi": false
   },
   {
-    "id": "family",
-    "text": "Who lives at home with you?",
-    "sub": "Your home environment helps us recommend breeds that naturally fit your family structure and lifestyle.",
+    "id": "trainingEffort",
+    "text": "How much training effort can you realistically commit?",
+    "sub": "Some breeds pick up commands quickly; others need real, sustained effort. Matching this honestly avoids a frustrating mismatch for both of you.",
     "options": [
       {
         "icon": "",
-        "label": "Young Children",
-        "desc": "Ideal for playful, patient and family-friendly companion breeds.",
-        "val": "kids"
+        "label": "Minimal — just the basics",
+        "desc": "You want a dog that's easy to manage without heavy training investment.",
+        "val": "minimal"
       },
       {
         "icon": "",
-        "label": "Senior Family Members",
-        "desc": "Comfortable with calm and easygoing breeds suited for peaceful homes.",
-        "val": "seniors"
-      },
-      {
-        "icon": "",
-        "label": "Both Children & Seniors",
-        "desc": "Best matched with gentle and adaptable breeds that suit all age groups.",
-        "val": "both"
-      },
-      {
-        "icon": "",
-        "label": "Adults Only",
-        "desc": "Flexible home setup that supports a wide variety of dog personalities.",
-        "val": "adults"
-      }
-    ],
-    "cols": 2,
-    "multi": false
-  },
-  {
-    "id": "shedding",
-    "text": "What kind of grooming and shedding level do you prefer?",
-    "sub": "Different breeds shed differently. Choosing your preference helps us match breeds that fit your comfort and maintenance style.",
-    "options": [
-      {
-        "icon": "",
-        "label": "Comfortable With Shedding",
-        "desc": "You are comfortable with regular brushing and routine home cleaning.",
-        "val": "fine"
-      },
-      {
-        "icon": "",
-        "label": "Moderate Shedding Preferred",
-        "desc": "Balanced option with manageable grooming and moderate coat maintenance.",
+        "label": "Moderate — regular training sessions",
+        "desc": "You're happy to put in consistent, routine effort.",
         "val": "moderate"
       },
       {
         "icon": "",
-        "label": "Low Shedding Preferred",
-        "desc": "Great for cleaner indoor spaces and lower grooming maintenance.",
-        "val": "low"
+        "label": "Committed — I'll invest heavily, even hire a trainer if needed",
+        "desc": "You're ready for a breed that genuinely needs sustained, dedicated training.",
+        "val": "committed"
+      }
+    ],
+    "cols": 3,
+    "multi": false
+  },
+  {
+    "id": "experience",
+    "text": "How familiar are you with caring for dogs?",
+    "sub": "Understanding your comfort level with dogs helps us recommend breeds that suit your experience and daily routine.",
+    "options": [
+      {
+        "icon": "",
+        "label": "First-Time Dog Parent",
+        "desc": "Perfect for discovering friendly and beginner-friendly breeds with easier care routines.",
+        "val": "none"
+      },
+      {
+        "icon": "",
+        "label": "Some Experience",
+        "desc": "You already understand basic care, companionship and everyday dog routines.",
+        "val": "some"
+      },
+      {
+        "icon": "",
+        "label": "Experienced Dog Owner",
+        "desc": "Comfortable with training, handling and caring for a wide range of dog personalities.",
+        "val": "experienced"
+      }
+    ],
+    "cols": 3,
+    "multi": false
+  },
+  {
+    "id": "allergies",
+    "text": "Does anyone in the house have pet allergies?",
+    "sub": "Important to know upfront — no dog breed is truly allergen-free, including ones marketed as 'hypoallergenic'. We'll flag this clearly rather than suggest a false sense of safety.",
+    "scored": false,
+    "options": [
+      {
+        "icon": "",
+        "label": "No known allergies",
+        "desc": "No specific allergy precautions needed.",
+        "val": "none"
+      },
+      {
+        "icon": "",
+        "label": "Mild allergies / sensitivities",
+        "desc": "Worth spending time with a specific dog before committing.",
+        "val": "mild"
+      },
+      {
+        "icon": "",
+        "label": "Diagnosed pet allergy",
+        "desc": "We'll show an important note — no breed is guaranteed safe.",
+        "val": "diagnosed"
       }
     ],
     "cols": 3,
