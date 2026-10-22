@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ToyPlain, useToyFor } from '../fun/SqueakyToy';
 
 const LoadingScreen = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const loadToy = useToyFor('loading', 'load-a');   // one squeaky-toy picture that bounces while we wait (not clickable)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -66,6 +68,8 @@ const LoadingScreen = ({ onComplete }) => {
             transition={{ delay: 0.5, duration: 1 }}
             style={{ width: '200px', mixBlendMode: 'multiply' }}
           />
+
+          {loadToy && <ToyPlain toy={loadToy.toy} size={loadToy.placement.size} style={loadToy.placement.pos} />}
         </motion.div>
       )}
     </AnimatePresence>

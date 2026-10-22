@@ -32,6 +32,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
    nothing here, and buys the authoritative data. */
 const BREEDS_TIMEOUT_MS = 8000;
 
+/* The live database still holds this breed under its OLD name. The engine's config files
+   (heat, flooring, trainability, alone-tolerance classes) are keyed by the NEW name, so with
+   the old name the engine cannot score the breed and silently drops it from every result list.
+   Until the database record itself is renamed, API records are renamed here as they arrive.
+   Safe to delete this alias once the database says "Indie Dog". */
+const NAME_ALIASES = { 'Indian Pariah Dog': 'Indie Dog' };
+const withCurrentNames = (list) =>
+  (Array.isArray(list) ? list.map((b) => (b && NAME_ALIASES[b.name] ? { ...b, name: NAME_ALIASES[b.name] } : b)) : list);
+
 /** Fields the scoring engine reads. A response missing them would still render
     a ranked list — a meaningless one — so it's rejected in favour of the
     bundled copy instead of quietly producing bad recommendations. */
@@ -56,7 +65,8 @@ export async function fetchBreeds() {
 
   inFlight = (async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/api/breeds/`, { timeout: BREEDS_TIMEOUT_MS });
+      const { data: raw } = await axios.get(`${API_URL}/api/breeds/`, { timeout: BREEDS_TIMEOUT_MS });
+      const data = withCurrentNames(raw);
       if (isUsable(data)) {
         cache = { breeds: data, source: 'api', error: null };
         return cache;

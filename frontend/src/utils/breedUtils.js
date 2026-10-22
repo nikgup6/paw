@@ -208,9 +208,21 @@ export function normaliseAnswers(answers) {
      collected. Assuming a hot city over 'moderate' also happens to be the
      demographically likely case — most Indian flats have tile or marble,
      and most of this product's pilot cities run hot. */
-  // 'young-kids'/'older-kids' replace 'kids' after the question split.
-  // 'kids' is kept as a legacy fallback for stale localStorage.
-  const family = one('family', 'young-kids');
+  /* 'young-kids'/'older-kids' replace 'kids' after the question split.
+     'kids' is kept as a legacy fallback for stale localStorage.
+
+     This question became MULTI-select: someone can live with young children AND seniors,
+     so it is read as a LIST, not one value. A single stored value still works (older saves,
+     and the AI matchmaker, both write one), and the legacy combined value 'both' still maps,
+     so nothing already saved changes meaning. Each flag below is now 'is any of the chosen
+     answers one of these', which is strictly safer than before: picking children and seniors
+     separately used to score as children only. */
+  const familyList = (() => {
+    const v = answers.family;
+    const list = (Array.isArray(v) ? v : [v]).filter((x) => typeof x === 'string' && x);
+    return list.length ? list : ['young-kids'];        // same cautious default as before
+  })();
+  const family = familyList[0];                        // kept for raw/debug output
   const experience = one('experience', 'none');
   const flooring = one('flooring', 'hard');
   const trainingEffort = one('trainingEffort', 'moderate');
@@ -232,7 +244,8 @@ export function normaliseAnswers(answers) {
     aptRank: HOME_IS_HOUSE[home] ? null : HOME_APT_RANK[home],
     zone: cityZone(one('city', 'hot')),
     budgetCeiling: mustMap(BUDGET_CEILING, budget, 'budget answer'),
-    hasVulnerable: mustMap(FAMILY_HAS_VULNERABLE, family, 'family answer'),
+    // any vulnerable person in the household makes the whole household vulnerable
+    hasVulnerable: familyList.some((f) => mustMap(FAMILY_HAS_VULNERABLE, f, 'family answer')),
     isFirstTimer: mustMap(EXPERIENCE_ANSWERS, experience, 'experience answer'),
     floorAnswer: mustMap(FLOORING_ANSWER, flooring, 'flooring answer'),
     trainAnswer: mustMap(TRAINING_EFFORT_ANSWER, trainingEffort, 'training-effort answer'),
@@ -246,10 +259,10 @@ export function normaliseAnswers(answers) {
     // young-kids is the strictest category; older-kids and the legacy 'kids'
     // value both apply the standard children safety filter. 'both' means
     // children AND seniors present — already maps to hasVulnerable=true.
-    hasKids: family === 'young-kids' || family === 'older-kids' || family === 'kids' || family === 'both',
-    hasYoungKids: family === 'young-kids',  // used for extra-strict safety text
-    hasSeniors: family === 'seniors' || family === 'both',
-    raw: { home, budget, family, experience, flooring, trainingEffort, schedule },
+    hasKids: familyList.some((f) => f === 'young-kids' || f === 'older-kids' || f === 'kids' || f === 'both'),
+    hasYoungKids: familyList.includes('young-kids'),  // used for extra-strict safety text
+    hasSeniors: familyList.some((f) => f === 'seniors' || f === 'both'),
+    raw: { home, budget, family, familyList, experience, flooring, trainingEffort, schedule },
   };
 }
 
@@ -921,6 +934,25 @@ const firstAnswer = (answers, id, d) => {
   return (Array.isArray(v) ? v[0] : v) || d;
 };
 
+/* Who lives at home, as a set of flags.
+   The household question is multi-select, so a scalar comparison like
+   `family === 'seniors'` silently loses the second answer: someone with young children
+   AND seniors would get the children lines and none of the senior ones. Every piece of
+   copy below asks these instead. A single stored value and the legacy combined value
+   'both' both still work, so nothing already saved reads differently. */
+const KID_VALUES = ['young-kids', 'older-kids', 'kids', 'both'];
+const familyFlags = (answers) => {
+  const v = answers && answers.family;
+  const list = (Array.isArray(v) ? v : [v]).filter((x) => typeof x === 'string' && x);
+  const picked = list.length ? list : ['adults'];
+  return {
+    hasYoungKids: picked.includes('young-kids'),
+    hasKids: picked.some((f) => KID_VALUES.includes(f)),
+    hasSeniors: picked.some((f) => f === 'seniors' || f === 'both'),
+    adultsOnly: picked.every((f) => f === 'adults'),
+  };
+};
+
 const PURPOSE_GOAL = {
   family: 'a family companion',
   guard: 'a home guardian',
@@ -940,7 +972,7 @@ export function generatePersonalizedReason(breed, answers) {
 
   const home = firstAnswer(answers, 'home', 'apt-2bhk');
   const activity = firstAnswer(answers, 'activity', 'moderate');
-  const family = firstAnswer(answers, 'family', 'adults');
+  const fam = familyFlags(answers);
   const experience = firstAnswer(answers, 'experience', 'none');
   const zone = cityZone(firstAnswer(answers, 'city', 'hot')); // same default as normaliseAnswers
   const purposes = toArray(answers.purpose);
@@ -1010,7 +1042,7 @@ export function generatePersonalizedReason(breed, answers) {
     contextBonus = 'handles time alone better than most breeds';
   }
   // 2. If toddler at home and breed is genuinely low-risk — reassure
-  else if ((family === 'young-kids') && nb?.riskTier === 'LOW') {
+  else if (fam.hasYoungKids && nb?.riskTier === 'LOW') {
     contextBonus = 'has a gentle, low-aggression temperament — good around young children';
   }
   // 3. If budget is tight and breed is affordable — name it
@@ -1049,11 +1081,11 @@ export function generatePersonalizedReason(breed, answers) {
   const supports = [];
   if (heatClass && climateGate(heatClass, zone) >= 0.95 && !contextBonus)
     supports.push(`its coat handles your ${zoneLabel(zone)} comfortably`);
-  if ((family === 'young-kids' || family === 'older-kids' || family === 'kids' || family === 'both') && rT === 'Low')
+  if (fam.hasKids && rT === 'Low')
     supports.push('it is famously gentle with children');
-  else if (family === 'seniors' && rT === 'Low')
+  else if (fam.hasSeniors && rT === 'Low')
     supports.push('it stays calm and easy around seniors');
-  else if (family === 'adults' && (energy.startsWith('low') || rT === 'Low'))
+  else if (fam.adultsOnly && (energy.startsWith('low') || rT === 'Low'))
     supports.push('its easygoing temperament suits an adults-only home');
   if (experience === 'none' && breed.experienceLevel === 'First-timer OK')
     supports.push('it forgives first-time-owner mistakes');
@@ -1074,7 +1106,7 @@ export function generateMatchReasons(breed, answers) {
   const home = firstAnswer(answers, 'home', 'apt-2bhk');
   const experience = firstAnswer(answers, 'experience', 'none');
   const budget = firstAnswer(answers, 'budget', '5k-10k');
-  const family = firstAnswer(answers, 'family', 'adults');
+  const fam = familyFlags(answers);
   const zone = cityZone(firstAnswer(answers, 'city', 'hot')); // same default as normaliseAnswers
 
   const pros = [];
@@ -1120,13 +1152,12 @@ export function generateMatchReasons(breed, answers) {
   else cons.push('Higher Monthly Cost');
 
   const rT = riskTag(breed.risk);
-  if ((family === 'young-kids' || family === 'older-kids' || family === 'kids' || family === 'both') && rT === 'Low') pros.push('Good with Children');
-  if (family === 'seniors' && rT === 'Low') pros.push('Good with Seniors');
+  if (fam.hasKids && rT === 'Low') pros.push('Good with Children');
+  if (fam.hasSeniors && rT === 'Low') pros.push('Good with Seniors');
   // Same lines as the engine's SAFETY flag: kids -> Medium and above; seniors only -> Medium–High and above.
-  const hasKidsChip = family === 'young-kids' || family === 'older-kids' || family === 'kids' || family === 'both';
-  if ((hasKidsChip && ['Medium', 'Medium–High', 'High'].includes(rT))
-      || (family === 'seniors' && ['Medium–High', 'High'].includes(rT))) cons.push('Not Ideal for Vulnerable Family Members');
-  if ((family === 'seniors' || family === 'both')) {
+  if ((fam.hasKids && ['Medium', 'Medium–High', 'High'].includes(rT))
+      || (fam.hasSeniors && ['Medium–High', 'High'].includes(rT))) cons.push('Not Ideal for Vulnerable Family Members');
+  if (fam.hasSeniors) {
     const sr = SIZE_RANK[sizeToken(breed.size)];
     const eb = ENERGY_BAND[headToken(breed.energy)];
     if (sr != null && eb != null && (sr >= 3 || (sr >= 2 && eb >= 2))) cons.push('Strong Puller — Fall Risk for Seniors');

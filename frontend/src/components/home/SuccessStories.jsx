@@ -62,6 +62,8 @@ const SuccessStories = () => {
           
           <button 
             onClick={prev}
+            className="ss__arrow"
+            aria-label="Previous story"
             style={{ position: 'absolute', left: 0, zIndex: 10, background: 'white', border: 'none', width: '50px', height: '50px', borderRadius: '50%', boxShadow: 'var(--shadow)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown)' }}
           >
             ←
@@ -95,43 +97,71 @@ const SuccessStories = () => {
 
           <button 
             onClick={next}
+            className="ss__arrow"
+            aria-label="Next story"
             style={{ position: 'absolute', right: 0, zIndex: 10, background: 'white', border: 'none', width: '50px', height: '50px', borderRadius: '50%', boxShadow: 'var(--shadow)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown)' }}
           >
             →
           </button>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '40px' }}>
+        {/* The dot you see is the inner span; the button around it is a full 44px tap target. The buttons sit
+            side by side with no gap, so neighbouring targets never overlap and steal each other's taps. */}
+        <div className="ss__dots" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '40px' }}>
           {stories.map((_, i) => (
             <button
               key={i}
+              className="ss__dot"
               onClick={() => setCurrent(i)}
-              style={{
-                width: i === current ? '30px' : '10px',
-                height: '10px',
-                borderRadius: '5px',
-                background: i === current ? 'var(--orange)' : 'rgba(109, 76, 65, 0.2)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
               aria-label={`Go to slide ${i + 1}`}
-            />
+              aria-current={i === current ? 'true' : undefined}
+            >
+              <span
+                className="ss__dot-i"
+                style={{
+                  width: i === current ? '30px' : '10px',
+                  background: i === current ? 'var(--orange)' : 'rgba(109, 76, 65, 0.2)',
+                }}
+              />
+            </button>
           ))}
         </div>
       </div>
       
-      {/* Mobile adjustment for carousel arrows */}
       <style>{`
+        /* Phones use the dots instead of the side arrows (there is no room beside the card).
+           This used to be written as div[style*="position: relative"] > button, which is not scoped to
+           this carousel at all — it would hide ANY button sitting directly inside an inline
+           position:relative div anywhere on the page under 768px. It is keyed to the arrows now. */
         @media (max-width: 768px) {
-          button[aria-label^="Go to slide"] {
-             /* Keep dots */
-          }
-          /* We can hide the absolute arrows on mobile and let them use dots */
-          div[style*="position: relative"] > button {
-            display: none !important;
-          }
+          .ss__arrow { display: none !important; }
         }
+        /* The dots stay small to look at, but the tappable part is a full 44px. */
+        .ss__dot {
+          flex: none;
+          padding: 0;
+          border: none;
+          background: none;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          -webkit-tap-highlight-color: transparent;
+        }
+        /* On a touch screen each dot gets a full 44px box. They sit edge to edge (the row gap goes to 0)
+           so neighbouring targets cannot overlap and steal one another's taps. */
+        @media (pointer: coarse) {
+          .ss__dots { gap: 0 !important; }
+          .ss__dot { width: 44px; height: 44px; }
+        }
+        .ss__dot-i {
+          display: block;
+          height: 10px;
+          border-radius: 5px;
+          transition: width 0.3s ease, background 0.3s ease;
+        }
+        .ss__dot:focus-visible { outline: 3px solid var(--orange); outline-offset: -6px; border-radius: 12px; }
+        @media (prefers-reduced-motion: reduce) { .ss__dot-i { transition: none; } }
       `}</style>
     </section>
   );

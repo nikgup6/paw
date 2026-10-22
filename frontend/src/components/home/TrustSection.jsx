@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 /* "Pitfalls in Choosing the Wrong Breed" — cream section with three
    illustrated cards.
@@ -220,6 +221,12 @@ const TrustSection = () => {
             </article>
           ))}
         </div>
+
+        {/* Small entry point to the heat check. Deliberately one line, not a new section: the
+            "Climate Conflict" card above is exactly the problem this tool answers. */}
+        <p className="pf__heatlink">
+          <Link to="/heat-check">Will your dream breed survive your city? Check the heat &rarr;</Link>
+        </p>
       </div>
 
       <style>{`
@@ -289,6 +296,13 @@ const TrustSection = () => {
           flex-shrink: 0;
         }
         .pf__icon svg { width: 28px; height: 28px; }
+        .pf__heatlink { margin: 22px 0 0; text-align: center; }
+        .pf__heatlink a {
+          display: inline-flex; align-items: center; justify-content: center;
+          min-height: 44px; padding: 0 14px;
+          font-family: 'Satoshi', 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+          color: #B34A0E; text-decoration: underline; text-underline-offset: 3px;
+        }
         .pf__card-title {
           margin: 0 0 6px;
           font-family: 'Fredoka', sans-serif;

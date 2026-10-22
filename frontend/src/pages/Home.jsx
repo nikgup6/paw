@@ -6,31 +6,54 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // Existing Components
 import LoadingScreen from '../components/home/LoadingScreen';
 import HeroSection from '../components/home/HeroSection';
+import HiDog from '../components/home/HiDog';
+import JourneyDog from '../components/home/JourneyDog';
 import GoldenCircle from '../components/home/GoldenCircle';
 import TrustSection from '../components/home/TrustSection';
 import FeaturedPuppies from '../components/home/FeaturedPuppies';
+import PlayTeaser from '../components/home/PlayTeaser';
+import { ToySlots } from '../components/fun/SqueakyToy';
+import { useToyGate } from '../components/fun/ToyContext';
 import SuccessStories from '../components/home/SuccessStories';
 import CommunitySection from '../components/home/CommunitySection';
 import Reveal from '../components/home/Reveal';
 
 // New Revamped Components
 import AuthModal from '../components/AuthModal';
+import ContactCapture from '../components/auth/ContactCapture';
+import ResultsPulse from '../components/results/ResultsPulse';
+import NotUnlockedCard from '../components/paywall/NotUnlockedCard';
+import { mayAskNotUnlocked } from '../components/paywall/notUnlocked';
+import { AFTER_OVERLAY_MS } from '../config/pulse';
 import BreedSlider from '../components/BreedSlider';
+import BreedSwipe from '../components/swipe/BreedSwipe';
+import { loadSavedAnswers } from '../utils/quizState';
 import BreedProfileModal from '../components/BreedProfileModal';
 import BreedModal from '../components/BreedModal';
 import RecommendationResults from '../components/RecommendationResults';
 import AboutModal from '../components/AboutModal';
-import { getOwnerId, listDogs } from '../utils/dogs';
+import { hasBrowserOwnerId, listDogs } from '../utils/dogs';
 import CitySelect from '../components/CitySelect';
 
 // Constants & Utilities
 import { useBreeds } from '../context/BreedsContext';
 import questionsData from '../constants/questions.json';
-import { computeMatches, selectTopMatches } from '../utils/breedUtils';
+import QuizFlow from '../components/quiz/QuizFlow';
+import RoughRecommendation from '../components/paywall/RoughRecommendation';
+import UnlockFlow from '../components/paywall/UnlockFlow';
+import usePaywallStatus from '../components/paywall/usePaywallStatus';
+import { PAYWALL_AFTER, ROUGH_PAUSE_MS } from '../config/paywall';
+import { computeRoughMatches, FREE_SCREEN_COUNT, LAST_FREE_SCREEN_INDEX, TOTAL_SCREENS } from '../utils/roughMatches';
+import { freePartCompleted, paywallCtaClicked, unlockContinued } from '../utils/paymentEvents';
+import { computeMatches, computeReadiness, selectTopMatches } from '../utils/breedUtils';
+import { track, saveProgress } from '../utils/analytics';
 import { parsePrompt } from '../utils/matchmaker';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+/* Where this tab remembers the answers behind the current Top 5 (see presentResults). */
+const LAST_RESULTS_KEY = 'pb_last_results';
 
 /* "Choose Your Journey" line icons — brown strokes with a single orange accent,
    replacing the old emoji so they match the brand and render the same on every
@@ -75,7 +98,7 @@ const Home = () => {
   /* No `loading` here on purpose — `breeds` is never empty, so this page has
      nothing to wait for. See BreedsProvider. */
   const { breeds: breedsData } = useBreeds();
-  const { user, logout, loading: authLoading } = useContext(AuthContext);
+  const { user, token, logout, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -92,8 +115,30 @@ const Home = () => {
   const [pendingTab, setPendingTab] = useState('menu'); // dashboard tab to open after login
 
   // Inline Quiz State
-  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [, setCurrentQIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState({});
+
+  /* ---- Paywall (components/paywall/*). The server decides the mode; null = the
+     server could not be asked, which runs the quiz without a paywall. ---- */
+  const [paywall, refreshPaywall, paywallSettled] = usePaywallStatus(user?.id);
+  const paywallActive = !!paywall && paywall.mode !== 'off' && !paywall.unlocked;
+  /* For the "Was this useful?" card on the full results: "paid" only when real
+     money moved; a fake-door unlock asks the price question hypothetically. */
+  const resultsPulseKind = !paywall || paywall.mode === 'off' ? 'none'
+    : paywall.unlocked_via === 'paid' ? 'paid' : 'fake_door';
+  const [quizStage, setQuizStage] = useState('quiz');   // 'quiz' | 'sniffing' | 'rough'
+  const [roughBreeds, setRoughBreeds] = useState([]);
+  const [resume, setResume] = useState(null);           // { startAt, runId, key } after the gate
+  const [unlockFor, setUnlockFor] = useState(null);     // why the unlock flow is open: 'quiz' | 'submit' | 'ai'
+  const [pendingAi, setPendingAi] = useState(null);     // matchmaker answers waiting for an unlock
+  const [paywallClosed, setPaywallClosed] = useState(false); // closed the unlock card from the rough recommendation without paying
+  // "What stopped you from unlocking?" (components/paywall/NotUnlockedCard.jsx): null or the moment.
+  const [notUnlocked, setNotUnlocked] = useState(null);
+  const [askedWhyThisVisit, setAskedWhyThisVisit] = useState(false);
+  const askWhyNotUnlocked = (moment) => mayAskNotUnlocked().then((ok) => {
+    if (ok) { setAskedWhyThisVisit(true); setNotUnlocked(moment); }
+  });
+  const returnToRough = React.useRef(false);            // Explore / Tinder opened from the rough card
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState('');
 
@@ -102,17 +147,36 @@ const Home = () => {
 
   // Results context: Top-5 personalisation
   const [resultsAnswers, setResultsAnswers] = useState(null);
+  const [revealRun, setRevealRun] = useState(0);
+  const [revealSeen, setRevealSeen] = useState(0);
   const [resultsSource, setResultsSource] = useState(null); // 'quiz' | 'ai' | null (explore)
   const [profileBreed, setProfileBreed] = useState(null);
   const [profileView, setProfileView] = useState('profile'); // 'profile' | 'buy'
   const [compareBreed, setCompareBreed] = useState(null); // seeds the Compare overlay
+  const [swipeAnswers, setSwipeAnswers] = useState(null);   // answers the swipe deck scores with (or null)
+  const [swipeExclude, setSwipeExclude] = useState([]);     // breed names left out of the deck (the Top 5)
+  const [swipeFrom, setSwipeFrom] = useState('breed_slider'); // where the deck returns to
 
-  // Lock scroll on the single-screen views; let the hero and the Top-5 grid scroll.
+  // The contact screen before question 1 (no token yet). It is taller than a phone with its keyboard up.
+  /* find_dog_clicked: any button that starts the quiz, with which one it was.
+     has_account: this browser already has a token, so the contact form is
+     skipped - those sessions are not counted as form drop-outs on the Pilot tab. */
+  const findDog = (source) => track('find_dog_clicked', { source, has_account: !!token });
+
+  const contactGate = subView === 'friend_dashboard' && dashboardTab === 'inline_quiz' && quizStage === 'quiz' && !token;
+
+  // Lock scroll on the single-screen views; let the hero and the Top-5 grid scroll. The contact
+  // screen scrolls too, or the keyboard could hide its Continue button.
   useEffect(() => {
-    const lock = isLoading || subView === 'friend_dashboard' || subView === 'breed_slider';
+    const lock = isLoading || (subView === 'friend_dashboard' && !contactGate) || subView === 'breed_slider' || subView === 'breed_swipe';
     document.body.style.overflow = lock ? 'hidden' : 'auto';
     return () => { document.body.style.overflow = 'auto'; };
-  }, [isLoading, subView]);
+  }, [isLoading, subView, contactGate]);
+
+  // Squeaky toys may show on the landing page and the results page, but not while the loading screen, the quiz,
+  // the breed slider or the swipe cards are open (this also keeps the footer's toys out of the keyboard's way).
+  // On the results page they also wait until the match reveal has been seen, so there is no gap while the quiz fades out.
+  useToyGate(!isLoading && (subView === 'hero' || (subView === 'results' && !(revealRun && revealRun !== revealSeen))));
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
@@ -121,16 +185,23 @@ const Home = () => {
     setDropdownOpen(false);
   };
 
-  // No auth gate up front — users explore freely and sign in after the Top 5.
+  // Explore needs no details. The quiz asks for them once, before question 1 (see the inline_quiz render below).
   const openDashboard = (tab = 'menu') => {
     setSubView('friend_dashboard');
     setDashboardTab(tab);
+    // Any fresh start leaves the paywall's in-between screens behind.
+    setQuizStage('quiz');
+    setResume(null);
+    setUnlockFor(null);
     if (tab === 'inline_quiz') {
       setCurrentQIndex(0);
       setQuizAnswers({});
     }
   };
 
+  // NOTE: the hero button already reports itself as `cta_click { source: 'hero' }` (HeroSection.jsx), so
+  // this handler no longer also fires `hero_cta_clicked`: one tap, one event. (`hero_cta_clicked`
+  // stays in the backend whitelist so old rows still show.)
   const handleFriendPathClick = (tab = 'menu') => {
     openDashboard(typeof tab === 'string' ? tab : 'menu');
   };
@@ -140,8 +211,15 @@ const Home = () => {
      their health records, and putting eight questions between them and those
      records every visit would be the wrong trade. Asked once, not every time. */
   const handleDogOwnerClick = async () => {
+    track('journey_selected', { choice: 'owner' });
+    // Dog profiles need an account. Not signed in: a browser that once had dogs
+    // goes to the sign-in screen in /app; anyone else starts with the survey.
+    if (!token) {
+      navigate(hasBrowserOwnerId() ? '/app' : '/owner-survey');
+      return;
+    }
     try {
-      const existing = await listDogs(getOwnerId());
+      const existing = await listDogs();
       navigate(existing.length > 0 ? '/app' : '/owner-survey');
     } catch {
       // Can't tell either way — send them to the dashboard, which knows how to
@@ -158,29 +236,68 @@ const Home = () => {
     setPendingTab('menu');
   };
 
+  /* Left the site last time with the paywall open (PaywallSheet sets the flag
+     with a beacon): ask "what stopped you" once, in the corner, if they still
+     have not unlocked. */
+  useEffect(() => {
+    if (!paywallSettled) return;
+    let left = false;
+    try { left = localStorage.getItem('pb_paywall_left_open') === '1'; localStorage.removeItem('pb_paywall_left_open'); } catch { /* blocked */ }
+    if (left && paywallActive) askWhyNotUnlocked('next_visit');
+  }, [paywallSettled]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Deep link: /?ai=1 lands on the AI Matchmaker (used by the Results page)
   useEffect(() => {
     if (authLoading) return;
     const params = new URLSearchParams(location.search);
     if (params.get('ai') === '1') {
       navigate('/', { replace: true });
+      // Only the choice is tracked. The text a person types into the matchmaker is never sent anywhere.
+      track('journey_selected', { choice: 'ai_matchmaker' });
       handleFriendPathClick('ai_matchmaker');
+    } else if (params.get('quiz') === '1') {
+      // Deep link /?quiz=1 starts the quiz (used by the "Walk the dog" game's "Find my dog" button).
+      navigate('/', { replace: true });
+      track('journey_selected', { choice: 'quiz' });
+      findDog('quiz_link');      // the game's button, the old /quiz address, a locked /results
+      handleFriendPathClick('inline_quiz');
     }
   }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Explore path: full database in the premium slider (no match scoring, no gate)
-  const openExploreSlider = () => {
+  const openExploreSlider = (source = 'unknown') => {
+    track('explore_opened', { source: typeof source === 'string' ? source : 'unknown' });
     setResultsAnswers(null);
     setResultsSource(null);
     setSliderBreeds(breedsData);
     setSubView('breed_slider');
   };
 
+  // Breed profile / compare overlays. These wrappers only add the tracking call.
+  const openProfile = (breed, source) => {
+    track('breed_opened', { breed: breed?.name, source });
+    setProfileBreed(breed);
+    setProfileView('profile');
+  };
+  const openCompare = (breed) => {
+    track('compare_opened', { breed: breed?.name });
+    setCompareBreed(breed);
+  };
+
+  // Breed Swipe: from Explore (saved quiz answers if any) or from the Top-5 results
+  // (the answers that produced them, minus the five already shown).
+  const openSwipe = (answers, excludeNames = [], from = null) => {
+    setSwipeFrom(from || (subView === 'results' ? 'results' : 'breed_slider'));
+    setSwipeAnswers(answers);
+    setSwipeExclude(excludeNames);
+    setSubView('breed_swipe');
+  };
+
   // Inline Quiz Handler
   const handleQuizAnswer = (qId, val) => {
     // "I already love a specific breed." aborts the quiz and opens Explore
     if (qId === 'purpose' && val === 'breed') {
-      openExploreSlider();
+      openExploreSlider('quiz');
       return;
     }
 
@@ -204,14 +321,107 @@ const Home = () => {
     setResultsSource(source);
     setSliderBreeds(top5);
     setSubView('results');
+    /* Remember the answers for as long as this tab is open, so leaving for a full page
+       (the heat check) and coming back can rebuild the same Top 5 - see the /?results=1
+       branch below. sessionStorage, not localStorage: it is a convenience for this visit,
+       not something to keep. The inline quiz here does not write pb_quiz_state (only the
+       older /quiz page does), which is why this cannot just read that. */
+    try { sessionStorage.setItem(LAST_RESULTS_KEY, JSON.stringify(answers)); } catch { /* storage blocked: the X just lands on the hero */ }
+    // Fresh quiz / matchmaker result only: one reveal per run id.
+    if (source === 'quiz' || source === 'ai') setRevealRun(Date.now());
+
+    // results_viewed: presentResults runs once per submit, so going into a breed
+    // profile and coming back (which does not call it) can never double count.
+    try {
+      const top = top5 && top5[0];
+      // The AI matchmaker has no timeline answer; don't invent a readiness level for it.
+      const readiness_code = answers && answers.timeline ? computeReadiness(answers).code : undefined;
+      track('results_viewed', {
+        top_breed: top?.name, label: top?.label, match_pct: top?.matchPercentage, readiness_code, source,
+      });
+      saveProgress({ top_breed: top?.name, readiness_code, status: 'completed' });
+    } catch { /* tracking never blocks results */ }
   };
 
-  // Login removed from the site — the auth code stays intact but is no longer
-  // surfaced. (The 10s login pop-up on results has been disabled.)
+  /* Deep link /?results=1 goes straight back to the Top 5 - the X on the heat check page.
+
+     The Top 5 is in-page state, not a route, so leaving for a full page loses it. The answers
+     behind it are kept in sessionStorage for the life of the tab (see presentResults above) and
+     the same five breeds are rebuilt here from the same engine. Nothing stored means nothing to
+     rebuild, so that visitor simply stays on the hero - which is right for someone who arrived
+     on a shared heat-check link and has never taken the quiz.
+
+     Deliberately its own effect, below presentResults rather than up with the other deep links:
+     calling it from up there reads as using a value before it is declared. */
+  useEffect(() => {
+    if (authLoading) return;
+    if (new URLSearchParams(location.search).get('results') !== '1') return;
+    navigate('/', { replace: true });
+    let saved;
+    try { saved = JSON.parse(sessionStorage.getItem(LAST_RESULTS_KEY) || 'null'); } catch { /* storage blocked */ }
+    if (!saved) saved = loadSavedAnswers();            // the older /quiz page's save, if there is one
+    if (!saved || !Object.keys(saved).length) return;
+    try {
+      const { matches: top5 } = selectTopMatches(computeMatches(saved, breedsData), 5);
+      // source 'restored': presentResults only starts the reveal for 'quiz' and 'ai', so the
+      // portal never replays on the way back.
+      if (top5 && top5.length) presentResults(saved, 'restored', top5);
+    } catch { /* a stale save the engine cannot read: leave them on the hero */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading]);
+
+  // Visitors give a contact detail through the contact form; sign-in is for dog owners and admins only.
+
+  /* ---- The paywall gate (PAYWALL_AFTER = 'rough'). QuizFlow calls this instead
+     of moving past the last free screen. ---- */
+  const handleQuizGate = (runId) => {
+    freePartCompleted();
+    setResume({ startAt: LAST_FREE_SCREEN_INDEX + 1, runId, key: `resume-${runId}` });
+    const rough = computeRoughMatches(quizAnswers, breedsData);
+    if (!rough.length) console.warn('[paywall] the engine returned no rough matches for these free answers');
+    setRoughBreeds(rough);
+    setQuizStage('sniffing');
+    setTimeout(() => setQuizStage((s) => (s === 'sniffing' ? 'rough' : s)), ROUGH_PAUSE_MS);
+  };
+
+  /* "Find my match". While the account is locked, the unlock flow opens first and
+     the results follow it. This is the trigger for PAYWALL_AFTER = 'questions',
+     and the safety net for 'rough' (e.g. the status arrived after the visitor had
+     already passed the free screens). */
+  const handleQuizSubmit = () => {
+    if (paywallActive) {
+      paywallCtaClicked('submit');
+      setUnlockFor('submit');
+      return;
+    }
+    submitInlineQuiz();
+  };
+
+  const handleUnlocked = (fresh) => {
+    const reason = unlockFor;
+    setUnlockFor(null);
+    setPaywallClosed(false);
+    try { localStorage.removeItem('pb_paywall_left_open'); } catch { /* nothing stored */ }
+    unlockContinued(fresh?.mode || paywall?.mode);
+    if (reason === 'quiz') {
+      // Back into the quiz at the first paid screen, answers kept.
+      setResume((r) => (r ? { ...r, key: `${r.key}-go` } : r));
+      setQuizStage('quiz');
+    } else if (reason === 'submit') {
+      submitInlineQuiz();
+    } else if (reason === 'ai' && pendingAi) {
+      const { answers, top5, prompt } = pendingAi;
+      setPendingAi(null);
+      saveMatchmakerRun(answers, prompt, top5);
+      presentResults(answers, 'ai', top5);
+    }
+  };
 
   const submitInlineQuiz = async () => {
+    track('quiz_completed');
+    saveProgress({ status: 'completed' });
     setIsProcessing(true);
-    setProcessingMessage('Analyzing your lifestyle answers...');
+    setProcessingMessage('Sniffing out your match...');
 
     // Premium processing animation beat before results reveal
     setTimeout(() => {
@@ -237,6 +447,15 @@ const Home = () => {
 
   // Conversational AI Matchmaker: Claude parses the prompt into the same 9
   // structured answers as the quiz, then the RIGHTBREED engine scores breeds.
+  // Save to DB (asynchronously)
+  const saveMatchmakerRun = (answers, prompt, top5) => {
+    axios.post(`${API_URL}/api/quiz/submit`, {
+      user_id: user?.id || null,
+      answers: { ...answers, _prompt: prompt },
+      top_breeds: top5.map(b => b.name)
+    }).catch(err => console.error("Error saving matchmaker run:", err));
+  };
+
   const handleMatchmakerSubmit = async (e) => {
     e.preventDefault();
     if (!matchmakerPrompt.trim()) return;
@@ -250,13 +469,15 @@ const Home = () => {
       const scoredBreeds = computeMatches(answers, breedsData);
       const { matches: top5 } = selectTopMatches(scoredBreeds, 5);
 
-      // Save to DB (asynchronously)
-      axios.post(`${API_URL}/api/quiz/submit`, {
-        user_id: user?.id || null,
-        answers: { ...answers, _prompt: matchmakerPrompt },
-        top_breeds: top5.map(b => b.name)
-      }).catch(err => console.error("Error saving matchmaker run:", err));
-
+      // A full Top 5, so the same paywall as the quiz. The run is saved and shown
+      // only once unlocked (handleUnlocked), never for a result nobody saw.
+      if (paywallActive) {
+        setPendingAi({ answers, top5, prompt: matchmakerPrompt });
+        paywallCtaClicked('matchmaker');
+        setUnlockFor('ai');
+        return;
+      }
+      saveMatchmakerRun(answers, matchmakerPrompt, top5);
       presentResults(answers, 'ai', top5);
     } catch (error) {
       console.error(error);
@@ -281,20 +502,20 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoading ? 0 : 1 }}
         transition={{ duration: 0.8 }}
-        style={{ position: 'relative', background: subView === 'results' ? '#FFFFFF' : 'var(--cream)', minHeight: '100dvh' }}
+        style={{ position: 'relative', background: subView === 'results' ? '#FFF6EC' : 'var(--cream)', minHeight: '100dvh' }}
       >
         {/* Navigation / Header — hidden on the hero view, which renders its own
             white header bar inside HeroSection (the new landing design). */}
-        {subView !== 'hero' && (
+        {subView !== 'hero' && subView !== 'breed_swipe' && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'clamp(10px, 2.5vw, 18px) clamp(14px, 3vw, 24px)', pointerEvents: 'none' }}>
           <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center' }}>
             {subView === 'results' ? (
               /* Results view: clean brand wordmark instead of the cartoon-dog logo. */
               <div onClick={() => { setSubView('hero'); }} style={{ cursor: 'pointer', lineHeight: 1 }} role="link" aria-label="Paw Buddy home">
-                <div style={{ fontFamily: "'Clash Display', 'Sora', sans-serif", fontWeight: 700, fontSize: 'clamp(20px, 2.4vw, 26px)', letterSpacing: '0.01em' }}>
-                  <span style={{ color: '#011E4A' }}>PAW </span><span style={{ color: '#F57A1B' }}>BUDDY</span>
+                <div style={{ fontFamily: "'Gabarito', system-ui, sans-serif", fontWeight: 800, fontSize: 'clamp(20px, 2.4vw, 26px)', letterSpacing: '-0.01em' }}>
+                  <span style={{ color: '#011E4A' }}>PAW </span><span style={{ color: '#F5691A' }}>BUDDY</span>
                 </div>
-                <div style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 500, fontSize: 'clamp(9px, 1vw, 11px)', color: '#011E4A', opacity: 0.75, marginTop: '3px' }}>
+                <div style={{ fontFamily: "'Figtree', system-ui, sans-serif", fontWeight: 500, fontSize: 'clamp(9px, 1vw, 11px)', color: '#011E4A', opacity: 0.75, marginTop: '3px' }} className="rbx-tagline">
                   India's #1 Dog Companion Platform
                 </div>
               </div>
@@ -307,7 +528,7 @@ const Home = () => {
             <button
               onClick={() => setIsAboutOpen(true)}
               className="about-nav-btn"
-              style={subView === 'results' ? { background: '#FFFFFF', color: '#011E4A', border: '1.5px solid #011E4A', fontFamily: "'Satoshi', 'Inter', sans-serif", animation: 'none', boxShadow: 'none' } : undefined}
+              style={subView === 'results' ? { background: '#FFFFFF', color: '#011E4A', border: 0, borderRadius: '999px', fontFamily: "'Figtree', system-ui, sans-serif", fontWeight: 700, animation: 'none', boxShadow: '0 1px 3px rgba(1,30,74,.08)' } : undefined}
             >
               About
             </button>
@@ -352,8 +573,7 @@ const Home = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              /* Login removed from the site — Sign In / Sign Up buttons hidden.
-                 The auth code is preserved; only the entry points are gone. */
+              /* Visitors give a contact detail through the contact form; sign-in is for dog owners and admins only. */
               null
             )}
           </div>
@@ -370,8 +590,9 @@ const Home = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
+              <div style={{ position: 'relative' }}>
               <HeroSection
-                onSelectFriendPath={() => handleFriendPathClick('menu')}
+                onSelectFriendPath={(source) => { findDog(source || 'hero'); handleFriendPathClick('menu'); }}
                 /* Existing owners go straight to the product area: dashboard,
                    dog profiles and Health Records all live under /app now.
                    Wired to the hero header's account icon. */
@@ -386,11 +607,23 @@ const Home = () => {
                 onAdmin={() => navigate('/admin')}
                 onLogout={handleLogout}
               />
+              {/* Squeaky toys on the first screen (decoration only; see constants/toys.js to move them) */}
+              {!isLoading && <ToySlots group="homeHero" page="home" />}
+              </div>
+              {/* The "Hiii!" dog: greets once per page load, only on the landing page, only after the loading screen */}
+              {!isLoading && <HiDog />}
               <GoldenCircle />
               <Reveal><CommunitySection /></Reveal>
-              <Reveal><TrustSection /></Reveal>
+              <div style={{ position: 'relative' }}>
+                <Reveal><TrustSection /></Reveal>
+                {!isLoading && <ToySlots group="homeTrust" page="home" />}
+              </div>
+              <Reveal><PlayTeaser /></Reveal>
               <Reveal><FeaturedPuppies user={user} /></Reveal>
               <Reveal><SuccessStories /></Reveal>
+              <div style={{ position: 'relative', height: 110 }}>
+                {!isLoading && <ToySlots group="homeEnd" page="home" />}
+              </div>
             </motion.div>
           )}
 
@@ -407,6 +640,7 @@ const Home = () => {
                 <button 
                   onClick={() => setSubView('hero')}
                   aria-label="Close"
+                  className="journey-close"
                   style={{
                     position: 'absolute', top: '16px', right: '16px',
                     background: 'none', border: 'none', fontSize: '28px',
@@ -419,7 +653,8 @@ const Home = () => {
                   &times;
                 </button>
 
-                {isProcessing ? (
+                {/* While the QUIZ is submitting, the quiz layer itself stays on screen (the dog sits at the end of its bar). */}
+                {isProcessing && dashboardTab !== 'inline_quiz' ? (
                   <div style={{ textAlign: 'center', padding: '40px 10px' }}>
                     <div className="loader-paw" style={{ fontSize: '50px', marginBottom: '20px', animation: 'spin 1.5s infinite linear' }}>🐾</div>
                     <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '22px', marginBottom: '10px' }}>
@@ -441,7 +676,7 @@ const Home = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                           {/* Option 1: Quiz */}
                           <div 
-                            onClick={() => { setDashboardTab('inline_quiz'); setCurrentQIndex(0); setQuizAnswers({}); }}
+                            onClick={() => { track('journey_selected', { choice: 'quiz' }); findDog('journey_card'); setDashboardTab('inline_quiz'); setCurrentQIndex(0); setQuizAnswers({}); }}
                             className="hover-lift journey-card"
                             style={{
                               background: '#FCFAF7', border: '1px solid #EAE4DE', borderRadius: '18px',
@@ -464,7 +699,7 @@ const Home = () => {
                               the hero, beside the main CTA, so this slot keeps the
                               breed matrix reachable from inside the dashboard too. */}
                           <div
-                            onClick={openExploreSlider}
+                            onClick={() => { track('journey_selected', { choice: 'explore' }); openExploreSlider('journey_menu'); }}
                             className="hover-lift journey-card"
                             style={{
                               background: '#FCFAF7', border: '1px solid #EAE4DE', borderRadius: '18px',
@@ -485,112 +720,55 @@ const Home = () => {
 
                           {/* AI Matchmaker removed from the menu — the view code stays
                               intact but is no longer reachable from here. */}
+
+                          {/* A dog with a speech bubble under the two cards: four lines,
+                              one every five seconds. See components/home/JourneyDog.jsx. */}
+                          <JourneyDog />
                         </div>
                       </div>
                     )}
 
-                    {dashboardTab === 'inline_quiz' && (
-                      <div>
-                        {/* Inline Quiz Question */}
-                        {(() => {
-                          const q = questionsData[currentQIndex];
-                          const pct = Math.round(((currentQIndex + 1) / questionsData.length) * 100);
-                          const currentAnswers = quizAnswers[q?.id] || [];
-
-                          if (!q) return null;
-
-                          return (
-                            <div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                <button 
-                                  onClick={() => setDashboardTab('menu')}
-                                  style={{ background: 'none', border: 'none', color: 'var(--orange)', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-                                >
-                                  ← Cancel Quiz
-                                </button>
-                                <span style={{ fontSize: '12px', color: 'var(--text-soft)', fontWeight: 600 }}>
-                                  Question {currentQIndex + 1} of {questionsData.length} ({pct}%)
-                                </span>
-                              </div>
-
-                              <div style={{ background: 'var(--orange-pale)', height: '5px', borderRadius: '10px', overflow: 'hidden', marginBottom: '25px' }}>
-                                <div style={{ background: 'var(--orange)', height: '100%', width: `${pct}%`, transition: 'width 0.3s' }}></div>
-                              </div>
-
-                              <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--brown)', fontSize: '20px', marginBottom: '20px', lineHeight: '1.4' }}>
-                                {q.text}
-                              </h3>
-
-                              {q.type === 'city' ? (
-                                <div style={{ marginBottom: '25px' }}>
-                                  <CitySelect
-                                    value={currentAnswers[0] || ''}
-                                    placeholder={q.placeholder}
-                                    onChange={(val) => setQuizAnswers(prev => ({ ...prev, [q.id]: [val] }))}
-                                  />
-                                </div>
-                              ) : (
-                              <div className="options-grid cols-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '25px' }}>
-                                {q.options.map(opt => {
-                                  const isSelected = currentAnswers.includes(opt.val);
-                                  return (
-                                    <button 
-                                      key={opt.val}
-                                      onClick={() => handleQuizAnswer(q.id, opt.val)}
-                                      className={`option-btn ${isSelected ? 'selected multi-selected' : ''}`}
-                                      style={{
-                                        padding: '12px 15px', borderRadius: '12px',
-                                        border: isSelected ? '2px solid var(--orange)' : '2px solid #EAE4DE',
-                                        background: isSelected ? 'var(--orange-pale)' : 'white',
-                                        color: isSelected ? 'var(--orange)' : 'var(--brown)',
-                                        cursor: 'pointer', textAlign: 'left',
-                                        transition: 'all 0.2s', display: 'flex', gap: '10px', alignItems: 'center'
-                                      }}
-                                    >
-                                      <span style={{ fontSize: '18px' }}>{opt.icon}</span>
-                                      <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-display)' }}>{opt.label}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              )}
-
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <button 
-                                  onClick={() => setCurrentQIndex(prev => prev - 1)}
-                                  disabled={currentQIndex === 0}
-                                  style={{
-                                    border: 'none', background: 'none', color: currentQIndex === 0 ? 'var(--text-soft)' : 'var(--brown)',
-                                    fontWeight: 'bold', cursor: currentQIndex === 0 ? 'default' : 'pointer', fontSize: '14px'
-                                  }}
-                                >
-                                  ← Back
-                                </button>
-
-                                {currentQIndex === questionsData.length - 1 ? (
-                                  <button 
-                                    onClick={submitInlineQuiz}
-                                    disabled={currentAnswers.length === 0}
-                                    className="hero-btn"
-                                    style={{ padding: '8px 25px', fontSize: '13px', boxShadow: 'none' }}
-                                  >
-                                    Get Recommendations →
-                                  </button>
-                                ) : (
-                                  <button 
-                                    onClick={() => setCurrentQIndex(prev => prev + 1)}
-                                    disabled={currentAnswers.length === 0}
-                                    className="hero-btn"
-                                    style={{ padding: '8px 25px', fontSize: '13px', boxShadow: 'none' }}
-                                  >
-                                    Next Question →
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
+                    {/* The contact screen comes before question 1 unless this browser already has a token.
+                        The number is a contact detail, not a login: see components/auth/ContactCapture.jsx. */}
+                    {dashboardTab === 'inline_quiz' && quizStage === 'quiz' && !token && (
+                      <div className="cc-inline">
+                        <ContactCapture
+                          title="Before we find your dog"
+                          sub="Tell us who you are, so we can share your matches with you."
+                        />
                       </div>
+                    )}
+
+                    {dashboardTab === 'inline_quiz' && quizStage === 'quiz' && token && (
+                      <QuizFlow
+                        key={resume?.key || 'quiz'}
+                        questions={questionsData}
+                        answers={quizAnswers}
+                        onAnswer={handleQuizAnswer}
+                        onSubmit={handleQuizSubmit}
+                        onCancel={() => setDashboardTab('menu')}
+                        onBrowseBreeds={() => openExploreSlider('quiz_link')}
+                        submitting={isProcessing}
+                        processingMessage={processingMessage}
+                        gateAt={paywallActive && PAYWALL_AFTER === 'rough' ? LAST_FREE_SCREEN_INDEX : null}
+                        onGate={handleQuizGate}
+                        startAt={resume?.startAt || 0}
+                        runId={resume?.runId}
+                      />
+                    )}
+
+                    {dashboardTab === 'inline_quiz' && quizStage !== 'quiz' && (
+                      <RoughRecommendation
+                        sniffing={quizStage === 'sniffing'}
+                        breeds={roughBreeds}
+                        freeCount={FREE_SCREEN_COUNT}
+                        totalCount={TOTAL_SCREENS}
+                        price={paywall?.price_rupees}
+                        onUnlock={() => { paywallCtaClicked('rough'); setUnlockFor('quiz'); }}
+                        onHome={() => openDashboard('menu')}
+                        onExplore={() => { returnToRough.current = true; openExploreSlider('rough_rec'); }}
+                        onSwipe={() => { returnToRough.current = true; openSwipe(null, [], 'friend_dashboard'); }}
+                      />
                     )}
 
                     {dashboardTab === 'ai_matchmaker' && (
@@ -619,7 +797,7 @@ const Home = () => {
                             required
                             style={{
                               width: '100%', minHeight: '120px', padding: '15px', borderRadius: '16px',
-                              border: '2px solid #EAE4DE', fontSize: '15px', fontFamily: 'var(--font-body-family)',
+                              border: '2px solid #EAE4DE', fontSize: '16px', fontFamily: 'var(--font-body-family)',
                               color: 'var(--brown)', outline: 'none', resize: 'vertical', marginBottom: '20px',
                               boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
                             }}
@@ -655,8 +833,16 @@ const Home = () => {
                 user={user}
                 onBack={() => openDashboard('menu')}
                 onBuy={handleBuy}
-                onFullProfile={(breed) => { setProfileBreed(breed); setProfileView('profile'); }}
-                onRetake={() => openDashboard('inline_quiz')}
+                onFullProfile={(breed) => openProfile(breed, 'results')}
+                onRetake={() => { track('retake_clicked'); findDog('retake'); openDashboard('inline_quiz'); }}
+                onExploreMore={() => openSwipe(resultsAnswers, (sliderBreeds || []).map((b) => b.name))}
+                /* "Compare breeds" in the results paw menu: the full breed matrix, where Compare lives. */
+                onCompareBreeds={() => openExploreSlider('results_fan')}
+                /* "Games" in the same menu: the Street Zoomies page. */
+                onPlayGames={() => { track('cta_click', { source: 'results_fan_games' }); navigate('/play'); }}
+                revealRun={revealRun}
+                revealSeen={revealSeen}
+                onRevealDone={() => setRevealSeen(revealRun)}
               />
             </motion.div>
           )}
@@ -680,15 +866,79 @@ const Home = () => {
                   breeds={sliderBreeds}
                   answers={resultsAnswers}
                   isResults={false}
-                  onClose={() => { setSubView('friend_dashboard'); setDashboardTab('menu'); }}
+                  onClose={() => {
+                    setSubView('friend_dashboard');
+                    // Opened from the rough recommendation: go back to it, answers intact.
+                    if (!returnToRough.current) setDashboardTab('menu');
+                    returnToRough.current = false;
+                  }}
                   onBuy={handleBuy}
-                  onFullProfile={(breed) => { setProfileBreed(breed); setProfileView('profile'); }}
-                  onCompare={(breed) => setCompareBreed(breed)}
+                  onFullProfile={(breed) => openProfile(breed, 'explore')}
+                  onCompare={openCompare}
+                  onSwipeMode={() => openSwipe(loadSavedAnswers(), [])}
                 />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+
+        {subView === 'breed_swipe' && (
+          <BreedSwipe
+            breeds={breedsData}
+            answers={swipeAnswers}
+            excludeNames={swipeExclude}
+            source={swipeFrom === 'results' ? 'results' : 'explore'}
+            onClose={() => setSubView(swipeFrom)}
+            onSliderView={() => setSubView('breed_slider')}
+            onBuy={handleBuy}
+            onFullProfile={(breed) => openProfile(breed, 'swipe')}
+            onCompare={openCompare}
+            onTakeQuiz={() => { findDog('swipe'); openDashboard('inline_quiz'); }}
+          />
+        )}
+
+        {/* The paywall: sign-in if needed, then the sheet (components/paywall/UnlockFlow.jsx). */}
+        <UnlockFlow
+          open={!!unlockFor}
+          status={paywall}
+          refreshStatus={refreshPaywall}
+          onUnlocked={handleUnlocked}
+          onCancel={(closed) => {
+            // Closing the unlock card from the rough recommendation is moment (a)
+            // for the "Was this useful?" card below.
+            if (unlockFor === 'quiz') setPaywallClosed(true);
+            setUnlockFor(null);
+            // Closed the sheet itself (not the sign-in step) without tapping Pay:
+            // ask why, right there.
+            if (closed?.how && !closed.tappedPay && paywallActive) askWhyNotUnlocked('dismissed');
+          }}
+        />
+
+        {notUnlocked && <NotUnlockedCard moment={notUnlocked} onDone={() => setNotUnlocked(null)} />}
+
+        {/* "Was this useful?" (components/results/ResultsPulse.jsx), at two moments only.
+            (a) closed the paywall without paying: on the rough recommendation, 5 seconds later. */}
+        <ResultsPulse
+          key="pulse-dismissed"
+          kind="dismissed"
+          price={paywall?.price_rupees}
+          active={paywallClosed && paywallActive && !unlockFor && !askedWhyThisVisit
+            && subView === 'friend_dashboard' && dashboardTab === 'inline_quiz' && quizStage === 'rough'}
+          blocked={isAboutOpen || !!profileBreed || !!compareBreed}
+          needsInteraction={false}
+          delayMs={AFTER_OVERLAY_MS}
+        />
+        {/* (b) the full recommendation, for people with access ('paid', which includes a
+            fake-door "Pay" tap) or with the paywall off ('none'). Never during the reveal. */}
+        <ResultsPulse
+          key={`pulse-results-${resultsPulseKind}`}
+          kind={resultsPulseKind}
+          price={paywall?.price_rupees}
+          active={paywallSettled && subView === 'results' && !!resultsAnswers && !paywallActive}
+          blocked={!!(revealRun && revealRun !== revealSeen) || !!unlockFor || isAboutOpen
+            || !!profileBreed || !!compareBreed || isAuthModalOpen}
+        />
 
         {/* Auth modal Popup Gate */}
         <AuthModal
@@ -726,7 +976,7 @@ const Home = () => {
         <AboutModal
           isOpen={isAboutOpen}
           onClose={() => setIsAboutOpen(false)}
-          onTakeQuiz={() => { setIsAboutOpen(false); handleFriendPathClick('inline_quiz'); }}
+          onTakeQuiz={() => { setIsAboutOpen(false); findDog('about'); handleFriendPathClick('inline_quiz'); }}
         />
       </motion.div>
 
@@ -740,6 +990,7 @@ const Home = () => {
           color: var(--orange);
           border: 1.5px solid rgba(230, 106, 26, 0.55);
           padding: 7px 18px;
+          min-height: 44px;            /* full-size tap target on phones */
           border-radius: 50px;
           cursor: pointer;
           font-family: var(--font-display);

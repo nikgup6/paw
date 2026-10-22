@@ -3,8 +3,35 @@ import { useOutletContext } from 'react-router-dom';
 import DocumentUploader from '../components/DocumentUploader';
 import QuickFeedback from '../../components/QuickFeedback';
 import {
-  deleteDocument, fileUrl, listDocuments, listPrescriptions, reprocessDocument,
+  deleteDocument, downloadFile, fetchFileObjectUrl, listDocuments, listPrescriptions, reprocessDocument,
 } from '../../utils/healthVault';
+
+/* A stored file shown from memory (the file route needs the sign-in token,
+   which an <img> or <iframe> cannot send). Null while it loads or if it fails. */
+const useFileObjectUrl = (documentId) => {
+  const [url, setUrl] = useState(null);
+  useEffect(() => {
+    if (!documentId) return undefined;
+    let made = null;
+    let alive = true;
+    fetchFileObjectUrl(documentId)
+      .then((u) => { made = u; if (alive) setUrl(u); else URL.revokeObjectURL(u); })
+      .catch(() => { /* the thumbnail just stays blank */ });
+    return () => { alive = false; if (made) URL.revokeObjectURL(made); };
+  }, [documentId]);
+  return url;
+};
+
+const DocImage = ({ documentId, ...props }) => {
+  const url = useFileObjectUrl(documentId);
+  return url ? <img src={url} alt="" {...props} /> : null;
+};
+
+const DocFrame = ({ documentId, title }) => {
+  const url = useFileObjectUrl(documentId);
+  return url ? <iframe className="pb-doc__frame" src={url} title={title} />
+    : <div className="pb-loading"><span className="pb-spin" aria-hidden="true" /> Loading…</div>;
+};
 import { formatDay, formatTimestamp, parseServerDate } from '../../utils/healthStatus';
 
 /* Every file uploaded for one dog: the original on Cloudinary, when it landed,
@@ -162,7 +189,7 @@ const DocumentVault = () => {
               return (
                 <li className="pb-doc" key={doc.id}>
                   <div className={`pb-doc__thumb ${isPdf ? 'is-pdf' : ''}`}>
-                    {isPdf ? <span>PDF</span> : <img src={fileUrl(doc.id)} alt="" loading="lazy" />}
+                    {isPdf ? <span>PDF</span> : <DocImage documentId={doc.id} loading="lazy" />}
                   </div>
 
                   <div className="pb-doc__meta">
@@ -210,9 +237,9 @@ const DocumentVault = () => {
                       </button>
                     )}
                     <button type="button" className="pb-btn pb-btn--sm" onClick={() => setPreview({ ...doc, isPdf })}>View</button>
-                    <a className="pb-btn pb-btn--sm" href={fileUrl(doc.id, { download: true })} target="_blank" rel="noreferrer">
+                    <button type="button" className="pb-btn pb-btn--sm" onClick={() => downloadFile(doc.id, doc.original_filename).catch(() => {})}>
                       Download
-                    </a>
+                    </button>
                     <button type="button" className="pb-btn pb-btn--sm pb-btn--danger" onClick={() => setPendingDelete(doc)}>
                       Delete
                     </button>
@@ -233,8 +260,8 @@ const DocumentVault = () => {
               <button type="button" onClick={() => setPreview(null)} aria-label="Close preview">×</button>
             </div>
             {preview.isPdf
-              ? <iframe className="pb-doc__frame" src={fileUrl(preview.id)} title={preview.original_filename} />
-              : <img className="pb-doc__full" src={fileUrl(preview.id)} alt={preview.original_filename} />}
+              ? <DocFrame documentId={preview.id} title={preview.original_filename} />
+              : <DocImage documentId={preview.id} className="pb-doc__full" alt={preview.original_filename} />}
           </div>
         </div>
       )}

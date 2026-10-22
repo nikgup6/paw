@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { DogsProvider, useDogs } from '../context/DogsContext';
+import DogSignIn from './components/DogSignIn';
 import { HealthIcon, HomeIcon, MoreIcon, ServicesIcon, SwitchDogIcon } from './components/TabIcons';
 import FeedbackModal from '../components/FeedbackModal';
 import { thumb } from '../utils/images';
@@ -253,7 +254,7 @@ const Shell = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { dogs, selectedDogId, selectDog } = useDogs();
+  const { dogs, selectedDogId, selectDog, needsSignIn } = useDogs();
   const match = useMatch('/app/dogs/:dogId/*');
   /* Identical resolution to the sidebar's: the dog you're looking at wins over
      the one merely selected, so the header can never name a different dog from
@@ -307,9 +308,12 @@ const Shell = () => {
           </nav>
         </header>
 
-        <Suspense fallback={<div className="pb-loading"><span className="pb-spin" aria-hidden="true" /> Loading…</div>}>
-          <Outlet />
-        </Suspense>
+        {/* Dog profiles need an account: sign in (or give details) first. */}
+        {needsSignIn ? <DogSignIn /> : (
+          <Suspense fallback={<div className="pb-loading"><span className="pb-spin" aria-hidden="true" /> Loading…</div>}>
+            <Outlet />
+          </Suspense>
+        )}
       </div>
 
       <MobileTabs

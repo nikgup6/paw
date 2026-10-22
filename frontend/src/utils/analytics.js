@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCampaign, getChannel, getContent, getDevice } from './attribution';
 
 /* Funnel tracking.
 
@@ -15,8 +16,12 @@ import axios from 'axios';
    sits on the critical path of the quiz, and a failed insert must never be
    able to stop somebody answering the next question. */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+/* ONE API base for every tracking call (events, progress, the legacy visit
+   ping in App.jsx). In production set VITE_API_URL on the host; without it
+   everything falls back to localhost, the same way for all of them. */
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const BASE = `${API_URL}/api/funnel`;
+const DEV = !!import.meta.env.DEV;
 
 const SID_KEY = 'pb_sid';
 
@@ -50,18 +55,77 @@ export const sessionId = readSid();
 let currentUserId = null;
 export const identify = (userId) => { currentUserId = userId || null; };
 
+/* Every event carries the first-touch traffic source, campaign, content (the
+   single reel) and device, so any event can be grouped by them later with no
+   joins. The caller's own props win. */
+const withContext = (props) => ({
+  channel: getChannel(), campaign: getCampaign(), content: getContent(), device: getDevice(), ...props,
+});
+
 export async function track(event_name, props = {}) {
   try {
-    await axios.post(`${BASE}/events`, {
+    const full = withContext(props);
+    if (DEV) console.debug('[track]', event_name, full);
+    const { data } = await axios.post(`${BASE}/events`, {
       session_id: sessionId,
       user_id: currentUserId,
       event_name,
-      props,
+      props: full,
     });
+    // The server stores nothing for a name it does not know. Say so loudly in dev.
+    if (DEV && data?.status === 'ignored') console.warn('[track] server IGNORED unknown event:', event_name);
   } catch {
     // Best effort. A missing datapoint is not worth a broken quiz.
   }
 }
+
+/* Fire once per `key`, however many times React re-renders or StrictMode runs an
+   effect twice. Keys ending in "_session" are remembered in sessionStorage too,
+   so they stay once-only across a page reload within the same browser session. */
+const onceKeys = new Set();
+export function trackOnce(event_name, key, props = {}) {
+  try {
+    const id = `${event_name}:${key}`;
+    if (onceKeys.has(id)) return;
+    onceKeys.add(id);
+    if (String(key).endsWith('_session')) {
+      try {
+        if (window.sessionStorage.getItem(`pb_once_${id}`)) return;
+        window.sessionStorage.setItem(`pb_once_${id}`, '1');
+      } catch { /* storage blocked: the in-memory Set still guards this page load */ }
+    }
+    track(event_name, props);
+  } catch { /* never break the UI */ }
+}
+
+/* For exit events: a normal request can be cancelled when the tab closes.
+   fetch with keepalive survives it. (navigator.sendBeacon with JSON would fail
+   the CORS preflight, so it is not used.) */
+/* For a page that is being hidden or closed: navigator.sendBeacon is the one
+   request a browser promises to finish after the page is gone. It sends the
+   JSON as text/plain (no CORS preflight); the server reads that the same way
+   and applies the same checks. Falls back to the keepalive fetch below. */
+export const sendBeaconEvent = (event_name, props = {}) => {
+  try {
+    const body = JSON.stringify({ session_id: sessionId, user_id: currentUserId, event_name, props: withContext(props) });
+    if (DEV) console.debug('[track]', event_name, props, '(sendBeacon)');
+    if (navigator.sendBeacon && navigator.sendBeacon(`${BASE}/events`, body)) return;
+  } catch { /* fall through */ }
+  trackBeacon(event_name, props);
+};
+
+export const trackBeacon = (event_name, props = {}) => {
+  try {
+    const full = withContext(props);
+    if (DEV) console.debug('[track]', event_name, full, '(beacon)');
+    fetch(`${BASE}/events`, {
+      method: 'POST',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, user_id: currentUserId, event_name, props: full }),
+    }).catch(() => { /* best effort */ });
+  } catch { /* never break the UI */ }
+};
 
 export async function saveProgress(patch) {
   try {

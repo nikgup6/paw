@@ -4,7 +4,7 @@ Thin controllers only — every handler delegates to a service. The legacy
 `/api/vaccination-documents/*` router re-registers these same handler functions
 (see routes/vaccination.py), so there is one implementation, not two.
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from fastapi.responses import Response
 from pydantic import BaseModel
 from urllib.parse import quote
@@ -24,17 +24,25 @@ class ScheduleEntryRef(BaseModel):
     """Which generated entry to hide. Sent in a body rather than the path because
     the keys contain colons (`schedule:DHPP:primary`)."""
     key: str
+from app.auth.dependencies import require_user
+from app.auth.dog_access import owned_dog, owned_record
 from app.database.connection import get_database
+from app.security import uploads
+from app.security.rate_limit import limited
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-ALLOWED_MIME = {"image/jpeg", "image/jpg", "image/png", "application/pdf"}
-ALLOWED_EXT = {"jpg", "jpeg", "png", "pdf"}
-EXT_TO_MIME = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "pdf": "application/pdf"}
 MAX_BYTES = 10 * 1024 * 1024
 
 NO_PROFILE = "Save your dog's profile before adding health records."
+
+# Every handler needs a signed-in owner: by its dog, or a record by its dog
+# (app/auth/dog_access.py). Someone else's dog or record answers 404.
+DOCUMENTS = "health_documents"
+VACCINATIONS = "vaccinations"
+PRESCRIPTIONS = "prescriptions"
+REMINDERS = "custom_reminders"
 
 
 def _require_db():
@@ -60,17 +68,16 @@ async def upload_document(
     dog_id: str = Form(...),
     document_type: str = Form(DocumentType.VACCINATION.value),
     file: UploadFile = File(...),
+    _limit: None = limited("uploads"),
+    claims: dict = Depends(require_user),
 ):
     """Store a medical document (Cloudinary + Health Vault) and run AI processing."""
     if not dog_id.strip():
         raise HTTPException(status_code=400, detail="A dog_id is required.")
 
     db = _require_db()
+    await owned_dog(db, dog_id.strip(), claims)
     await _require_dog(db, dog_id.strip())
-
-    ext = (file.filename or "").rsplit(".", 1)[-1].lower() if "." in (file.filename or "") else ""
-    if file.content_type not in ALLOWED_MIME and ext not in ALLOWED_EXT:
-        raise HTTPException(status_code=415, detail="Only JPG, JPEG, PNG or PDF files are allowed.")
 
     data = await file.read()
     if not data:
@@ -78,13 +85,27 @@ async def upload_document(
     if len(data) > MAX_BYTES:
         raise HTTPException(status_code=413, detail="File exceeds the 10MB limit.")
 
+    # What the file really is, from its own first bytes. This used to accept a
+    # file if EITHER the browser's label OR the name's extension looked right -
+    # so a program renamed to card.pdf got in on its name alone.
+    kind = uploads.sniff(data)
+    if kind not in uploads.DOCUMENT_KINDS:
+        raise HTTPException(status_code=415, detail="Only JPG, JPEG, PNG or PDF files are allowed.")
+    if kind != "pdf":
+        try:
+            cleaned = uploads.clean_image(data, kind)     # also proves it decodes as an image
+        except uploads.UploadRejected:
+            raise HTTPException(status_code=415, detail="That image couldn't be read. Please try another file.")
+        if uploads.STRIP_DOCUMENT_IMAGE_METADATA:
+            data = cleaned
+
     # AI being unconfigured is handled gracefully inside the service (the file is
     # still stored and the document is left Pending). Cloudinary is required.
     from app.services import cloudinary_service
     if not cloudinary_service.is_configured():
         raise HTTPException(status_code=503, detail="File storage is not configured on the server.")
 
-    mime_type = file.content_type if file.content_type in ALLOWED_MIME else EXT_TO_MIME.get(ext, "application/octet-stream")
+    mime_type = uploads.KINDS[kind]           # from the bytes, never the browser's label
     try:
         return await health_vault_service.ingest(db, dog_id.strip(), data, file.filename or "document", mime_type, document_type)
     except Exception:
@@ -92,64 +113,72 @@ async def upload_document(
         raise HTTPException(status_code=502, detail="Upload failed. Please try again.")
 
 
-async def list_documents(dog_id: str, type: str = Query(default=None)):
+async def list_documents(dog_id: str, type: str = Query(default=None), claims: dict = Depends(require_user)):
     """All Health Vault documents for a dog (optionally filtered by ?type=)."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     return await health_vault_service.list_documents(db, dog_id, type)
 
 
-async def list_vaccinations(dog_id: str):
+async def list_vaccinations(dog_id: str, claims: dict = Depends(require_user)):
     """Flat vaccination records with a live status — the legacy projection."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     return await timeline_service.build(db, dog_id)
 
 
-async def health_records(dog_id: str):
+async def health_records(dog_id: str, claims: dict = Depends(require_user)):
     """The Health Records Center: the dog's stored shots merged with the standard
     Indian schedule for its age and breed, grouped into Completed / Due Today /
     Upcoming / Overdue against the server's current date."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     dog = await dog_profile_service.get(db, dog_id)
     if not dog:
         raise HTTPException(status_code=409, detail=NO_PROFILE)
     return await timeline_service.build_health_records(db, dog_id, dog)
 
 
-async def list_reminders(dog_id: str):
+async def list_reminders(dog_id: str, claims: dict = Depends(require_user)):
     """Everything owed for this dog inside the reminder window — vaccinations,
     deworming and the owner's own reminders alike."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     dog = await dog_profile_service.get(db, dog_id)
     return await reminder_service.list_for(db, dog_id, dog)
 
 
-async def health_summary(dog_id: str):
+async def health_summary(dog_id: str, claims: dict = Depends(require_user)):
     """The Overview page's read model for one dog."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     dog = await _require_dog(db, dog_id)
     return await health_summary_service.build(db, dog_id, dog)
 
 
-async def emergency_card(dog_id: str):
+async def emergency_card(dog_id: str, claims: dict = Depends(require_user)):
     """The vet-ER card: who this dog is, what it reacts to, what it's on, and
     the shots that are actually completed."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     dog = await _require_dog(db, dog_id)
     return await emergency_card_service.build(db, dog_id, dog)
 
 
-async def list_prescriptions(dog_id: str):
+async def list_prescriptions(dog_id: str, claims: dict = Depends(require_user)):
     """Medical Logs — this dog's prescriptions, newest first."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     return await health_vault_service.list_prescriptions(db, dog_id)
 
 
-async def dismiss_schedule_entry(dog_id: str, ref: ScheduleEntryRef):
+async def dismiss_schedule_entry(dog_id: str, ref: ScheduleEntryRef, claims: dict = Depends(require_user)):
     """Hide a generated schedule dose or booster for this dog.
 
     Nothing is destroyed — the schedule still knows about it, it just stops
     being shown, and `restore_schedule_entries` brings it back."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     await _require_dog(db, dog_id)
     if not ref.key.strip():
         raise HTTPException(status_code=400, detail="A schedule entry key is required.")
@@ -157,23 +186,26 @@ async def dismiss_schedule_entry(dog_id: str, ref: ScheduleEntryRef):
     return {"status": "success", "hidden": await schedule_dismissal_service.count(db, dog_id)}
 
 
-async def restore_schedule_entries(dog_id: str):
+async def restore_schedule_entries(dog_id: str, claims: dict = Depends(require_user)):
     """Un-hide everything this dog has dismissed."""
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     restored = await schedule_dismissal_service.restore_all(db, dog_id)
     return {"status": "success", "restored": restored}
 
 
-async def delete_vaccination(vaccination_id: str):
+async def delete_vaccination(vaccination_id: str, claims: dict = Depends(require_user)):
     """Delete one recorded shot. The source document is untouched."""
     db = _require_db()
+    await owned_record(db, VACCINATIONS, vaccination_id, claims, "Vaccination")
     if not await health_vault_service.delete_vaccination(db, vaccination_id):
         raise HTTPException(status_code=404, detail="Vaccination not found.")
     return {"status": "success"}
 
 
-async def delete_prescription(prescription_id: str):
+async def delete_prescription(prescription_id: str, claims: dict = Depends(require_user)):
     db = _require_db()
+    await owned_record(db, PRESCRIPTIONS, prescription_id, claims, "Prescription")
     if not await health_vault_service.delete_prescription(db, prescription_id):
         raise HTTPException(status_code=404, detail="Prescription not found.")
     return {"status": "success"}
@@ -181,8 +213,9 @@ async def delete_prescription(prescription_id: str):
 
 # ------------------------- owner-created reminders -------------------------- #
 
-async def create_reminder(dog_id: str, payload: CustomReminderIn):
+async def create_reminder(dog_id: str, payload: CustomReminderIn, claims: dict = Depends(require_user)):
     db = _require_db()
+    await owned_dog(db, dog_id, claims)
     await _require_dog(db, dog_id)
     data = payload.dict()
     issues = custom_reminder_service.validate(data)
@@ -191,8 +224,9 @@ async def create_reminder(dog_id: str, payload: CustomReminderIn):
     return await custom_reminder_service.create(db, dog_id, data)
 
 
-async def update_reminder(reminder_id: str, payload: CustomReminderIn):
+async def update_reminder(reminder_id: str, payload: CustomReminderIn, claims: dict = Depends(require_user)):
     db = _require_db()
+    await owned_record(db, REMINDERS, reminder_id, claims, "Reminder")
     data = payload.dict()
     issues = custom_reminder_service.validate(data)
     if issues:
@@ -203,49 +237,54 @@ async def update_reminder(reminder_id: str, payload: CustomReminderIn):
     return updated
 
 
-async def complete_reminder(reminder_id: str):
+async def complete_reminder(reminder_id: str, claims: dict = Depends(require_user)):
     """Tick a reminder off — recurring ones roll to their next occurrence."""
     db = _require_db()
+    await owned_record(db, REMINDERS, reminder_id, claims, "Reminder")
     updated = await custom_reminder_service.complete(db, reminder_id)
     if updated is None:
         raise HTTPException(status_code=404, detail="Reminder not found.")
     return updated
 
 
-async def delete_reminder(reminder_id: str):
+async def delete_reminder(reminder_id: str, claims: dict = Depends(require_user)):
     db = _require_db()
+    await owned_record(db, REMINDERS, reminder_id, claims, "Reminder")
     if not await custom_reminder_service.delete(db, reminder_id):
         raise HTTPException(status_code=404, detail="Reminder not found.")
     return {"status": "success"}
 
 
-async def review_vaccination(vaccination_id: str, edits: VaccinationEdit):
+async def review_vaccination(vaccination_id: str, edits: VaccinationEdit, claims: dict = Depends(require_user)):
     """Confirm/correct a Needs-Review vaccination, then create its reminder."""
     db = _require_db()
+    await owned_record(db, VACCINATIONS, vaccination_id, claims, "Vaccination")
     updated = await health_vault_service.review_vaccination(db, vaccination_id, edits.dict())
     if updated is None:
         raise HTTPException(status_code=404, detail="Vaccination not found.")
     return updated
 
 
-async def update_status(document_id: str, update: StatusUpdate):
+async def update_status(document_id: str, update: StatusUpdate, claims: dict = Depends(require_user)):
     db = _require_db()
+    await owned_record(db, DOCUMENTS, document_id, claims, "Document")
     ok = await health_vault_service.set_status(db, document_id, update.processing_status.value)
     if not ok:
         raise HTTPException(status_code=404, detail="Document not found.")
     return {"status": "success", "processing_status": update.processing_status.value}
 
 
-async def reprocess_document(document_id: str):
+async def reprocess_document(document_id: str, _limit: None = limited("uploads"), claims: dict = Depends(require_user)):
     """Manual retry for a document whose AI processing failed (or never ran)."""
     db = _require_db()
+    await owned_record(db, DOCUMENTS, document_id, claims, "Document")
     updated = await health_vault_service.reprocess(db, document_id)
     if updated is None:
         raise HTTPException(status_code=404, detail="Document not found.")
     return updated
 
 
-async def get_file(document_id: str, download: bool = Query(default=False)):
+async def get_file(document_id: str, download: bool = Query(default=False), claims: dict = Depends(require_user)):
     """Serve the stored original — inline for viewing, or as an attachment.
 
     Going through the API rather than linking straight at Cloudinary is what
@@ -253,6 +292,7 @@ async def get_file(document_id: str, download: bool = Query(default=False)):
     refuses to deliver `.pdf` unless the account opts in), so the real content
     type and the original filename only exist here."""
     db = _require_db()
+    await owned_record(db, DOCUMENTS, document_id, claims, "Document")
     try:
         found = await health_vault_service.get_file(db, document_id)
     except Exception as exc:
@@ -284,10 +324,11 @@ async def get_file(document_id: str, download: bool = Query(default=False)):
     )
 
 
-async def delete_document(document_id: str, delete_records: bool = Query(default=False)):
+async def delete_document(document_id: str, delete_records: bool = Query(default=False), claims: dict = Depends(require_user)):
     """Delete a document. `?delete_records=true` also removes the vaccinations
     that were extracted from it; by default they are kept."""
     db = _require_db()
+    await owned_record(db, DOCUMENTS, document_id, claims, "Document")
     ok = await health_vault_service.delete_document(db, document_id, delete_records)
     if not ok:
         raise HTTPException(status_code=404, detail="Document not found.")

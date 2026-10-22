@@ -8,10 +8,13 @@ key is configured, the route answers with an empty payload and the frontend
 falls back to its local keyword parser.
 """
 
-from fastapi import APIRouter
+import logging
+
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.config.settings import settings
+from app.security.rate_limit import matchmaker_within_daily_cap, rate_limit
 
 try:
     from anthropic import AsyncAnthropic
@@ -19,6 +22,7 @@ except ImportError:  # anthropic not installed yet — fallback mode
     AsyncAnthropic = None
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 MODEL = "claude-haiku-4-5"
 
@@ -70,12 +74,20 @@ class MatchmakerRequest(BaseModel):
     prompt: str
 
 
-@router.post("/parse")
+# 10 per connection per hour (429 past that), plus a daily cap across everyone.
+# Either way the browser falls back to its local keyword parser on its own -
+# utils/matchmaker.js treats an error or an empty answer exactly the same.
+@router.post("/parse", dependencies=[Depends(rate_limit("matchmaker"))])
 async def parse_prompt(request: MatchmakerRequest):
     api_key = settings.ANTHROPIC_API_KEY
     if not api_key or AsyncAnthropic is None:
         # No key configured — frontend uses its local parser
         return {"answers": {}, "source": "none"}
+
+    # Counted only here, after the free exits: a call that would not reach the
+    # paid API does not use up the day's budget.
+    if not await matchmaker_within_daily_cap():
+        return {"answers": {}, "source": "capped"}
 
     try:
         client = AsyncAnthropic(api_key=api_key)
@@ -103,5 +115,7 @@ async def parse_prompt(request: MatchmakerRequest):
 
         return {"answers": answers, "source": "ai"}
     except Exception as exc:  # any API failure → frontend local fallback
-        print(f"Matchmaker parse failed: {exc}")
+        # The visitor's own words are never logged - only what kind of failure it was.
+        logger.warning("Matchmaker parse failed (%s); the browser falls back to its local parser",
+                       type(exc).__name__)
         return {"answers": {}, "source": "error"}

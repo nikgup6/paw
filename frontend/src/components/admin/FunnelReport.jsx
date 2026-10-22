@@ -15,6 +15,7 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const STEP_LABELS = {
+  site_visit: 'Visited',
   quiz_started: 'Started',
   quiz_completed: 'Completed',
   results_viewed: 'Results viewed',
@@ -29,6 +30,19 @@ const READINESS_COLOR = {
   ready_now: '#C62828', ready_soon: '#E35D18', planning: '#2F7FB8', researching: '#7A6A5C',
 };
 const colorFor = (code) => READINESS_COLOR[code] || '#B9AA9C';
+
+const ACTION_LABELS = {
+  share_clicked: 'Shared results', breed_opened: 'Opened a breed', compare_opened: 'Opened compare',
+  swipe_shortlist: 'Shortlisted in swipe', stickers_open: 'Opened stickers', retake_clicked: 'Retook the quiz',
+  gate_viewed: 'Saw the lead gate', gate_submitted: 'Submitted the gate', gate_skipped: 'Skipped the gate',
+  // Paywall (labels only; the pilot dashboard comes in its own step)
+  free_part_completed: 'Finished the free part', rough_rec_viewed: 'Saw the rough match',
+  paywall_cta_clicked: 'Tapped Unlock', paywall_viewed: 'Saw the paywall',
+  payment_started: 'Tapped Pay (server)', payment_dismissed: 'Closed checkout',
+  payment_failed: 'Payment failed', payment_success: 'Paid (server-confirmed)',
+  unlock_continued: 'Continued after unlocking',
+};
+const pct = (v) => (v == null ? '—' : `${v}%`);
 
 const PRESETS = [
   { label: '7 days', days: 7 },
@@ -90,6 +104,23 @@ const FunnelReport = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  // One row per quiz session, for pasting numbers into updates. Needs the admin token,
+  // so it is fetched as a file and saved rather than opened as a plain link.
+  const downloadCsv = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/funnel/export.csv`, {
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${localStorage.getItem('pb_token') || ''}` },
+      });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'paw-buddy-funnel.csv'; a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Couldn’t download the CSV.');
+    }
+  };
+
   if (loading && !report) {
     return <div style={{ ...card, color: 'var(--text-soft)' }}>Loading funnel…</div>;
   }
@@ -103,6 +134,12 @@ const FunnelReport = () => {
   }
 
   const { funnel, dropoff, readiness, abandoned, completions, cta_rate: cta } = report;
+  // Added later: older API responses may not carry these, so every one has a safe default.
+  const byChannel = report.by_channel || [];
+  const byDevice = report.by_device || [];
+  const actions = report.actions || {};
+  const health = report.health || null;
+  const healthBad = !!health && (health.rejected_events > 0 || health.events_last_24h === 0);
   const readinessTotal = readiness.reduce((sum, r) => sum + r.count, 0);
   const custom = Boolean(start || end);
 
@@ -113,6 +150,12 @@ const FunnelReport = () => {
       <div style={{ ...card, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
         <strong style={{ color: 'var(--brown)', fontSize: '14px' }}>Acquisition funnel</strong>
         <span style={{ flex: 1 }} />
+        <button
+          onClick={downloadCsv}
+          style={{ padding: '7px 14px', borderRadius: '50px', cursor: 'pointer', fontSize: '12.5px', fontWeight: 700, border: '1px solid #E3D9CE', background: 'white', color: 'var(--brown)', fontFamily: 'inherit' }}
+        >
+          Download CSV
+        </button>
         {PRESETS.map((p) => (
           <button
             key={p.days}
@@ -138,6 +181,27 @@ const FunnelReport = () => {
         )}
       </div>
 
+
+      {/* ---------------------- tracking health strip ------------------------ */}
+      {health && (
+        <div style={{
+          ...card, padding: '14px 20px', marginBottom: '16px', display: 'flex', gap: '22px', flexWrap: 'wrap', alignItems: 'center',
+          background: healthBad ? '#FFF6E5' : 'white', border: healthBad ? '1px solid #F0C36D' : '1px solid transparent',
+        }}>
+          <strong style={{ color: healthBad ? '#8A5A12' : 'var(--brown)', fontSize: '13px' }}>
+            {healthBad ? '⚠ Tracking health: needs a look' : 'Tracking health: OK'}
+          </strong>
+          <span style={{ fontSize: '12.5px', color: 'var(--brown)' }}>
+            Rejected events: <b style={{ color: health.rejected_events > 0 ? '#B26A00' : 'inherit' }}>{health.rejected_events}</b>
+            {health.last_rejected ? ` (last: ${health.last_rejected}${health.last_rejected_reason ? ` - ${health.last_rejected_reason}` : ''})` : ''}
+          </span>
+          <span style={{ fontSize: '12.5px', color: 'var(--brown)' }}>
+            Events in last 24h: <b style={{ color: health.events_last_24h === 0 ? '#B26A00' : 'inherit' }}>{health.events_last_24h}</b>
+          </span>
+          <span style={{ fontSize: '12.5px', color: 'var(--text-soft)' }}>Last event: {stamp(health.last_event_at)}</span>
+        </div>
+      )}
+
       {/* -------------------------- 1. the funnel ---------------------------- */}
       <div style={card}>
         <h3 style={h3}>Funnel</h3>
@@ -156,7 +220,7 @@ const FunnelReport = () => {
                 </div>
                 {step.from_start != null && i > 0 && (
                   <div style={{ fontSize: '11px', color: 'var(--text-soft)', marginTop: '2px' }}>
-                    {step.from_start}% of started
+                    {step.from_start}% of visited
                   </div>
                 )}
               </div>
@@ -170,6 +234,71 @@ const FunnelReport = () => {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+
+      {/* ------------------------- by source / by device --------------------- */}
+      <div style={card}>
+        <h3 style={h3}>By source</h3>
+        <p style={sub}>Where visitors came from (first touch, from the UTM tag on the link). Rates are conversion from the step before.</p>
+        {byChannel.length === 0 ? (
+          <p style={{ ...sub, margin: 0 }}>No source data in this range yet.</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr><th style={th}>Source</th><th style={th}>Visits</th><th style={th}>Started %</th><th style={th}>Completed %</th><th style={th}>Results %</th><th style={th}>Breeder CTA %</th></tr>
+            </thead>
+            <tbody>
+              {byChannel.map((row) => (
+                <tr key={row.channel}>
+                  <td style={{ ...td, fontWeight: 700 }}>{row.channel}</td>
+                  <td style={td}>{row.site_visit}</td>
+                  <td style={td}>{pct(row.started_rate)}</td>
+                  <td style={td}>{pct(row.completed_rate)}</td>
+                  <td style={td}>{pct(row.results_rate)}</td>
+                  <td style={td}>{pct(row.cta_rate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+        <div style={{ ...card, flex: '1 1 340px' }}>
+          <h3 style={h3}>By device</h3>
+          {byDevice.length === 0 ? (
+            <p style={{ ...sub, margin: 0 }}>No device data yet.</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr><th style={th}>Device</th><th style={th}>Visits</th><th style={th}>Started</th><th style={th}>Completed</th><th style={th}>CTA</th></tr>
+              </thead>
+              <tbody>
+                {byDevice.map((row) => (
+                  <tr key={row.device}>
+                    <td style={{ ...td, fontWeight: 700 }}>{row.device}</td>
+                    <td style={td}>{row.site_visit}</td>
+                    <td style={td}>{row.quiz_started}</td>
+                    <td style={td}>{row.quiz_completed}</td>
+                    <td style={td}>{row.breeder_cta_clicked}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div style={{ ...card, flex: '1 1 340px' }}>
+          <h3 style={h3}>Other actions</h3>
+          <p style={sub}>Distinct sessions that did each thing.</p>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <tbody>
+              {Object.entries(actions).map(([name, count]) => (
+                <tr key={name}><td style={td}>{ACTION_LABELS[name] || name}</td><td style={{ ...td, fontWeight: 700 }}>{count}</td></tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

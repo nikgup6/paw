@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { claimLegacyDog, getOwnerId, listDogs } from '../utils/dogs';
+import { AuthContext } from './AuthContext';
+import { adoptBrowserDogs, getOwnerId, listDogs } from '../utils/dogs';
 
 /* Owns the owner's dogs for the whole /app area.
 
@@ -13,7 +14,12 @@ import { claimLegacyDog, getOwnerId, listDogs } from '../utils/dogs';
 
    It also owns which dog is *selected*. One selection drives the dashboard and
    the sidebar together, and it survives a reload, so there is never a moment
-   where the page is showing one dog and the menu is pointing at another. */
+   where the page is showing one dog and the menu is pointing at another.
+
+   Dog profiles need a signed-in account. Without one, `needsSignIn` is true and
+   the app shows the sign-in screen (app/components/DogSignIn.jsx) instead of an
+   error. After signing in, this browser's old pre-sign-in dogs are moved to the
+   account once, then the list loads. */
 
 const DogsContext = createContext(null);
 const SELECTED_KEY = 'pb_selected_dog';
@@ -24,6 +30,8 @@ const readSelected = () => {
 
 export const DogsProvider = ({ children }) => {
   const [ownerId] = useState(getOwnerId);
+  const { token, user } = useContext(AuthContext);
+  const needsSignIn = !token;
   const [dogs, setDogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,8 +43,10 @@ export const DogsProvider = ({ children }) => {
       setDogs(list);
       setError('');
       return list;
-    } catch {
-      setError('Couldn’t load your dogs. Check your connection and try again.');
+    } catch (err) {
+      setError(err?.response?.status === 401
+        ? 'Your sign-in has expired. Please sign in again.'
+        : 'Couldn’t load your dogs. Check your connection and try again.');
       return null;
     } finally {
       setLoading(false);
@@ -44,16 +54,12 @@ export const DogsProvider = ({ children }) => {
   }, [ownerId]);
 
   useEffect(() => {
+    if (needsSignIn) return undefined;
     let cancelled = false;
-    (async () => {
-      // Adopt a pre-multi-dog profile before the first list, so an existing
-      // medical history shows up rather than looking like a fresh install.
-      await claimLegacyDog(ownerId);
-      if (cancelled) return;
-      await refresh();
-    })();
+    // This browser's pre-sign-in dogs first, so they show up in the first list.
+    adoptBrowserDogs(user?.id).then(() => { if (!cancelled) refresh(); });
     return () => { cancelled = true; };
-  }, [ownerId, refresh]);
+  }, [needsSignIn, user?.id, refresh]);
 
   const selectDog = useCallback((id) => {
     setSelectedId(id);
@@ -67,8 +73,9 @@ export const DogsProvider = ({ children }) => {
     const selectedDog = dogs.find((d) => d.id === selectedId) || dogs[0] || null;
     return {
       ownerId,
+      needsSignIn,
       dogs,
-      loading,
+      loading: needsSignIn ? false : loading,
       error,
       refresh,
       hasDogs: dogs.length > 0,
@@ -77,7 +84,7 @@ export const DogsProvider = ({ children }) => {
       selectedDogId: selectedDog?.id || null,
       selectDog,
     };
-  }, [ownerId, dogs, loading, error, refresh, selectedId, selectDog]);
+  }, [ownerId, needsSignIn, dogs, loading, error, refresh, selectedId, selectDog]);
 
   return <DogsContext.Provider value={value}>{children}</DogsContext.Provider>;
 };

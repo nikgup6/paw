@@ -11,6 +11,7 @@ from fastapi.responses import Response
 
 from app.auth.dependencies import require_admin
 from app.database.connection import get_database
+from app.security.rate_limit import rate_limit
 from app.models.owner_survey import OwnerSurveyIn
 from app.services import owner_survey_service
 
@@ -25,7 +26,7 @@ def _require_db():
     return db
 
 
-@router.post("/submit")
+@router.post("/submit", dependencies=[Depends(rate_limit("owner_survey"))])
 async def submit_survey(payload: OwnerSurveyIn):
     """Public: one completed 8-question form."""
     db = _require_db()

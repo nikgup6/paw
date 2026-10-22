@@ -1,14 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.auth.dependencies import require_admin, require_self_or_admin
+from typing import Optional
+
+from app.auth.dependencies import optional_user, require_admin, require_self_or_admin
 from app.models.interaction import BuyRequest
 from app.database.connection import get_database
+from app.security.rate_limit import rate_limit
 from typing import List
 
 router = APIRouter()
 
-@router.post("")
-async def submit_buy_request(request: BuyRequest):
+@router.post("", dependencies=[Depends(rate_limit("buy"))])
+async def submit_buy_request(request: BuyRequest, claims: Optional[dict] = Depends(optional_user)):
+    """Public lead capture. Filed under the signed-in account if there is one
+    (from the token - a user_id in the body is ignored, or anyone could plant
+    leads in someone else's Profile history), otherwise anonymous."""
     db = get_database()
+    request.user_id = claims["sub"] if claims else None
     await db["buy_requests"].insert_one(request.dict())
     return {"status": "success"}
 

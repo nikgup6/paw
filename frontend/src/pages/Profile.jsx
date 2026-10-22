@@ -22,14 +22,12 @@ const Profile = () => {
 
     const fetchProfileData = async () => {
       try {
-        // /api/buy/user/:id now requires the caller to BE that user (or an
-        // admin) — it used to be openly readable by anyone who knew a user
-        // id. Without this header every Profile page would 401 on its own
-        // buy history.
-        const authHeaders = { headers: { Authorization: `Bearer ${localStorage.getItem('pb_token') || ''}` } };
+        // All three reads now require the caller to BE that user (or an admin):
+        // they used to be readable by anyone who knew a user id. The token is
+        // attached by the axios hook in utils/apiAuth.js.
         const [quizRes, buyRes] = await Promise.all([
           axios.get(`${API_URL}/api/quiz/user/${user.id}`),
-          axios.get(`${API_URL}/api/buy/user/${user.id}`, authHeaders)
+          axios.get(`${API_URL}/api/buy/user/${user.id}`)
         ]);
         setQuizzes(quizRes.data);
         setBuyRequests(buyRes.data);

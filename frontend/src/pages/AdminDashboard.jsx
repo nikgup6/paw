@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import FunnelReport from '../components/admin/FunnelReport';
+import PilotReport from '../components/admin/PilotReport';
 import OwnerSurveyTable from '../components/admin/OwnerSurveyTable';
 import CareTipsTable from '../components/admin/CareTipsTable';
 
@@ -188,6 +189,7 @@ const AdminDashboard = () => {
   const [expScore, setExpScore] = useState({ field: '', max: '' });
   const [anonymousVisitors, setAnonymousVisitors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reportView, setReportView] = useState(() => { try { return localStorage.getItem('pb_admin_report') || 'funnel'; } catch { return 'funnel'; } });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'users', 'buy_requests', 'leads', 'anonymous'
   const [cityFilter, setCityFilter] = useState('');
   const [authError, setAuthError] = useState('');
@@ -423,7 +425,23 @@ const AdminDashboard = () => {
         {/* The acquisition funnel sits above the existing tabs and has its own
             date range — it answers a different question from the tables below
             it, which are lifetime lists rather than a period report. */}
-        <FunnelReport />
+        {/* Funnel (unchanged) or Pilot (the four stages of the paid pilot). The
+            choice is remembered in this browser only. */}
+        <div role="tablist" aria-label="Report" style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+          {[['funnel', 'Funnel'], ['pilot', 'Pilot']].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={reportView === id}
+              onClick={() => { setReportView(id); try { localStorage.setItem('pb_admin_report', id); } catch { /* storage blocked */ } }}
+              style={{ padding: '9px 18px', minHeight: '40px', borderRadius: '50px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: 'var(--shadow)', background: reportView === id ? '#011E4A' : 'white', color: reportView === id ? 'white' : '#011E4A' }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {reportView === 'pilot' ? <PilotReport /> : <FunnelReport />}
 
         {activeTab === 'overview' && (
           <>

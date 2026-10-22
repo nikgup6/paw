@@ -156,19 +156,13 @@
       },
       {
         "icon": "",
-        "label": "Both Children & Seniors",
-        "desc": "Best matched with gentle and adaptable breeds that suit all age groups.",
-        "val": "both"
-      },
-      {
-        "icon": "",
         "label": "Adults Only",
         "desc": "Flexible home setup that supports a wide variety of dog personalities.",
         "val": "adults"
       }
     ],
     "cols": 2,
-    "multi": false
+    "multi": true
   },
   {
     "id": "activity",

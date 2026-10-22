@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { buildLivingConditions, generateProsCons } from '../utils/breedUtils';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from './WhatsAppButton';
 import BreederDirectory from './BreederDirectory';
+import { recallReadiness, sessionId, track, trackOnce } from '../utils/analytics';
+import { getChannel } from '../utils/attribution';
 import { BuyConfirm } from './BreedCheckGate';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -18,6 +20,21 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
   const [showAuthWarning, setShowAuthWarning] = useState(false);
   const [waLink, setWaLink] = useState('');
   const navigate = useNavigate();
+  const runId = useRef(Date.now()); // one id per opening of this modal, for once-only tracking
+
+  // Funnel step: the user asked for breeders. Once per breed per opening, so a
+  // re-render or StrictMode's double effect cannot count it twice.
+  const fireBreederCta = () => {
+    if (!breed) return;
+    trackOnce('breeder_cta_clicked', `${breed.name}:${runId.current}`, {
+      breed: breed.name,
+      city: answeredCity(answers) || user?.city || null,
+      readiness_code: recallReadiness(),
+      source: answers ? 'quiz_results' : 'explore',
+    });
+  };
+  // "Find breeders" opens this modal straight on the breeder list (initialView 'buy').
+  useEffect(() => { if (initialView === 'buy') fireBreederCta(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!breed) return null;
 
@@ -35,6 +52,7 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
      "Proceed anyway" confirmation button reach the same place. */
   const proceedToBuy = () => {
     setView('buy');
+    fireBreederCta();
     axios.post(`${API_URL}/api/buy`, {
       user_id: user?.id || null,
       user_name: user?.name || 'Guest',
@@ -43,6 +61,8 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
       breed_name: breed.name,
       intent: 'Viewed breeder list',
       status: 'NEW',
+      session_id: sessionId,
+      channel: getChannel(),
     }).catch(() => { /* best effort — never blocks the user */ });
   };
 
@@ -63,11 +83,14 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
       breed_name: breed.name,
       intent: `Contacted breeder: ${breeder.name} (${breeder.city})`,
       status: 'NEW',
+      session_id: sessionId,
+      channel: getChannel(),
     }).catch(() => { /* best effort */ });
   };
 
   const submitBuyRequest = (e) => {
     e.preventDefault();
+    track('contact_submitted', { breed: breed.name });
     const formData = new FormData(e.target);
     const name = formData.get('name');
     const mobile = formData.get('mobile');
@@ -87,7 +110,9 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
       city: user?.city || 'Not Provided',
       breed_name: breed.name,
       intent,
-      status: "NEW"
+      status: "NEW",
+      session_id: sessionId,
+      channel: getChannel(),
     }).catch(() => { /* lead capture is best-effort */ });
 
     setView('success');
@@ -132,6 +157,7 @@ const BreedProfileModal = ({ breed, user, onClose, answers, topBreeds = [], init
             topBreeds={topBreeds}
             onBack={() => setView('profile')}
             onContact={logBreederContact}
+            source="breed_profile"
           />
         )}
 

@@ -68,9 +68,12 @@ def validate(payload: dict) -> list:
 async def create(db, owner_id: str, payload: dict) -> dict:
     """Create a dog and mint its id. Every later record is linked to that id."""
     dog = DogProfile(owner_id=owner_id, **_fields(payload))
-    await db[DOGS].insert_one(dog.dict())
+    # owner_kind "account": owned by a signed-in account (owner_id is its user id),
+    # so adopt_browser_dogs can never move it. Dogs from before sign-in have none.
+    row = {**dog.dict(), "owner_kind": "account"}
+    await db[DOGS].insert_one(dict(row))
     logger.info("Created dog %s for owner %s", dog.id, owner_id)
-    return dog.dict()
+    return row
 
 
 async def update(db, dog_id: str, payload: dict):
@@ -121,6 +124,22 @@ async def delete(db, dog_id: str) -> bool:
     await db[DOGS].delete_one({"id": dog_id})
     logger.info("Deleted dog %s and all of its records", dog_id)
     return True
+
+
+async def adopt_browser_dogs(db, browser_owner_id: str, user_id: str) -> int:
+    """Move the dogs a browser created before sign-in existed to the account
+    now signed in on that same browser. The browser's random owner id lives
+    only in that browser (localStorage + cookie), so holding it is the proof.
+    Only dogs still owned by that exact id move; nothing is deleted."""
+    moved = 0
+    async for dog in db[DOGS].find({"owner_id": browser_owner_id}):
+        if dog.get("owner_kind") == "account":
+            continue        # already belongs to an account: never moved by this
+        await db[DOGS].update_one({"id": dog["id"], "owner_id": browser_owner_id},
+                                  {"$set": {"owner_id": user_id, "owner_kind": "account",
+                                            "adopted_from_browser": True, "updated_at": utc_now()}})
+        moved += 1
+    return moved
 
 
 async def claim(db, dog_id: str, owner_id: str):

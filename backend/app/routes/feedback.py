@@ -1,9 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from typing import Optional
 
-from app.auth.dependencies import require_admin
+from app.auth.dependencies import optional_user, require_admin
 from app.models.interaction import EXPERIENCE_QUESTIONS, ExperienceFeedback, Feedback
+from app.models.funnel import safe_id
+from app.models.pulse import PULSE_VERSION, PulseIn, ScreenerIn
 from app.database.connection import get_database
+from app.security import rate_limit as rl
+from app.security.rate_limit import rate_limit
+from app.services import pulse_service
 
 router = APIRouter()
 
@@ -17,7 +22,7 @@ EXPERIENCE_COLLECTION = "experience_feedback"
 SORTABLE_FIELDS = frozenset(EXPERIENCE_QUESTIONS) | {"created_at"}
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(rate_limit("feedback"))])
 async def submit_feedback(feedback: Feedback):
     """Public: anyone can leave feedback, signed in or not.
 
@@ -49,7 +54,7 @@ async def get_feedback(
     return feedback_list
 
 
-@router.post("/experience")
+@router.post("/experience", dependencies=[Depends(rate_limit("feedback_experience"))])
 async def submit_experience_feedback(entry: ExperienceFeedback):
     """Public: the 5-question survey from the app's "More" sheet.
 
@@ -117,3 +122,72 @@ async def list_experience_feedback(
         averages[key] = round(sum(values) / len(values), 2) if values else None
 
     return {"entries": rows, "count": len(rows), "averages": averages}
+
+
+# ------------------------------------------------------------------------- #
+# "Was this useful?" pop-up (frontend/src/components/results/ResultsPulse.jsx).
+# The whitelists are in models/pulse.py; the logic in services/pulse_service.py.
+# Everything above this line is unchanged.
+# ------------------------------------------------------------------------- #
+
+def _db():
+    db = get_database()
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database unavailable.")
+    return db
+
+
+async def _limit(request: Request, session_id: str) -> None:
+    """200 an hour per connection (a college Wi-Fi is one address for everyone
+    on it) and 10 an hour per visit (one person answers at most 5 times)."""
+    await rl.enforce("pulse_ip", rl.client_ip(request))
+    await rl.enforce("pulse_session", session_id, whose="from this visit")
+
+
+@router.post("/pulse")
+async def submit_pulse(payload: PulseIn, request: Request, claims: Optional[dict] = Depends(optional_user)):
+    """"Was this recommendation useful to you?" One row per session in the
+    existing feedback collection; posting again (say, with a comment) updates
+    it. A code outside yes/some/no, or a comment with a link, is a 422."""
+    await _limit(request, payload.session_id)
+    await pulse_service.save_pulse(_db(), payload, claims)
+    return {"status": "success"}
+
+
+@router.post("/screener")
+async def submit_screener(payload: ScreenerIn, request: Request, claims: Optional[dict] = Depends(optional_user)):
+    """One screener answer. Key and answer are checked against the whitelist;
+    a repeat tap for the same key replaces the answer."""
+    await _limit(request, payload.session_id)
+    await pulse_service.save_screener(_db(), payload, claims)
+    return {"status": "success"}
+
+
+@router.get("/pulse/status")
+async def pulse_status(
+    request: Request,
+    session_id: str = Query(...),
+    version: int = Query(PULSE_VERSION, ge=1, le=1000),
+    claims: Optional[dict] = Depends(optional_user),
+):
+    """Public. Was this visit (or this signed-in account) already asked? Returns
+    booleans and question keys only - nothing personal."""
+    if not safe_id(session_id):
+        raise HTTPException(status_code=422, detail="bad session_id")
+    await rl.enforce("pulse_status", rl.client_ip(request))
+    return await pulse_service.status(_db(), session_id, claims["sub"] if claims else None, version)
+
+
+@router.get("/pulse/summary", dependencies=[Depends(require_admin)])
+async def pulse_summary(
+    start: Optional[str] = Query(None, description="ISO date, inclusive"),
+    end: Optional[str] = Query(None, description="ISO date, inclusive"),
+    days: int = Query(30, ge=1, le=365),
+    include_test: bool = Query(False, description="Include visits tagged ?utm_source=test"),
+):
+    """Admin only. Counts, distributions, response rate and the latest comments
+    (with date, breed and paywall state - never a name, number or email)."""
+    try:
+        return await pulse_service.summary(_db(), start, end, include_test, days)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Dates must be ISO (YYYY-MM-DD).")

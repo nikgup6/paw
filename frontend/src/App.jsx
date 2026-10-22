@@ -3,13 +3,17 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layouts/Layout';
 import Home from './pages/Home';
 import Explore from './pages/Explore';
-import Quiz from './pages/Quiz';
+import RequireUnlock from './components/paywall/RequireUnlock';
+import { Terms, Privacy, Refunds, Contact } from './pages/legal/LegalPages';
 import Results from './pages/Results';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import OwnerSurvey from './pages/OwnerSurvey';
+import StickersPage from './pages/StickersPage';
+import { captureAttribution, getAttribution } from './utils/attribution';
+import { API_URL, sessionId, saveProgress, trackOnce } from './utils/analytics';
 import ProtectedRoute from './components/ProtectedRoute';
 import { BreedsProvider } from './context/BreedsContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -17,6 +21,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 /* The signed-in product area is code-split away from the marketing site: a
    visitor who only ever reads the landing page never downloads the dashboard,
    and the Health Records pages only load when one is opened. */
+/* The "Walk the dog" game is code-split too: the main bundle never carries it. */
+const Play = lazy(() => import('./pages/Play'));
+/* The heat check is its own page and carries the climate table, so it is code-split as well. */
+const HeatCheck = lazy(() => import('./pages/HeatCheck'));
 const AppShell = lazy(() => import('./app/AppShell'));
 const Dashboard = lazy(() => import('./app/Dashboard'));
 const DogForm = lazy(() => import('./app/DogForm'));
@@ -34,7 +42,19 @@ const AppFallback = () => (
   </div>
 );
 
+// Read the UTM / referrer / device ONCE per browser session, as early as possible,
+// so every event (even ones fired by child components) already knows its channel.
+captureAttribution();
+
 function App() {
+  // One site_visit per browser session, plus the first-touch source saved on this
+  // session's quiz_progress row (the server only ever writes it once).
+  useEffect(() => {
+    const first = getAttribution() || captureAttribution();
+    trackOnce('site_visit', 'site_visit_session', { landing_path: first?.landing_path || window.location.pathname });
+    if (first) saveProgress({ attribution: first });
+  }, []);
+
   useEffect(() => {
     const trackAnonymousVisit = async () => {
       // Check if user is NOT logged in and hasn't been tracked yet in this session
@@ -46,10 +66,11 @@ function App() {
             localStorage.setItem('pb_visitor_id', visitorId);
           }
           
-          await fetch(`${import.meta.env.VITE_API_URL}/api/analytics/visit`, {
+          await fetch(`${API_URL}/api/analytics/visit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ visitor_id: visitorId })
+            // session_id joins this legacy visit record to the funnel's events
+            body: JSON.stringify({ visitor_id: visitorId, session_id: sessionId })
           });
           
           sessionStorage.setItem('pb_anon_tracked', 'true');
@@ -90,10 +111,23 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="explore" element={<Explore />} />
-            <Route path="quiz" element={<Quiz />} />
+            {/* The old standalone quiz now leads to the home-page quiz, where the
+                paywall lives (Quiz.jsx is kept, just no longer routed). */}
+            <Route path="quiz" element={<Navigate to="/?quiz=1" replace />} />
             {/* Existing Dog Owner intake — 8 questions, then Add-a-Dog. */}
             <Route path="owner-survey" element={<OwnerSurvey />} />
-            <Route path="results" element={<Results />} />
+            <Route path="results" element={<RequireUnlock><Results /></RequireUnlock>} />
+            {/* Shareable sticker pack; redirects home while STICKERS_LIVE is false. */}
+            <Route path="stickers" element={<StickersPage />} />
+            {/* "Will it survive?" — the breed/city/month heat lookup. Read-only, no backend. */}
+            <Route path="heat-check" element={<HeatCheck />} />
+            {/* Policy pages a payment gateway checks for (placeholders; see pages/legal). */}
+            <Route path="terms" element={<Terms />} />
+            <Route path="privacy" element={<Privacy />} />
+            <Route path="refunds" element={<Refunds />} />
+            <Route path="contact" element={<Contact />} />
+            {/* Public mini-game. Not part of the quiz, the results or the lead gate. */}
+            <Route path="play" element={<Play />} />
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
             <Route 

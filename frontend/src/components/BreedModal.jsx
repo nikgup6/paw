@@ -7,6 +7,8 @@ import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from './WhatsAppButton';
 import BreederDirectory from './BreederDirectory';
 import { loadQuizState } from '../utils/quizState';
+import { recallReadiness, sessionId, trackOnce } from '../utils/analytics';
+import { getChannel } from '../utils/attribution';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -23,6 +25,16 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [waLink, setWaLink] = useState('');
   const compareRef = useRef(null);
+  const runId = useRef(Date.now()); // once-only tracking key for this modal instance
+
+  // Funnel step: the buy view (the breeder list) just opened for this breed.
+  useEffect(() => {
+    if (modalType === 'buy' && breed) {
+      trackOnce('breeder_cta_clicked', `${breed.name}:${runId.current}`, {
+        breed: breed.name, city: quizCity || user?.city || null, readiness_code: recallReadiness(), source: 'explore',
+      });
+    }
+  }, [modalType, breed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (modalType === 'compare' && breed) {
@@ -73,7 +85,9 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
       city: user?.city || 'Not Provided',
       breed_name: breed?.name,
       intent: `Contacted breeder: ${breeder.name} (${breeder.city})`,
-      status: "NEW"
+      status: "NEW",
+      session_id: sessionId,
+      channel: getChannel(),
     }).catch(() => { /* best effort */ });
   };
 
@@ -115,6 +129,7 @@ const BreedModal = ({ breed, modalType, onClose, setModalType, user }) => {
                 breedName={breed.name}
                 topBreeds={[]}
                 onContact={logBreederContact}
+                source="breed_modal"
               />
             )}
           </>

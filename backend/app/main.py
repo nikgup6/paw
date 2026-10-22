@@ -1,24 +1,85 @@
 import logging
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from app.auth.dependencies import require_admin
 from app.config.settings import settings, ENV_FILE
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_database
 from app.database.indexes import ensure_indexes
-from app.routes import auth, breeds, quiz, admin, feedback, buy_requests, analytics, pets, matchmaker, vaccination, health_vault, dogs, funnel, owner_survey, care_tips, daily_care
+from app.security.body_limit import BodySizeLimit
+from app.security.errors import CatchUnexpected, body_for, log_and_reference
+from app.security.headers import SecurityHeaders
+from app.security.log_safety import install_log_redaction
+
+# Before anything logs: every log record from here on is checked for secrets and
+# phone numbers (app/security/log_safety.py).
+install_log_redaction()
+from app.routes import auth, breeds, quiz, admin, feedback, buy_requests, analytics, pets, matchmaker, vaccination, health_vault, dogs, funnel, owner_survey, care_tips, daily_care, paywall
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title=settings.PROJECT_NAME)
+# The interactive API docs (/docs, /redoc) and the machine-readable map of every
+# endpoint (/openapi.json) are a gift to anyone probing the live API. Kept on a
+# laptop, where they are useful; switched off when ENV=production.
+_PRODUCTION = settings.ENV == "production"
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    docs_url=None if _PRODUCTION else "/docs",
+    redoc_url=None if _PRODUCTION else "/redoc",
+    openapi_url=None if _PRODUCTION else "/openapi.json",
+)
 
+# Middleware order: Starlette wraps each new one AROUND the ones added before,
+# so the first added is the innermost. Innermost to outermost here:
+#   CatchUnexpected -> BodySizeLimit -> CORS -> SecurityHeaders
+# so an unexpected error's 500 still passes through CORS and gets the headers.
+app.add_middleware(CatchUnexpected)
+
+# Tracking bodies are a few hundred bytes; 10 KB is a generous ceiling. Added
+# BEFORE the CORS middleware on purpose: Starlette wraps each new middleware
+# around the earlier ones, so this one sits inside CORS and even its 413 carries
+# the CORS headers (otherwise the browser reports a confusing CORS error).
+app.add_middleware(BodySizeLimit, limits={
+    "/api/funnel/events": 10 * 1024,
+    "/api/funnel/progress": 10 * 1024,
+    "/api/analytics/visit": 10 * 1024,
+    "/api/feedback/pulse": 2 * 1024,       # a 200-character comment plus codes
+    "/api/feedback/screener": 1024,
+})
+
+# CORS decides which WEBSITES may call this API from a browser. It was "*"
+# (every site on the internet) together with allow_credentials=True. Now:
+#  - origins: only the ones listed in CORS_ORIGINS (no wildcard; see settings.py)
+#  - credentials off: the frontend sends its login token in the Authorization
+#    header and never uses cookies, so there is nothing for this to allow
+#  - methods and headers: exactly what the frontend sends, nothing more
+#  - Retry-After exposed, so the page can read how long a rate limit lasts
+# CORS is a browser rule only. It does not stop curl or a script calling the API
+# directly - the rate limits and the login checks are what do that.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Update for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
+    expose_headers=["Retry-After"],
+    max_age=600,
 )
+
+# Added last, so it is the outermost layer: every response gets these headers,
+# including CORS refusals and the size limit's 413. See app/security/headers.py.
+app.add_middleware(SecurityHeaders, frame_origins=settings.cors_origins)
+
+
+@app.exception_handler(Exception)
+async def unexpected_error(request: Request, exc: Exception):
+    """Last resort, for an error raised inside a middleware. Errors from the
+    routes are caught earlier by CatchUnexpected (app/security/errors.py), whose
+    reply carries the CORS and security headers - this one, run by Starlette
+    outside every middleware, cannot."""
+    ref = log_and_reference(request.method, request.url.path, exc)
+    return Response(content=body_for(ref), status_code=500, media_type="application/json")
 
 def _log_configuration_status():
     """Report missing integration config at boot, so a misconfigured server is
@@ -27,6 +88,12 @@ def _log_configuration_status():
     from app.services.ai_processing import provider
 
     logger.info("Config source: %s (%s)", ENV_FILE, "found" if ENV_FILE.exists() else "MISSING")
+
+    if settings.ENV == "production" and settings.TRUSTED_PROXY_COUNT == 0:
+        logger.warning(
+            "ENV=production with TRUSTED_PROXY_COUNT=0. Behind a proxy (Vercel is one) every "
+            "visitor then looks like the proxy and they all share ONE rate limit. Set "
+            "TRUSTED_PROXY_COUNT=1 on Vercel.")
 
     if not cloudinary_service.is_configured():
         logger.warning(
@@ -111,6 +178,9 @@ app.include_router(care_tips.router, prefix="/api/care-tips", tags=["care-tips"]
 # stricter one nothing could satisfy while there is no login.
 app.include_router(daily_care.router, prefix="/api/daily-care", tags=["daily-care"])
 app.include_router(matchmaker.router, prefix="/api/matchmaker", tags=["matchmaker"])
+# Status is public (the quiz needs the mode before sign-in); order and verify
+# need a sign-in per route; the webhook is proven by Razorpay's signature.
+app.include_router(paywall.router, prefix="/api/paywall", tags=["paywall"])
 app.include_router(dogs.router, prefix="/api/dogs", tags=["dogs"])
 app.include_router(vaccination.router, prefix="/api/vaccination-documents", tags=["vaccination (legacy alias)"])
 app.include_router(health_vault.router, prefix="/api/health-vault", tags=["health-vault"])

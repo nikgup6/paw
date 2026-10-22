@@ -6,6 +6,7 @@ import {
 
 import { WhatsAppIcon } from './WhatsAppButton';
 import QuickFeedback from './QuickFeedback';
+import { trackOnce } from '../utils/analytics';
 
 /* Shown after "Buy Now": the verified breeder network for the user's city.
    Two filters as specced — a free-text breeder-name search, and a zone picker
@@ -14,7 +15,9 @@ import QuickFeedback from './QuickFeedback';
 
 const RATING_COLOR = (r) => (r >= 4.7 ? '#1E9E52' : r >= 4.3 ? '#2F8F4E' : '#B4761B');
 
-const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onContact }) => {
+/* `source` says which screen the directory was opened from (breed_modal, breed_profile, results);
+   it is only a label on the call / WhatsApp tap events. */
+const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onContact, source = 'directory' }) => {
   const [query, setQuery] = useState('');
   const [area, setArea] = useState('all');
   /* Breeders whose WhatsApp button has been tapped this session. Asking before
@@ -164,7 +167,14 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
                     <dt>Phone</dt>
                     <dd>
                       {telHref(b.phone)
-                        ? <a href={telHref(b.phone)}>{b.phone}</a>
+                        ? (
+                          <a
+                            href={telHref(b.phone)}
+                            // Once per breeder per browser session (a second tap is the same intent,
+                            // and the dashboard counts people, not taps). No preventDefault: the call still starts.
+                            onClick={() => trackOnce('breeder_call_clicked', `${b.id}_session`, { breeder_id: b.id, breeder_name: b.name, breed: breedName, source })}
+                          >{b.phone}</a>
+                        )
                         : <span className="bd-dim">Not listed — reach them via Maps</span>}
                     </dd>
                   </div>
@@ -196,6 +206,10 @@ const BreederDirectory = ({ userCity, breedName, topBreeds = [], onBack, onConta
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => {
+                        // This is the single place that tracks the tap. The modals that wrap this
+                        // component (onContact) still log the lead to /api/buy but no longer track it too.
+                        // Once per breeder per browser session, as for calls.
+                        trackOnce('breeder_whatsapp_opened', `${b.id}_session`, { breeder_id: b.id, breeder_name: b.name, breed: breedName, source });
                         onContact?.(b);
                         setContacted((prev) => new Set(prev).add(b.id));
                       }}

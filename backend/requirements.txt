@@ -9,5 +9,8 @@ bcrypt==3.2.2
 python-multipart>=0.0.6
 anthropic>=0.69.0
 cloudinary>=1.40.0
+# Upload checks: decodes images to prove what they are, and re-saves dog photos
+# without their EXIF/GPS metadata (app/security/uploads.py).
+Pillow>=10.0
 google-genai>=1.0.0
 openpyxl>=3.1.0

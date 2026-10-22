@@ -100,4 +100,7 @@ class BuyRequest(BaseModel):
     breed_name: str
     intent: str
     status: str = "NEW"
+    # Links the lead back to the funnel session and traffic source.
+    session_id: Optional[str] = None
+    channel: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)

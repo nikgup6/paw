@@ -10,7 +10,7 @@ const describeBreed = (b) => {
   return `A ${sizeWord} ${role} with ${energy} energy — happiest with ${(b.time || 'about an hour').toLowerCase()} of engagement every day.`;
 };
 
-const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile, onCompare }) => {
+const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile, onCompare, onSwipeMode }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,6 +142,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', zIndex: 10, padding: '0 10px' }}>
         <button 
           onClick={onClose}
+          className="bs-back"
           style={{
             background: 'white', color: 'var(--brown)', border: '1px solid #EAE4DE',
             padding: '8px 20px', borderRadius: '50px', cursor: 'pointer',
@@ -151,6 +152,21 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
         >
           ← Back
         </button>
+
+        {onSwipeMode && (
+          <button
+            type="button"
+            onClick={onSwipeMode}
+            className="bs-swipe"
+            style={{
+              background: '#FFF1E6', color: '#B34A0E', border: '1.5px solid #F5691A',
+              padding: '8px 18px', borderRadius: '50px', cursor: 'pointer',
+              fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-semibold)', fontSize: '13px'
+            }}
+          >
+            Swipe mode
+          </button>
+        )}
 
         {/* Autocomplete Instant Search Bar */}
         <div style={{ position: 'relative', width: '100%', maxWidth: '350px' }}>
@@ -164,6 +180,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
             <span style={{ marginRight: '8px' }}>🔍</span>
             <input 
               type="text"
+              className="bs-search"
               placeholder="Search breeds instantly..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
@@ -171,7 +188,7 @@ const BreedSlider = ({ breeds, answers, isResults, onClose, onBuy, onFullProfile
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               style={{
                 border: 'none', outline: 'none', padding: '8px 0', width: '100%',
-                fontSize: '14px', fontFamily: 'var(--font-body-family)', color: 'var(--brown)'
+                fontFamily: 'var(--font-body-family)', color: 'var(--brown)'
               }}
             />
           </div>

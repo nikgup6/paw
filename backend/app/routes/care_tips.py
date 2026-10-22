@@ -11,9 +11,10 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, UploadFile, File
 
-from app.auth.dependencies import require_admin
+from app.auth.dependencies import require_admin, require_user
+from app.auth.dog_access import owned_dog
 from app.database.connection import get_database
-from app.services import care_tips_import_service, care_tips_service, conditions, dog_profile_service
+from app.services import care_tips_import_service, care_tips_service, conditions
 from app.services.care_tips_import_service import zone_for_city
 
 logger = logging.getLogger(__name__)
@@ -106,8 +107,9 @@ async def match_for_dog(
         False, description="Return the dog's complete approved matching set — no "
                            "rotation, no 3-tip cap — instead of the dashboard card's "
                            "rotated subset. Powers the Tip Details modal."),
+    claims: dict = Depends(require_user),
 ):
-    """Public: tips for a dog that already has a profile (the dashboard card).
+    """Signed-in owner only: tips for a dog that already has a profile (the dashboard card).
 
     Breed, city and date of birth are read from the stored profile rather than
     taken from the query string, so the card always reflects what the owner
@@ -119,9 +121,7 @@ async def match_for_dog(
     and the month (see services/conditions.py) — no live reading is taken, so
     the payload carries source="derived" rather than implying a measurement."""
     db = _require_db()
-    dog = await dog_profile_service.get(db, dog_id)
-    if not dog:
-        raise HTTPException(status_code=404, detail="Dog not found.")
+    dog = await owned_dog(db, dog_id, claims)      # signed in, and your dog (else 404)
 
     city = dog.get("city")
 

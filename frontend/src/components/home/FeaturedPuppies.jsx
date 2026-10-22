@@ -55,11 +55,12 @@ const FeaturedPuppies = ({ user }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/explore')}
+            className="fp-explore"
             style={{ 
               background: 'var(--orange-pale)', 
               color: 'var(--orange)', 
               border: 'none', 
-              padding: '12px 24px', 
+              padding: '12px 24px',
               borderRadius: '50px',
               fontFamily: 'var(--font-display)',
               fontWeight: 600,
@@ -86,6 +87,7 @@ const FeaturedPuppies = ({ user }) => {
               <BreedCard 
                 breed={puppy} 
                 hideActionButtons={true}
+                barkSource="carousel"
                 onBuy={() => handleBuy(puppy)}
                 onFullProfile={() => handleFullProfile(puppy)}
                 onImageClick={() => { setSelectedBreed(puppy); setModalType('image_preview'); }}

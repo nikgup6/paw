@@ -3,7 +3,9 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 class PetProfile(BaseModel):
-    user_id: str
+    # Set by the server from the sign-in token (routes/pets.py); a value sent by
+    # the browser is ignored, so it is optional here.
+    user_id: Optional[str] = None
     name: str
     dob: str
     age_display: str

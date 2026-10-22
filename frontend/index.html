@@ -6,13 +6,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Caveat:wght@500;600&family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Caveat:wght@500;600&family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Caveat:wght@500;600&family=Figtree:wght@400;500;700&family=Fredoka:wght@400;500;600;700&family=Gabarito:wght@500;700;800&family=Instrument+Serif:ital@1&family=Plus+Jakarta+Sans:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Caveat:wght@500;600&family=Figtree:wght@400;500;700&family=Fredoka:wght@400;500;600;700&family=Gabarito:wght@500;700;800&family=Instrument+Serif:ital@1&family=Plus+Jakarta+Sans:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Gabarito (500/700/800) and Figtree (400/500/700) are the Top 5 results section only -
+         see --pb-font-display / --pb-font-body in components/RecommendationResults.jsx. They ride
+         in the same stylesheet request as the rest, which is already preloaded on the line above. -->
+    <!-- Instrument Serif is loaded ITALIC ONLY (ital@1), one weight, for the hero's first
+         headline line and nothing else. It is requested in the same stylesheet as the other
+         Google families so there is still one round trip, and that stylesheet is already
+         preloaded on the line above. All families use display=swap, so text paints in the
+         fallback immediately and never blocks the hero. -->
     <!-- Satoshi is not on Google Fonts; loaded from Fontshare. Used for the
          landing hero CTA, subtext, ticker and wordmark. -->
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
     <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=clash-display@600,700&display=swap" rel="stylesheet">
-    <title>Paw Buddy - Meet Your New Best Friend</title>
+    <!-- Link previews (WhatsApp, Instagram DMs, other chat apps) read these RAW tags and do not
+         run JavaScript, so they live here rather than in React. REPLACE-WITH-LIVE-DOMAIN must be
+         swapped for the real domain (no trailing slash) in the five places below; the image
+         URL has to be absolute. See src/constants/site.js. -->
+    <title>PAW BUDDY: Find the Right Dog for Your Life in 2 Minutes</title>
+    <meta name="description" content="Take a free 2-minute quiz and see which dog breeds fit your home, budget, city heat and daily routine. Made for dog buyers in India." />
+    <link rel="canonical" href="https://REPLACE-WITH-LIVE-DOMAIN/" />
+    <meta name="theme-color" content="#F5691A" />
+    <link rel="apple-touch-icon" href="/image.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PAW BUDDY" />
+    <meta property="og:title" content="PAW BUDDY: Find the Right Dog for Your Life in 2 Minutes" />
+    <meta property="og:description" content="Take a free 2-minute quiz and see which dog breeds fit your home, budget, city heat and daily routine. Made for dog buyers in India." />
+    <meta property="og:url" content="https://REPLACE-WITH-LIVE-DOMAIN/" />
+    <meta property="og:image" content="https://REPLACE-WITH-LIVE-DOMAIN/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="PAW BUDDY: which dog actually fits your life? A free 2-minute quiz." />
+    <meta property="og:locale" content="en_IN" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PAW BUDDY: Find the Right Dog for Your Life in 2 Minutes" />
+    <meta name="twitter:description" content="Take a free 2-minute quiz and see which dog breeds fit your home, budget, city heat and daily routine. Made for dog buyers in India." />
+    <meta name="twitter:image" content="https://REPLACE-WITH-LIVE-DOMAIN/og-image.jpg" />
   </head>
   <body>
     <div id="root"></div>

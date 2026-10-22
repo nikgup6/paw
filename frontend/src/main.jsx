@@ -4,6 +4,11 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './styles/index.css'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { installApiAuth } from './utils/apiAuth.js'
+
+/* Attach the signed-in user's token to every request to OUR API (never to any
+   other site). See utils/apiAuth.js. */
+installApiAuth()
 
 /* Caches document reads (see public/sw.js) so a certificate or prescription an
    owner has already opened still opens with no connection. Registered after

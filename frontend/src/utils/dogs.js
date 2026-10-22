@@ -2,16 +2,18 @@ import axios from 'axios';
 
 /* Client for the dog-profile API.
 
-   An owner is identified by a per-device id. There is no login: creating a dog
-   profile IS the sign-up step, and that dog's id is what every health record is
-   filed under. One owner may keep any number of dogs, and no read ever spans
-   two of them. */
+   Every call needs a signed-in account (utils/apiAuth.js adds the token); the
+   server takes the owner from that token, never from anything sent here. One
+   owner may keep any number of dogs, and no read ever spans two of them.
+
+   The per-device owner id below is from before sign-in existed. It is now used
+   for one thing: moving this browser's old dogs to the account once
+   (adoptBrowserDogs). */
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const BASE = `${API_URL}/api/dogs`;
 
 const OWNER_ID_KEY = 'pb_owner_id';
-const LEGACY_DOG_ID_KEY = 'pb_dog_id';
 
 /* The owner id is the only thing tying a person to their dogs, and it lived in
    exactly one place: localStorage. Clearing site data — or a browser doing it
@@ -64,34 +66,34 @@ export const getOwnerId = () => {
   return id;
 };
 
-/* The first build kept a single dog under `pb_dog_id` with no owner. Adopt it
-   once so an existing medical history survives the move to multiple dogs. */
-export const claimLegacyDog = async (ownerId) => {
-  let legacyId;
-  try {
-    legacyId = localStorage.getItem(LEGACY_DOG_ID_KEY);
-  } catch { return null; }
-  if (!legacyId) return null;
+/* Has this browser ever had the old per-device owner id (it may hold dogs)? */
+export const hasBrowserOwnerId = () => !!(readStored(OWNER_ID_KEY) || readCookie(OWNER_ID_KEY));
 
+/* Dogs made on this browser before sign-in were owned by its random id. Once
+   someone signs in here, move those dogs to their account (the server only
+   moves dogs still owned by that exact id). Once per account per browser. */
+export const adoptBrowserDogs = async (userId) => {
+  const browserId = readStored(OWNER_ID_KEY) || readCookie(OWNER_ID_KEY);
+  const doneKey = `pb_dogs_adopted_${userId}`;
+  if (!browserId || readStored(doneKey)) return 0;
   try {
-    const dog = await axios.post(`${BASE}/${legacyId}/claim`, null, { params: { owner_id: ownerId } })
-      .then((r) => r.data);
-    return dog;
+    const { data } = await axios.post(`${BASE}/adopt-browser`, { browser_owner_id: browserId });
+    writeStored(doneKey, '1');
+    return data?.moved || 0;
   } catch {
-    return null;                       // already claimed, or never existed
-  } finally {
-    try { localStorage.removeItem(LEGACY_DOG_ID_KEY); } catch { /* ignore */ }
+    return 0;                          // try again next time
   }
 };
 
-export const listDogs = (ownerId) =>
-  axios.get(BASE, { params: { owner_id: ownerId } }).then((r) => r.data);
+/* `ownerId` is ignored: the server lists the signed-in account's dogs. */
+export const listDogs = () =>
+  axios.get(BASE).then((r) => r.data);
 
 export const getDog = (dogId) =>
   axios.get(`${BASE}/${dogId}`).then((r) => r.data);
 
-export const createDog = (ownerId, profile) =>
-  axios.post(BASE, profile, { params: { owner_id: ownerId } }).then((r) => r.data);
+export const createDog = (_ownerId, profile) =>
+  axios.post(BASE, profile).then((r) => r.data);
 
 export const updateDog = (dogId, profile) =>
   axios.put(`${BASE}/${dogId}`, profile).then((r) => r.data);

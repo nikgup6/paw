@@ -75,10 +75,24 @@ async def ensure_indexes(db) -> None:
         # `events` is append-only and is the source of truth for what happened.
         # Every dashboard read filters by event_name over a date window, or
         # replays one session, so those are the two indexes that matter.
+        # "Was this useful?" pop-up. One feedback row per session for it (the
+        # partial filter leaves every other kind of feedback alone), and one
+        # screener answer per (session, question).
+        feedback = db["feedback"]
+        await feedback.create_index(
+            [("context", 1), ("session_id", 1)], unique=True,
+            partialFilterExpression={"context": "rec_useful"}, name="rec_useful_one_per_session")
+        await feedback.create_index([("context", 1), ("created_at", -1)])
+        screener = db["screener_answers"]
+        await screener.create_index([("session_id", 1), ("key", 1)], unique=True)
+        await screener.create_index("created_at")
+        await screener.create_index("user_id")
+
         events = db["events"]
         await events.create_index([("event_name", 1), ("created_at", -1)])
         await events.create_index("session_id")
         await events.create_index("created_at")
+        await events.create_index("props.channel")  # funnel split by traffic source
 
         # `quiz_progress` is mutable: one row per session, rewritten on every
         # answer. session_id is the upsert key, so it has to be unique — two
@@ -88,6 +102,12 @@ async def ensure_indexes(db) -> None:
         await progress.create_index("status")
         await progress.create_index("readiness_code")
         await progress.create_index("updated_at")
+        await progress.create_index("user_id")         # pilot dashboard: a person's sessions
+
+        # Pilot dashboard lookups. Not unique: these only speed up reads.
+        users = db["users"]
+        await users.create_index("id")
+        await users.create_index([("source", 1), ("created_at", -1)])
 
         # The reference table behind readiness_code. One row per level, so the
         # code is the natural key.
@@ -124,6 +144,22 @@ async def ensure_indexes(db) -> None:
 
         # The per-dog habit list. One document per dog, so dog_id is unique.
         await db["daily_care_items"].create_index("dog_id", unique=True)
+
+        # Paywall orders. order_id is how verify and the webhook find a row, and
+        # unique so one Razorpay order can never become two rows. payment_id is
+        # unique only where it exists: a PARTIAL index, because a "sparse" one
+        # still indexes null and two unpaid rows would collide.
+        payments = db["payments"]
+        await payments.create_index("order_id", unique=True)
+        await payments.create_index("payment_id", unique=True,
+                                    partialFilterExpression={"payment_id": {"$type": "string"}})
+        await payments.create_index([("user_id", 1), ("created_at", -1)])
+        await payments.create_index("created_at")     # pilot dashboard window
+
+        # Rate-limit counters (app/security/rate_limit.py). Each document's
+        # expires_at is the end of its window; MongoDB deletes it after that,
+        # so the collection never grows past the windows currently open.
+        await db["rate_limits"].create_index("expires_at", expireAfterSeconds=0)
 
         logger.info("Indexes ensured for dog_profiles + vaccination_documents + vaccinations "
                     "+ health_documents + prescriptions + reminders + custom_reminders "

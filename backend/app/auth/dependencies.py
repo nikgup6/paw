@@ -102,4 +102,41 @@ async def require_self_or_admin(
         return claims
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                        detail="You can only view your own requests.")
+                        detail="You can only view your own data.")
+
+
+async def require_user(
+    creds: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> dict:
+    """Any signed-in account. For writes that belong to the caller: the route
+    takes the account id from the token (claims["sub"]), never from the request
+    body, so nobody can write into someone else's record by naming their id."""
+    if creds is None or not creds.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sign in to save this.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    claims = decode_token(creds.credentials)
+    if claims is None or not claims.get("sub"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Your session has expired. Please sign in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return claims
+
+
+async def optional_user(
+    creds: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> Optional[dict]:
+    """The signed-in account if there is a valid token, else None. Never raises.
+
+    For PUBLIC writes that may be attributed to an account - the quiz result, a
+    breeder request. Anonymous visitors must keep working, so a missing,
+    expired or forged token is not an error: the record is simply saved as
+    anonymous. What it no longer does is believe a user_id the browser typed."""
+    if creds is None or not creds.credentials:
+        return None
+    claims = decode_token(creds.credentials)
+    return claims if claims and claims.get("sub") else None

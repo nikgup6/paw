@@ -93,3 +93,20 @@ export const deleteDocument = (documentId, deleteRecords = false) =>
    and filename. `download` switches inline viewing for a save-as. */
 export const fileUrl = (documentId, { download = false } = {}) =>
   (documentId ? `${BASE}/documents/${documentId}/file${download ? '?download=true' : ''}` : null);
+
+/* The file route needs the owner's sign-in, and an <img>, <iframe> or link
+   cannot send it. So the file is fetched with the token (axios adds it) and
+   shown from memory: an object URL that exists only in this tab. The caller
+   revokes it when done. */
+export const fetchFileObjectUrl = (documentId) =>
+  axios.get(fileUrl(documentId), { responseType: 'blob' }).then((r) => URL.createObjectURL(r.data));
+
+/* Download: the same authorised fetch, saved under the original filename. */
+export const downloadFile = async (documentId, filename) => {
+  const url = await fetchFileObjectUrl(documentId);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'document';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};

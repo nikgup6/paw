@@ -1,0 +1,12 @@
+TODO: public/og-image.jpg is MISSING. Link previews will show no picture until it exists.
+
+Spec (make it in Canva):
+- 1200 x 630 px, JPG, under 300 KB.
+- Keep ALL text and the logo inside the central 1000 x 500 (apps crop differently).
+- PAW BUDDY logo, the headline "Which dog actually fits your life?",
+  one line "2-minute quiz. Free.", and one friendly dog illustration in the brand style.
+- Navy text on cream, or white on orange. Large enough to read at about 300 px wide.
+
+Brand: orange #F5691A, navy #011E4A, cream #FBF8F4, peach #FFD9BD.
+
+Save it as public/og-image.jpg, then delete this file.

@@ -2194,3 +2194,78 @@
 .match-score.warning {
   color: #E74C3C; /* Red */
 }
+
+
+/* The explore search box: desktop keeps 14px; the touch block below raises it to 16px so iOS
+   Safari does not zoom the page when it is tapped. */
+.bs-search { font-size: 14px; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TOUCH DEVICES ONLY  (phones, tablets — anything driven by a finger)
+   Everything here exists because a fingertip needs ~44x44px and cannot read 10px
+   type, while a mouse pointer can hit a 34px button exactly. Desktop is left
+   alone on purpose: it is keyed on `pointer: coarse`, not on screen width, so
+   resizing a desktop window never changes the desktop design.
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (pointer: coarse) {
+  /* --- 44px minimum tap targets --- */
+  .about-nav-btn,
+  .hero-btn,
+  .breed-btn,
+  .rbx-pill,
+  .rbx-back,
+  .bs-back,
+  .bs-swipe,
+  .fp-explore,
+  .auth-back,
+  .auth-btn,
+  .feedback-submit,
+  .buy-action-btn {
+    min-height: 44px;
+  }
+  .journey-close,
+  .about-close {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .auth-signup {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 8px;
+  }
+  /* Footer links were 15px tall and 26px wide — far too small for a thumb. The tighter gap keeps the
+     row from wrapping awkwardly now that each link is wider. */
+  .footer-links { align-items: center; gap: 12px; }
+  .footer-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 6px;
+  }
+
+  /* --- text a phone can actually read --- */
+  .pill { font-size: 12px; }
+  .top-badge { font-size: 12px; }
+  .auth-strip__label { font-size: 12px !important; }
+  .rbx-tagline { font-size: 12px !important; }
+  .rbx-explore-new { font-size: 11px; }
+
+  /* --- a field under 16px makes iOS Safari zoom the whole page when it is tapped --- */
+  .auth-field input,
+  .feedback-textarea,
+  .bs-search,
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .bs-search { min-height: 44px; }
+}

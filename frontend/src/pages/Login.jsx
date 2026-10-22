@@ -1,17 +1,20 @@
 import { useState, useContext } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import ContactCapture from '../components/auth/ContactCapture';
+import LegacyNumberLogin from '../components/auth/LegacyNumberLogin';
 
-/* Placeholder every account was created with. Ordinary sign-in is by mobile
-   number alone; this is sent only so the existing form contract is unchanged. */
-const PLACEHOLDER_PASSWORD = 'PawBuddy@123';
+/* Two screens in one page.
+   - Everyone else: the contact screen. There is no sign-in by mobile number
+     (nobody can prove a number is theirs without OTP), so a visitor on a new
+     browser simply gives their details again and gets a fresh account.
+   - Administrators: mobile, then the real password - unchanged. */
 
 const Login = () => {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
-  /* Only the admin account has a real password. Rather than showing everyone a
-     field that 28 of 29 accounts must leave blank, the field appears when the
-     server says this mobile needs one. */
+  /* Only admin accounts have a password. The field appears once the server
+     says this mobile is one. */
   const [needsPassword, setNeedsPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,13 +26,16 @@ const Login = () => {
      a link into the dashboard — say so, otherwise the redirect reads as the
      link being broken. */
   const bouncedFromAdmin = location.state?.reason === 'admin';
+  const [adminView, setAdminView] = useState(bouncedFromAdmin);
+  const [dogOwnerView, setDogOwnerView] = useState(false);   // TEMPORARY number-only sign-in, until OTP
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const userData = await login(mobile, needsPassword ? password : PLACEHOLDER_PASSWORD);
+      // An empty password is only a question: "is this an admin number?"
+      const userData = await login(mobile, needsPassword ? password : '');
       if (userData?.role === 'ADMIN') {
         navigate('/admin');
       } else {
@@ -46,8 +52,10 @@ const Login = () => {
         }
       } else if (err?.response?.status === 503) {
         setError('Administrator sign-in is not configured on the server.');
+      } else if (err?.response?.status === 429) {
+        setError(typeof detail === 'string' ? detail : 'Too many attempts. Please wait and try again.');
       } else {
-        setError('Login failed. Check credentials.');
+        setError(needsPassword ? 'That password is not right.' : 'That number is not an administrator account.');
       }
     } finally {
       setLoading(false);
@@ -61,6 +69,7 @@ const Login = () => {
         <img src="/logo.png" alt="Paw Buddy" style={{ width: '140px', mixBlendMode: 'multiply', cursor: 'pointer' }} onClick={() => navigate('/')} />
         <button 
           onClick={() => navigate(-1)}
+          className="auth-back"
           style={{
             background: 'var(--orange)', color: 'white', border: 'none',
             padding: '10px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
@@ -77,37 +86,47 @@ const Login = () => {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div className="auth-box" style={{ maxWidth: '440px', width: '100%' }}>
         <div className="auth-logo">🐾</div>
-        <h2 className="auth-title">{bouncedFromAdmin ? 'Administrator Sign In' : 'Welcome Back'}</h2>
+        {dogOwnerView && !adminView ? (
+          <>
+            <h2 className="auth-title">Welcome back</h2>
+            <p className="auth-sub">Sign in with the number your dog profile was made with.</p>
+            <LegacyNumberLogin onDone={() => navigate('/app')} />
+            <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px' }}>
+              <button type="button" className="auth-signup" onClick={() => setDogOwnerView(false)}
+                style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 'bold', font: 'inherit' }}>
+                Back
+              </button>
+            </div>
+          </>
+        ) : !adminView ? (
+          <>
+            <ContactCapture
+              title="Welcome to Paw Buddy"
+              sub="No password needed. On a new phone or browser, just enter your details again."
+              onDone={() => navigate(from)}
+            />
+            <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: 'var(--text-soft)' }}>
+              <button type="button" className="auth-signup" onClick={() => setDogOwnerView(true)}
+                style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 'bold', font: 'inherit' }}>
+                Already have a dog profile? Sign in with your number
+              </button>
+              <br />
+              <button type="button" className="auth-signup" onClick={() => { setAdminView(true); setError(''); }}
+                style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--orange)', fontWeight: 'bold', font: 'inherit' }}>
+                Administrator sign in
+              </button>
+            </div>
+          </>
+        ) : (
+        <>
+        <h2 className="auth-title">Administrator Sign In</h2>
         <p className="auth-sub">
-          {bouncedFromAdmin
-            ? 'The dashboard needs an administrator account.'
-            : 'Log in to your Paw Buddy account'}
+          {bouncedFromAdmin ? 'The dashboard needs an administrator account.' : 'For the PAW BUDDY team only.'}
         </p>
-
-        {/* What an ordinary account is for, three words at a time.
-            Hidden entirely on the admin bounce: someone sent here to type a
-            password is mid-task on something else, and consumer feature copy
-            in that moment is noise between them and the dashboard. */}
-        {!bouncedFromAdmin && (
-          <div className="auth-strip">
-            <div className="auth-strip__item">
-              <span className="auth-strip__icon" aria-hidden="true">💉</span>
-              <span className="auth-strip__label">Vaccination reminders</span>
-            </div>
-            <div className="auth-strip__item">
-              <span className="auth-strip__icon" aria-hidden="true">🏥</span>
-              <span className="auth-strip__label">Verified services</span>
-            </div>
-            <div className="auth-strip__item">
-              <span className="auth-strip__icon" aria-hidden="true">🩺</span>
-              <span className="auth-strip__label">Personalized tips</span>
-            </div>
-          </div>
-        )}
 
         {/* Says plainly that a password is coming. Landing on a bare mobile
             field after clicking "Admin" is what made this look broken. */}
-        {bouncedFromAdmin && !error && (
+        {!needsPassword && !error && (
           <div
             style={{
               marginBottom: '15px', padding: '11px 14px', borderRadius: 'var(--radius-sm)',
@@ -147,9 +166,8 @@ const Login = () => {
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: 'var(--text-soft)' }}>
-          Don't have an account? <Link to="/signup" state={{ from }} style={{ color: 'var(--orange)', fontWeight: 'bold', textDecoration: 'none' }}>Sign Up</Link>
-        </div>
+        </>
+        )}
       </div>
       </div>
     </div>

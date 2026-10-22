@@ -15,7 +15,9 @@ async def connect_to_mongo():
             db = client["paw_buddy"]
         logging.info("Connected to MongoDB")
     except Exception as e:
-        logging.error(f"Error connecting to MongoDB: {e}")
+        # The driver's message can echo the connection string; the log redaction
+        # masks credentials, and the type alone is usually enough to act on.
+        logging.error("Error connecting to MongoDB: %s: %s", type(e).__name__, e)
 
 async def close_mongo_connection():
     global client

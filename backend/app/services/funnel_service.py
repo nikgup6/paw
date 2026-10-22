@@ -13,13 +13,22 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from app.models.funnel import FUNNEL_EVENTS, KNOWN_EVENTS
+from app.models.funnel import FUNNEL_EVENTS, KNOWN_EVENTS, public_event_problem
 from app.services import readiness
 
 logger = logging.getLogger(__name__)
 
 EVENTS = "events"
 PROGRESS = "quiz_progress"
+META = "analytics_meta"
+
+#: Actions worth a plain "how many sessions did this" count on the report.
+ACTION_EVENTS = (
+    "share_clicked", "breed_opened", "compare_opened",
+    "swipe_shortlist", "stickers_open", "retake_clicked",
+    # lead gate: zero until the UI starts firing them
+    "gate_viewed", "gate_submitted", "gate_skipped",
+)
 
 #: A session with no activity for this long is treated as walked away, not
 #: mid-thought. It only affects the "abandoned" list — nothing is written.
@@ -36,14 +45,42 @@ def utc_now() -> datetime:
 
 # ---------------------------------- writes ---------------------------------- #
 
-async def record_event(db, event: dict) -> bool:
-    """Append one event. Returns False for an unrecognised name.
+async def record_event(db, event: dict, trusted: bool = False) -> bool:
+    """Append one event. Returns False if it was refused.
+
+    `trusted=False` (the default) is for events from the browser: the name must
+    be known, must not be one of SERVER_ONLY_EVENTS (money), and the event must
+    pass the shape rules in models/funnel.py. `trusted=True` is ONLY for server
+    code that has verified what it is recording - the paywall, after the payment
+    provider confirms a payment - and skips the browser rules.
 
     Best-effort by design: tracking must never be able to break the quiz, so
     the caller treats a False or an exception as "carry on".
     """
-    if event.get("event_name") not in KNOWN_EVENTS:
-        logger.warning("Rejected unknown event_name: %r", event.get("event_name"))
+    name = event.get("event_name")
+    if name not in KNOWN_EVENTS:
+        reason = "unknown event name"
+    elif not trusted:
+        reason = public_event_problem(event)
+    else:
+        reason = None
+
+    if reason:
+        # The name is whatever the browser sent - cut short so a hostile value
+        # cannot flood the log or the counter row.
+        shown = str(name)[:64]
+        logger.warning("Rejected event %r: %s", shown, reason)
+        # Count it, so a typo in a deploy shows up on the admin "Tracking
+        # health" strip instead of silently storing nothing. Never raises.
+        try:
+            await db[META].update_one(
+                {"_id": "rejected_events"},
+                {"$inc": {"count": 1},
+                 "$set": {"last_name": shown, "last_reason": reason, "last_at": utc_now()}},
+                upsert=True,
+            )
+        except Exception:  # noqa: BLE001 - tracking must never raise
+            logger.exception("Could not count rejected event")
         return False
     await db[EVENTS].insert_one(event)
     return True
@@ -57,6 +94,9 @@ async def upsert_progress(db, patch: dict) -> dict:
     wipe the fields it wasn't told about — the timeline answer would erase the
     city, the completion would erase the answers."""
     session_id = patch.pop("session_id")
+    # Attribution is FIRST TOUCH: it is written once and never overwritten, so
+    # a later visit from a different link cannot change where this person came from.
+    attribution = patch.pop("attribution", None)
     fields = {k: v for k, v in patch.items() if v is not None}
     fields["updated_at"] = utc_now()
 
@@ -77,11 +117,21 @@ async def upsert_progress(db, patch: dict) -> dict:
     if "status" not in fields:
         on_insert["status"] = "in_progress"
 
+    if attribution:
+        on_insert["attribution"] = attribution
+
     await db[PROGRESS].update_one(
         {"session_id": session_id},
         {"$set": fields, "$setOnInsert": on_insert},
         upsert=True,
     )
+    if attribution:
+        # The row may already exist from before this was sent (an older build
+        # saved answers first). Fill it in only if it is still missing.
+        await db[PROGRESS].update_one(
+            {"session_id": session_id, "attribution": {"$exists": False}},
+            {"$set": {"attribution": attribution}},
+        )
     row = await db[PROGRESS].find_one({"session_id": session_id})
     return _clean(row)
 
@@ -269,6 +319,94 @@ async def _completions(db, window: dict) -> list:
     return rows
 
 
+async def _by_prop(db, window: dict, prop: str) -> list:
+    """The funnel split by one event property (`channel` or `device`).
+
+    One aggregation: distinct sessions per (value, event). Every event carries
+    the first-touch channel and device (analytics.js adds them), so no join is
+    needed. Rates are step-to-step and None where the step before is zero."""
+    pipeline = [
+        {"$match": {"created_at": window, "event_name": {"$in": list(FUNNEL_EVENTS)}}},
+        {"$group": {"_id": {"k": "$props." + prop, "event": "$event_name", "session": "$session_id"}}},
+        {"$group": {"_id": {"k": "$_id.k", "event": "$_id.event"}, "sessions": {"$sum": 1}}},
+    ]
+    table = {}
+    async for row in db[EVENTS].aggregate(pipeline):
+        key = row["_id"].get("k") or "unknown"
+        table.setdefault(key, {})[row["_id"]["event"]] = row["sessions"]
+
+    def pct(num, den):
+        return round(num / den * 100, 1) if den else None
+
+    out = []
+    for key, counts in table.items():
+        c = {name: counts.get(name, 0) for name in FUNNEL_EVENTS}
+        out.append({
+            prop: key,
+            **c,
+            "started_rate": pct(c["quiz_started"], c["site_visit"]),
+            "completed_rate": pct(c["quiz_completed"], c["quiz_started"]),
+            "results_rate": pct(c["results_viewed"], c["quiz_completed"]),
+            "cta_rate": pct(c["breeder_cta_clicked"], c["results_viewed"]),
+            "contact_rate": pct(c["contact_submitted"], c["breeder_cta_clicked"]),
+        })
+    out.sort(key=lambda r: (-r["site_visit"], -r["quiz_started"], str(r[prop])))
+    return out
+
+
+async def _actions(db, window: dict) -> dict:
+    """Distinct sessions per secondary action (share, compare, swipe...)."""
+    pipeline = [
+        {"$match": {"created_at": window, "event_name": {"$in": list(ACTION_EVENTS)}}},
+        {"$group": {"_id": {"event": "$event_name", "session": "$session_id"}}},
+        {"$group": {"_id": "$_id.event", "sessions": {"$sum": 1}}},
+    ]
+    counts = {row["_id"]: row["sessions"] async for row in db[EVENTS].aggregate(pipeline)}
+    return {name: counts.get(name, 0) for name in ACTION_EVENTS}
+
+
+async def _health(db) -> dict:
+    """Is tracking itself working? Rejected events, and whether anything arrived lately."""
+    meta = await db[META].find_one({"_id": "rejected_events"}) or {}
+    since = utc_now() - timedelta(hours=24)
+    last = await db[EVENTS].find_one({}, sort=[("created_at", -1)])
+    last_at = _aware(last.get("created_at")) if last else None
+    last_rejected_at = _aware(meta.get("last_at"))
+    return {
+        "rejected_events": meta.get("count", 0),
+        "last_rejected": meta.get("last_name"),
+        # Why it was refused: "unknown event name", "server-only event" (a money
+        # event sent from a browser), or one of the shape rules in models/funnel.py.
+        "last_rejected_reason": meta.get("last_reason"),
+        "last_rejected_at": last_rejected_at.isoformat() if last_rejected_at else None,
+        "events_last_24h": await db[EVENTS].count_documents({"created_at": {"$gte": since}}),
+        "last_event_at": last_at.isoformat() if last_at else None,
+    }
+
+
+async def export_rows(db) -> list:
+    """One row per quiz_progress session, for the CSV export."""
+    rows = [_clean(row) async for row in db[PROGRESS].find({}).sort("started_at", -1)]
+    ids = [row["session_id"] for row in rows]
+    clicked = set(await db[EVENTS].distinct(
+        "session_id", {"event_name": "breeder_cta_clicked", "session_id": {"$in": ids}})) if ids else set()
+    out = []
+    for row in rows:
+        attr = row.get("attribution") or {}
+        out.append({
+            "session_id": row["session_id"],
+            "started_at": row.get("started_at"),
+            "channel": attr.get("channel") or "",
+            "device": attr.get("device") or "",
+            "city": row.get("city") or "",
+            "status": row.get("status") or "",
+            "readiness_code": row.get("readiness_code") or "",
+            "top_breed": row.get("top_breed") or "",
+            "breeder_cta_clicked": "yes" if row["session_id"] in clicked else "no",
+        })
+    return out
+
+
 async def build_report(db, days: int = 30, start: str = None, end: str = None) -> dict:
     """Everything the dashboard renders, in one request.
 
@@ -307,6 +445,11 @@ async def build_report(db, days: int = 30, start: str = None, end: str = None) -
         "readiness": await _readiness(db, window),
         "abandoned": await _abandoned(db),
         "completions": await _completions(db, window),
+        # --- additive blocks (real-journey tracking) ---
+        "by_channel": await _by_prop(db, window, "channel"),
+        "by_device": await _by_prop(db, window, "device"),
+        "actions": await _actions(db, window),
+        "health": await _health(db),
         # The headline number: of the people who got as far as seeing a
         # recommendation, how many asked to be put in touch with a breeder.
         "cta_rate": {

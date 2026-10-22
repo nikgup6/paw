@@ -1,15 +1,20 @@
-import { useState, useEffect, useContext, useRef } from 'react';
+import { useState, useEffect, useContext, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useBreeds } from '../context/BreedsContext';
 import BreedCard from '../components/BreedCard';
+// "A day with your dog": only loaded once someone taps the button, so the page is unchanged until then.
+const DayInLife = lazy(() => import('../components/results/DayInLife'));
 import FeedbackModal from '../components/FeedbackModal';
+import ResultsPulse from '../components/results/ResultsPulse';
+import usePaywallStatus from '../components/paywall/usePaywallStatus';
 import QuickFeedback from '../components/QuickFeedback';
 import QuickLoginModal from '../components/QuickLoginModal';
 import { AuthContext } from '../context/AuthContext';
 import { buildLivingConditions, computeMatches, computeReadiness, generateProsCons, generatePersonalizedReason, noExcellentMatch, selectTopMatches } from '../utils/breedUtils';
 import { clearQuizState, loadSavedAnswers } from '../utils/quizState';
-import { isSoftCta, saveProgress, showsBreederCta, showsPrepCapture, track } from '../utils/analytics';
+import { isSoftCta, saveProgress, sessionId, showsBreederCta, showsPrepCapture, track } from '../utils/analytics';
+import { getChannel } from '../utils/attribution';
 import { buildWhatsAppEnquiryLink, WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import WhatsAppButton from '../components/WhatsAppButton';
 import BreederDirectory from '../components/BreederDirectory';
@@ -78,7 +83,11 @@ const Results = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLoginGate, setShowLoginGate] = useState(false);
+  // The breed whose puppy-day story is open, or null. Nothing about it is persisted.
+  const [dayBreed, setDayBreed] = useState(null);
   const { user, loading: authLoading } = useContext(AuthContext);
+  const [paywall, , paywallSettled] = usePaywallStatus(user?.id);
+  const pulseKind = !paywall || paywall.mode === 'off' ? 'none' : paywall.unlocked_via === 'paid' ? 'paid' : 'fake_door';
   /* Breeds are fetched now, not bundled — but `breeds` is never empty: it holds
      the bundled catalogue from the very first render and is replaced in place if
      the API answers. So scoring does NOT wait. It used to, and on a deploy where
@@ -268,7 +277,9 @@ const Results = () => {
       city: quizCity || user?.city || 'Not Provided',
       breed_name: selectedBreed?.name,
       intent: `Contacted breeder: ${breeder.name} (${breeder.city})`,
-      status: "NEW"
+      status: "NEW",
+      session_id: sessionId,
+      channel: getChannel(),
     }).catch(() => { /* best effort */ });
   };
 
@@ -525,6 +536,15 @@ const Results = () => {
                   <span key={tag} className="match-tag">{tag}</span>
                 ))}
               </div>
+              {/* One honest day with a 3-month-old puppy of this breed, built from this
+                  visitor's own answers. Light-on-dark, because the card is orange. */}
+              <button
+                type="button"
+                onClick={() => setDayBreed(topBreeds[0])}
+                style={{ boxSizing: 'border-box', width: '100%', minHeight: '48px', marginTop: '14px', padding: '0 18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 'var(--radius-pill)', fontWeight: 'var(--weight-bold)', cursor: 'pointer', fontFamily: 'var(--font-body-family)', backdropFilter: 'blur(5px)', lineHeight: 1.25, textAlign: 'center' }}
+              >
+                See a day with {topBreeds[0].name}
+              </button>
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
                 {canConnect && (
                   <button
@@ -564,6 +584,7 @@ const Results = () => {
               onCompare={(b) => handleAction('compare', b)}
               onFullProfile={(b) => handleAction('full_profile', b)}
               onImageClick={(b) => handleAction('image_preview', b)}
+              onDayInLife={(b) => setDayBreed(b)}
             />
           ))}
         </div>
@@ -676,6 +697,7 @@ const Results = () => {
                 breedName={selectedBreed.name}
                 topBreeds={topBreeds.map((b) => b.name)}
                 onContact={logBreederContact}
+                source="results"
               />
             )}
 
@@ -967,7 +989,32 @@ const Results = () => {
         </button>
       )}
 
+      {dayBreed && (
+        <Suspense fallback={null}>
+          <DayInLife
+            breed={dayBreed}
+            answers={answers}
+            city={quizCity || ''}
+            onClose={() => setDayBreed(null)}
+            /* Only a lead who is actually offered a breeder on this page gets the breeder
+               button in the story too — a cold lead is never pushed at one. */
+            onFindBreeders={canConnect ? ((b) => { setDayBreed(null); handleAction('buy', b); }) : null}
+          />
+        </Suspense>
+      )}
+
       <FeedbackModal isOpen={showFeedback} onClose={() => setShowFeedback(false)} user={user} />
+
+      {/* "Was this useful?" (components/results/ResultsPulse.jsx). This page sits behind
+          RequireUnlock, so whoever sees it has access ('paid') or the paywall is off.
+          It waits while this page's own QuickFeedback toast is on screen. */}
+      <ResultsPulse
+        key={`pulse-${pulseKind}`}
+        kind={pulseKind}
+        price={paywall?.price_rupees}
+        active={paywallSettled && !loading && topBreeds.length > 0}
+        blocked={!!modalType || showFeedback || showLoginGate || !!dayBreed}
+      />
     </section>
   );
 };

@@ -14,7 +14,6 @@ Images are unaffected and keep the default handling.
 """
 import logging
 import os
-import re
 import uuid
 
 import cloudinary
@@ -64,11 +63,14 @@ def is_configured() -> bool:
     return _configured
 
 
-def _slug(filename: str) -> str:
-    """A safe, extension-less public-id stem taken from the original filename."""
-    stem = re.sub(r"\.[^.]+$", "", filename or "")
-    stem = re.sub(r"[^A-Za-z0-9_-]+", "_", stem).strip("_")
-    return (stem or "document")[:60]
+def _random_name() -> str:
+    """The stored file's name: 32 random hex characters.
+
+    It used to be built from the uploader's own filename ("Rahul_Sharma_
+    vaccination_card_3f9a..."), which put a person's name into a public file
+    address. The original name is still kept in our own database
+    (original_filename) and is what a download is called."""
+    return uuid.uuid4().hex
 
 
 async def upload_document(file_bytes: bytes, filename: str, mime_type: str = None) -> dict:
@@ -81,22 +83,21 @@ async def upload_document(file_bytes: bytes, filename: str, mime_type: str = Non
     if not is_configured():
         raise RuntimeError("Cloudinary is not configured (set CLOUDINARY_* in backend/.env).")
 
-    is_pdf = (mime_type == PDF_MIME) or str(filename or "").lower().endswith(".pdf")
+    # mime_type now comes from the file's own bytes (security/uploads.py), so the
+    # filename is no longer consulted: a JPEG called card.pdf is still a JPEG.
+    is_pdf = mime_type == PDF_MIME
 
     def _upload():
         if is_pdf:
             return cloudinary.uploader.upload(
                 file_bytes,
-                public_id=f"{settings.CLOUDINARY_UPLOAD_FOLDER}/{_slug(filename)}_{uuid.uuid4().hex[:8]}",
+                public_id=f"{settings.CLOUDINARY_UPLOAD_FOLDER}/{_random_name()}",
                 resource_type="raw",
             )
         return cloudinary.uploader.upload(
             file_bytes,
-            folder=settings.CLOUDINARY_UPLOAD_FOLDER,
+            public_id=f"{settings.CLOUDINARY_UPLOAD_FOLDER}/{_random_name()}",
             resource_type="auto",
-            use_filename=True,
-            unique_filename=True,
-            filename_override=filename,
         )
 
     result = await run_in_threadpool(_upload)
@@ -107,20 +108,18 @@ async def upload_document(file_bytes: bytes, filename: str, mime_type: str = Non
     }
 
 
-async def upload_photo(file_bytes: bytes, filename: str) -> dict:
+async def upload_photo(file_bytes: bytes, filename: str = None) -> dict:
     """Store a dog's profile photo. Always an image, so the default handling
-    applies and Cloudinary can serve it directly to an <img>."""
+    applies and Cloudinary can serve it directly to an <img>. Stored under a
+    random name; `filename` is accepted for old callers and ignored."""
     if not is_configured():
         raise RuntimeError("Cloudinary is not configured (set CLOUDINARY_* in backend/.env).")
 
     def _upload():
         return cloudinary.uploader.upload(
             file_bytes,
-            folder=f"{settings.CLOUDINARY_UPLOAD_FOLDER}/dog_photos",
+            public_id=f"{settings.CLOUDINARY_UPLOAD_FOLDER}/dog_photos/{_random_name()}",
             resource_type="image",
-            use_filename=True,
-            unique_filename=True,
-            filename_override=filename,
         )
 
     result = await run_in_threadpool(_upload)
