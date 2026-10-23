@@ -7,6 +7,9 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 bcrypt==3.2.2
 python-multipart>=0.0.6
+# Razorpay API calls (app/services/paywall_service.py). Listed explicitly: it was
+# only arriving as a dependency of the anthropic package.
+httpx>=0.24
 anthropic>=0.69.0
 cloudinary>=1.40.0
 # Upload checks: decodes images to prove what they are, and re-saves dog photos
