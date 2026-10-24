@@ -76,12 +76,12 @@ export default function RoughRecommendation({
         {!later && (
           <p className="pbrr__pitch">
             <strong>Want your full match?</strong> Answer {remaining} more questions and unlock your top 5 with
-            match %, warnings, city care guide and a day with your dog. {priceText}.
+            match %, warnings, city care guide and a day with your dog.
           </p>
         )}
         <div className="pbrr__actions">
           <button type="button" className="pbrr__btn pbrr__btn--go" onClick={onUnlock}>
-            Unlock my full match, {priceText}
+            Unlock my full match
           </button>
           {!later && (
             <button type="button" className="pbrr__btn pbrr__btn--later" onClick={() => setLater(true)}>Maybe later</button>
