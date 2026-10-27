@@ -20,7 +20,6 @@ import Reveal from '../components/home/Reveal';
 
 // New Revamped Components
 import AuthModal from '../components/AuthModal';
-import ContactCapture from '../components/auth/ContactCapture';
 import ResultsPulse from '../components/results/ResultsPulse';
 import NotUnlockedCard from '../components/paywall/NotUnlockedCard';
 import { mayAskNotUnlocked } from '../components/paywall/notUnlocked';
@@ -157,21 +156,17 @@ const Home = () => {
   const [swipeExclude, setSwipeExclude] = useState([]);     // breed names left out of the deck (the Top 5)
   const [swipeFrom, setSwipeFrom] = useState('breed_slider'); // where the deck returns to
 
-  // The contact screen before question 1 (no token yet). It is taller than a phone with its keyboard up.
   /* find_dog_clicked: any button that starts the quiz, with which one it was.
-     has_account: this browser already has a token, so the contact form is
-     skipped - those sessions are not counted as form drop-outs on the Pilot tab. */
+     has_account: this browser already has a token, so the contact form will be
+     skipped at the unlock step - those sessions are not counted as form drop-outs on the Pilot tab. */
   const findDog = (source) => track('find_dog_clicked', { source, has_account: !!token });
 
-  const contactGate = subView === 'friend_dashboard' && dashboardTab === 'inline_quiz' && quizStage === 'quiz' && !token;
-
-  // Lock scroll on the single-screen views; let the hero and the Top-5 grid scroll. The contact
-  // screen scrolls too, or the keyboard could hide its Continue button.
+  // Lock scroll on the single-screen views; let the hero and the Top-5 grid scroll.
   useEffect(() => {
-    const lock = isLoading || (subView === 'friend_dashboard' && !contactGate) || subView === 'breed_slider' || subView === 'breed_swipe';
+    const lock = isLoading || subView === 'friend_dashboard' || subView === 'breed_slider' || subView === 'breed_swipe';
     document.body.style.overflow = lock ? 'hidden' : 'auto';
     return () => { document.body.style.overflow = 'auto'; };
-  }, [isLoading, subView, contactGate]);
+  }, [isLoading, subView]);
 
   // Squeaky toys may show on the landing page and the results page, but not while the loading screen, the quiz,
   // the breed slider or the swipe cards are open (this also keeps the footer's toys out of the keyboard's way).
@@ -185,7 +180,7 @@ const Home = () => {
     setDropdownOpen(false);
   };
 
-  // Explore needs no details. The quiz asks for them once, before question 1 (see the inline_quiz render below).
+  // Explore and the free questions need no details. They are asked for once, at the unlock step (UnlockFlow).
   const openDashboard = (tab = 'menu') => {
     setSubView('friend_dashboard');
     setDashboardTab(tab);
@@ -728,18 +723,9 @@ const Home = () => {
                       </div>
                     )}
 
-                    {/* The contact screen comes before question 1 unless this browser already has a token.
-                        The number is a contact detail, not a login: see components/auth/ContactCapture.jsx. */}
-                    {dashboardTab === 'inline_quiz' && quizStage === 'quiz' && !token && (
-                      <div className="cc-inline">
-                        <ContactCapture
-                          title="Before we find your dog"
-                          sub="Tell us who you are, so we can share your matches with you."
-                        />
-                      </div>
-                    )}
-
-                    {dashboardTab === 'inline_quiz' && quizStage === 'quiz' && token && (
+                    {/* No details needed to answer. The contact screen comes later, when they tap
+                        Unlock at the end of "About you" (components/paywall/UnlockFlow.jsx). */}
+                    {dashboardTab === 'inline_quiz' && quizStage === 'quiz' && (
                       <QuizFlow
                         key={resume?.key || 'quiz'}
                         questions={questionsData}
