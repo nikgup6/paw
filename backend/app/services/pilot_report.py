@@ -283,15 +283,15 @@ async def build_pilot_report(db, start: Optional[str] = None, end: Optional[str]
 
     # ---- breakdowns
     def breakdown(key_fn) -> list:
-        rows = defaultdict(lambda: {"visits": 0, "tapped_find_dog": 0, "form_submitted": 0, "quiz_started": 0,
-                                    "rough_rec_viewed": 0, "paywall_viewed": 0, "breeder_taps": 0, "_payers": set()})
+        rows = defaultdict(lambda: {"visits": 0, "tapped_find_dog": 0, "quiz_started": 0, "rough_rec_viewed": 0,
+                                    "form_submitted": 0, "paywall_viewed": 0, "breeder_taps": 0, "_payers": set()})
         for s in sessions.values():
             r = rows[key_fn(s)]
             r["visits"] += has(s, "site_visit")
             r["tapped_find_dog"] += has(s, "find_dog_clicked")
-            r["form_submitted"] += has(s, "login_started")
             r["quiz_started"] += has(s, "quiz_started")
             r["rough_rec_viewed"] += has(s, "rough_rec_viewed")
+            r["form_submitted"] += has(s, "login_started")
             r["paywall_viewed"] += has(s, "paywall_viewed")
             r["breeder_taps"] += any(has(s, t) for t in BREEDER_TAPS)
             if s["user"] in payers:
@@ -308,7 +308,9 @@ async def build_pilot_report(db, start: Optional[str] = None, end: Optional[str]
     breakdowns = {k: breakdown(lambda s, k=k: _label(s["labels"].get(k))) for k in BREAKDOWN_KEYS}
     reels = breakdown(lambda s: f'{_label(s["labels"].get("campaign"))} / {_label(s["labels"].get("content"))}')
 
-    # ---- anonymous entry funnel: visit -> Find my dog -> contact form -> account -> quiz
+    # ---- anonymous entry funnel, in the order a newcomer meets it:
+    #   visit -> Find my dog -> quiz -> "About you" done -> rough match -> Unlock
+    #   -> contact form -> account -> paywall
     # Only sessions that tapped WITHOUT an account already: a returning browser
     # skips the form and must not count as a form drop-out.
     first_tap = {}
@@ -321,10 +323,20 @@ async def build_pilot_report(db, start: Optional[str] = None, end: Optional[str]
             had_account.add(sid)
         if sid not in first_tap or (row["first"] and row["first"] < first_tap[sid][0]):
             first_tap[sid] = (row["first"], row.get("src") or NONE_LABEL)
-    newcomers = [sid for sid in first_tap if sid not in had_account]
-    ENTRY_STEPS = (("tapped", "find_dog_clicked"), ("form_viewed", "contact_form_viewed"),
+    # Until late October 2026 the contact form came BEFORE question 1. Those
+    # sessions saw the form first (or never reached the quiz), so they cannot be
+    # read in the new order: they are counted apart and left out of the steps.
+    def old_order(s) -> bool:
+        form, quiz = s["events"].get("contact_form_viewed"), s["events"].get("quiz_started")
+        return form is not None and (quiz is None or form <= quiz)
+    tapped_new = [sid for sid in first_tap if sid not in had_account]
+    old_flow = [sid for sid in tapped_new if old_order(sessions[sid])]
+    newcomers = [sid for sid in tapped_new if not old_order(sessions[sid])]
+    ENTRY_STEPS = (("tapped", "find_dog_clicked"), ("quiz_started", "quiz_started"),
+                   ("free_done", "free_part_completed"), ("rough_viewed", "rough_rec_viewed"),
+                   ("unlock_tapped", "paywall_cta_clicked"), ("form_viewed", "contact_form_viewed"),
                    ("form_started", "contact_form_started"), ("submitted", "login_started"),
-                   ("account_created", "login_completed"), ("quiz_started", "quiz_started"))
+                   ("account_created", "login_completed"), ("paywall_viewed", "paywall_viewed"))
 
     def entry_counts(sids) -> dict:
         return {step: sum(1 for sid in sids if has(sessions[sid], name)) for step, name in ENTRY_STEPS}
@@ -341,7 +353,7 @@ async def build_pilot_report(db, start: Optional[str] = None, end: Optional[str]
 
     new_counts = entry_counts(newcomers)
     left = sum(1 for sid in newcomers if has(sessions[sid], "contact_form_viewed") and not has(sessions[sid], "login_completed"))
-    finished = sum(1 for sid in newcomers if has(sessions[sid], "login_completed") and has(sessions[sid], "quiz_started"))
+    finished = sum(1 for sid in newcomers if has(sessions[sid], "login_completed") and has(sessions[sid], "paywall_viewed"))
 
     def entry_split(key_fn) -> list:
         groups = defaultdict(list)
@@ -358,11 +370,12 @@ async def build_pilot_report(db, start: Optional[str] = None, end: Optional[str]
 
     entry = {
         # The visits row counts every session; the steps after it only sessions
-        # that tapped Find my dog with no account yet.
+        # that tapped Find my dog with no account yet, in the current order.
         "steps": entry_steps(newcomers, visits),
         "tapped_with_account": len(had_account),
+        "old_flow_sessions": len(old_flow),
         "left_form_unfinished": ratio(left, new_counts["form_viewed"]),
-        "finished_and_started_quiz": ratio(finished, new_counts["form_viewed"]),
+        "finished_and_saw_paywall": ratio(finished, new_counts["form_viewed"]),
         "by_source": entry_split(lambda sid: first_tap[sid][1]),
         "by_device": entry_split(lambda sid: _label(sessions[sid]["labels"].get("device"))),
     }

@@ -94,8 +94,8 @@ const Scroll = ({ children }) => (
 
 /* ---------------- the breakdown / per-reel table (sortable) ---------------- */
 const COLUMNS = [
-  ['visits', 'Visits'], ['tapped_find_dog', 'Tapped Find my dog'], ['form_submitted', 'Form submitted'],
-  ['quiz_started', 'Quiz started'], ['rough_rec_viewed', 'Rough rec'],
+  ['visits', 'Visits'], ['tapped_find_dog', 'Tapped Find my dog'], ['quiz_started', 'Quiz started'],
+  ['rough_rec_viewed', 'Rough rec'], ['form_submitted', 'Form submitted'],
   ['paywall_viewed', 'Paywall viewed'], ['paid', 'Paid / tapped Pay'], ['breeder_taps', 'Breeder taps'],
   ['paid_pct', 'Paid % of paywall views'],
 ];
@@ -137,10 +137,13 @@ const BreakdownTable = ({ rows, keyLabel, labelFor = (k) => k }) => {
   );
 };
 
-/* ---------------- entry funnel (anonymous: before any account) ---------------- */
+/* ---------------- entry funnel (anonymous: before any account) ----------------
+   The contact form comes at Unlock, after the free "About you" questions. */
 const ENTRY_LABEL = {
-  visits: 'Visits', tapped: 'Tapped Find my dog', form_viewed: 'Saw the contact form', form_started: 'Started typing',
-  submitted: 'Submitted', account_created: 'Account created', quiz_started: 'Quiz started',
+  visits: 'Visits', tapped: 'Tapped Find my dog', quiz_started: 'Quiz started', free_done: 'Finished About you',
+  rough_viewed: 'Saw the rough match', unlock_tapped: 'Tapped Unlock', form_viewed: 'Saw the contact form',
+  form_started: 'Started typing', submitted: 'Submitted', account_created: 'Account created',
+  paywall_viewed: 'Saw the paywall',
 };
 const EntryFunnel = ({ entry, notLive }) => {
   const max = Math.max(1, ...entry.steps.map((s) => s.count));
@@ -150,13 +153,14 @@ const EntryFunnel = ({ entry, notLive }) => {
       {rows.length === 0 ? <p style={{ ...sub, margin: 0 }}>Nothing yet.</p> : (
         <Scroll>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 460 }}>
-            <thead><tr>{[label, 'Tapped', 'Saw form', 'Account', 'Quiz', 'Account % of form'].map((x) => <th key={x} style={th}>{x}</th>)}</tr></thead>
+            <thead><tr>{[label, 'Tapped', 'Quiz', 'Unlock', 'Saw form', 'Account', 'Account % of form'].map((x) => <th key={x} style={th}>{x}</th>)}</tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.key}>
                   <td style={{ ...td, fontWeight: 700 }}>{r.key}</td>
-                  <td style={td}>{num(r.tapped)}</td><td style={td}>{num(r.form_viewed)}</td>
-                  <td style={td}>{num(r.account_created)}</td><td style={td}>{num(r.quiz_started)}</td>
+                  <td style={td}>{num(r.tapped)}</td><td style={td}>{num(r.quiz_started)}</td>
+                  <td style={td}>{num(r.unlock_tapped)}</td><td style={td}>{num(r.form_viewed)}</td>
+                  <td style={td}>{num(r.account_created)}</td>
                   <td style={td}>{r.too_few
                     ? <span style={{ color: '#8A5A00', background: '#FFF4D6', padding: '2px 8px', borderRadius: 20, fontSize: '11.5px', fontWeight: 700 }}>too few</span>
                     : <b>{pct(r.created_pct)}</b>}</td>
@@ -169,7 +173,7 @@ const EntryFunnel = ({ entry, notLive }) => {
     </div>
   );
   return (
-    <Section title="Entry funnel" note={`Anonymous visitors before they have an account (session only). After "Visits", only sessions that tapped without an account yet are counted; ${num(entry.tapped_with_account)} returning browser${entry.tapped_with_account === 1 ? '' : 's'} skipped the form and are left out.`}>
+    <Section title="Entry funnel" note={`Anonymous visitors before they have an account (session only). The contact form now comes at Unlock, after the free questions. After "Visits", only sessions that tapped without an account yet are counted; ${num(entry.tapped_with_account)} returning browser${entry.tapped_with_account === 1 ? '' : 's'} skipped the form and are left out.${entry.old_flow_sessions ? ` ${num(entry.old_flow_sessions)} earlier session${entry.old_flow_sessions === 1 ? '' : 's'} saw the form before question 1 (the old order) and are left out too.` : ''}`}>
       <div style={{ display: 'grid', gap: 6, marginBottom: 14 }}>
         {entry.steps.map((s) => (
           <div key={s.step} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 170px) 1fr', gap: 10, alignItems: 'center', fontSize: '13px' }}>
@@ -190,7 +194,7 @@ const EntryFunnel = ({ entry, notLive }) => {
         Saw the form but left without finishing: <b>{num(entry.left_form_unfinished.count)}</b> ({pct(entry.left_form_unfinished.pct)})
       </p>
       <p style={{ margin: '0 0 14px', fontSize: '14px' }}>
-        Filled the form and started the quiz: <b>{num(entry.finished_and_started_quiz.count)}</b> ({pct(entry.finished_and_started_quiz.pct)})
+        Filled the form and saw the paywall: <b>{num(entry.finished_and_saw_paywall.count)}</b> ({pct(entry.finished_and_saw_paywall.pct)})
       </p>
       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
         {split(entry.by_source, 'button')}
@@ -353,9 +357,9 @@ const PilotReport = () => {
         <Arrow value={share(s.free.rough_rec_viewed.count, s.reach.visits)} />
         <Stage step={2} title="Free engine" value={num(s.free.rough_rec_viewed.count)} valueNote="sessions that saw the instant (rough) recommendation"
           lines={[
-            <>Gave a contact number: <b>{num(s.free.signed_in_people)}</b> people ({num(s.free.unique_numbers_unverified)} unique numbers, <i>unverified</i>)<NotLive show={notLive.has('login_completed')} /></>,
             <>Quiz started: {ofText(s.free.quiz_started)}</>,
             <>Finished the free questions: {ofText(s.free.free_part_completed)}<NotLive show={notLive.has('free_part_completed')} /></>,
+            <>Gave a contact number (at Unlock): <b>{num(s.free.signed_in_people)}</b> people ({num(s.free.unique_numbers_unverified)} unique numbers, <i>unverified</i>)<NotLive show={notLive.has('login_completed')} /></>,
           ]} />
         <Arrow value={money.paywall_viewed.pct} />
         <Stage step={3} title="Money"

@@ -28,14 +28,14 @@ from datetime import datetime, timedelta, timezone
 
 INTERNAL_DEMO_MOBILE = "9000000099"     # put this in INTERNAL_TEST_MOBILES to see it excluded
 
-# name, content, channel, city, visits, bounced, started, signed_in, free_done, rough, paywall, cta, payers(live, fake), breeder
+# name, content, channel, city, visits, bounced, started, free_done, rough, cta (Unlock), signed_in, paywall, payers(live, fake)
 CAMPAIGNS = [
-    ("hyd_launch", "reel_1", "instagram", "Hyderabad", 40, 4, 30, 30, 28, 28, 20, 12, (0, 8)),
-    ("campus", "poster_qr", "poster", "Bangalore", 30, 2, 20, 20, 20, 18, 10, 6, (2, 2)),
-    ("blr_try", "reel_2", "instagram", "Hyderabad", 12, 2, 6, 6, 6, 6, 6, 3, (0, 2)),
+    ("hyd_launch", "reel_1", "instagram", "Hyderabad", 40, 4, 34, 30, 28, 24, 22, 20, (0, 8)),
+    ("campus", "poster_qr", "poster", "Bangalore", 30, 2, 26, 22, 20, 14, 12, 10, (2, 2)),
+    ("blr_try", "reel_2", "instagram", "Hyderabad", 12, 2, 8, 6, 6, 6, 6, 6, (0, 2)),
 ]
-# Every non-bounced visitor taps one of these; the quiz starts only after the
-# contact form (the gate), so "started" equals "signed in" above.
+# Every non-bounced visitor taps one of these. The quiz starts straight away; the
+# contact form comes only when they tap Unlock, so "signed in" <= "cta" above.
 ENTRY_SOURCES = ("hero", "sticky_bar", "journey_card")
 AGES = ["20_24", "25_29", "30_34", None]          # None -> "Not given"
 
@@ -47,9 +47,10 @@ def build_demo_docs(base: datetime) -> tuple:
            "rough_rec_viewed": 0, "paywall_viewed": 0, "paywall_cta_clicked": 0, "paid_live": 0,
            "intent": 0, "revenue": 0.0, "breeder_call_payers": 0, "breeder_whatsapp_unpaid": 0,
            "by_campaign": {}, "by_city": {}, "by_age": {},
-           "entry": {"tapped": 0, "form_viewed": 0, "form_started": 0, "submitted": 0, "account_created": 0,
-                     "quiz_started": 0, "errors": 0, "left_form_unfinished": 0, "finished_and_started_quiz": 0,
-                     "tapped_with_account": 0, "by_source": {}},
+           "entry": {"tapped": 0, "quiz_started": 0, "free_done": 0, "rough_viewed": 0, "unlock_tapped": 0,
+                     "form_viewed": 0, "form_started": 0, "submitted": 0, "account_created": 0, "paywall_viewed": 0,
+                     "errors": 0, "left_form_unfinished": 0, "finished_and_saw_paywall": 0,
+                     "tapped_with_account": 0, "old_flow_sessions": 0, "by_source": {}},
            "pulse": {"useful": {"paid": {"yes": 0}, "fake_door": {"yes": 0}}, "price_fair": {"paid": {}, "fake_door": {}},
                      "not_paid_reason": {}, "dismissed_how": {}, "abandoned": 0, "left_open_no_answer": 0}}
     HOWS = ("x", "outside", "esc", "back")
@@ -79,7 +80,7 @@ def build_demo_docs(base: datetime) -> tuple:
                                "props": {**(labels or {}), **props}, "created_at": at()})
 
     n = 0
-    for (camp, content, channel, city, visits, bounced, started, signed, free_done, rough, paywall, cta,
+    for (camp, content, channel, city, visits, bounced, started, free_done, rough, cta, signed, paywall,
          (live, fake)) in CAMPAIGNS:
         row = {"visits": visits, "paywall_viewed": paywall, "paid": live + fake}
         exp["by_campaign"][f"{camp} / {content}"] = row
@@ -100,27 +101,44 @@ def build_demo_docs(base: datetime) -> tuple:
             event(sid, "site_visit", None, labels)
             if i >= visits - bounced:
                 continue                                  # bounced: the visit and nothing else
-            # Entry funnel: tap Find my dog, the contact form, an account, then the quiz.
+            # Entry funnel: tap Find my dog, the free quiz and rough match with no
+            # account, then Unlock -> the contact form -> an account -> the paywall.
             e = exp["entry"]
             src = ENTRY_SOURCES[i % len(ENTRY_SOURCES)]
             event(sid, "find_dog_clicked", None, labels, source=src, has_account=False)
-            event(sid, "contact_form_viewed", None, labels)
             e["tapped"] += 1
-            e["form_viewed"] += 1
             e["by_source"].setdefault(src, {"tapped": 0, "account_created": 0})
             e["by_source"][src]["tapped"] += 1
-            if i < signed + 4:
-                event(sid, "contact_form_started", None, labels)
-                e["form_started"] += 1
-            if signed <= i < signed + 2:
-                event(sid, "contact_form_error", None, labels, field="mobile")
-                e["errors"] += 1
-            if i < signed:
-                event(sid, "login_started", None, labels)
-                e["submitted"] += 1
-            else:
-                event(sid, "contact_form_closed", None, labels)
-                e["left_form_unfinished"] += 1
+            if i < started:
+                event(sid, "quiz_started", None, labels)
+                e["quiz_started"] += 1
+                for q in range(4):
+                    event(sid, "question_viewed", None, labels, q_index=q, q_id=f"q{q}")
+                    if i < free_done or q < 2:
+                        event(sid, "question_answered", None, labels, q_index=q, q_id=f"q{q}")
+            if i < free_done:
+                event(sid, "free_part_completed", None, labels)
+                e["free_done"] += 1
+            if i < rough:
+                event(sid, "rough_rec_viewed", None, labels)
+                e["rough_viewed"] += 1
+            if i < cta:
+                event(sid, "paywall_cta_clicked", None, labels, source="rough")
+                event(sid, "contact_form_viewed", None, labels)
+                e["unlock_tapped"] += 1
+                e["form_viewed"] += 1
+                if i < min(cta, signed + 2):
+                    event(sid, "contact_form_started", None, labels)
+                    e["form_started"] += 1
+                if signed <= i < min(cta, signed + 2):
+                    event(sid, "contact_form_error", None, labels, field="mobile")
+                    e["errors"] += 1
+                if i < signed:
+                    event(sid, "login_started", None, labels)
+                    e["submitted"] += 1
+                else:
+                    event(sid, "contact_form_closed", None, labels)
+                    e["left_form_unfinished"] += 1
             if uid:
                 docs["users"].append({"id": uid, "name": "Demo person", "mobile": f"98{n:08d}", "role": "USER",
                                       "source": "contact_form", "mobile_verified": False,
@@ -130,23 +148,11 @@ def build_demo_docs(base: datetime) -> tuple:
                 e["by_source"][src]["account_created"] += 1
                 exp["by_age"].setdefault(age or "Not given", 0)
                 exp["by_age"][age or "Not given"] += 1
-            if i < started:
-                event(sid, "quiz_started", uid, labels)
-                e["quiz_started"] += 1
-                if uid:
-                    e["finished_and_started_quiz"] += 1
-                for q in range(4):
-                    event(sid, "question_viewed", uid, labels, q_index=q, q_id=f"q{q}")
-                    if i < free_done or q < 2:
-                        event(sid, "question_answered", uid, labels, q_index=q, q_id=f"q{q}")
-            if i < free_done:
-                event(sid, "free_part_completed", uid, labels)
-            if i < rough:
-                event(sid, "rough_rec_viewed", uid, labels)
             if i < paywall:
                 event(sid, "paywall_viewed", uid, labels)
-            if i < cta:
-                event(sid, "paywall_cta_clicked", uid, labels)
+                e["paywall_viewed"] += 1
+                if uid:
+                    e["finished_and_saw_paywall"] += 1
             if i < live + fake:
                 is_live = i < live
                 docs["payments"].append({
@@ -214,6 +220,23 @@ def build_demo_docs(base: datetime) -> tuple:
     exp["by_campaign"]["campus / poster_qr"]["visits"] += 1
     exp["by_city"]["Bangalore"]["visits"] += 1
     exp["entry"]["tapped_with_account"] = 1
+
+    # A visit from before the contact form moved to Unlock: the form came before
+    # question 1 and they left. Counted apart, not in the entry steps.
+    sid = "demo-s-oldflow-1"
+    labels = {"channel": "instagram", "campaign": "hyd_launch", "content": "reel_1", "device": "mobile"}
+    docs["quiz_progress"].append({"session_id": sid, "user_id": None, "city": "Hyderabad", "status": "in_progress",
+                                  "started_at": at(), "updated_at": at(),
+                                  "attribution": {"channel": "instagram", "utm_campaign": "hyd_launch",
+                                                  "utm_content": "reel_1", "device": "mobile"}})
+    event(sid, "site_visit", None, labels)
+    event(sid, "find_dog_clicked", None, labels, source="hero", has_account=False)
+    event(sid, "contact_form_viewed", None, labels)
+    event(sid, "contact_form_closed", None, labels)
+    exp["visits"] += 1
+    exp["by_campaign"]["hyd_launch / reel_1"]["visits"] += 1
+    exp["by_city"]["Hyderabad"]["visits"] += 1
+    exp["entry"]["old_flow_sessions"] = 1
 
     # A Razorpay TEST payment by a campus person: excluded unless the toggle is on.
     test_payer = next(u["id"] for u in docs["users"] if u["id"] == "demo-u-0050")
