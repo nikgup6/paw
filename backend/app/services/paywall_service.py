@@ -21,6 +21,13 @@ payment_success event, however many times either is repeated.
 
 FAKE-DOOR MODE takes no money: "Pay" records the intent and unlocks for free.
 
+ADMIN DEMOS: with PAYWALL_MODE=live and RAZORPAY_TEST_KEY_* set, an ADMIN
+account's orders go through the Razorpay TEST keys (mode "test" on the row), so
+a demo runs the real Checkout with pretend money. Everyone else pays live. The
+role comes from the signed token, so nobody can ask their way into test mode.
+A demo payment unlocks for ADMIN_DEMO_UNLOCK_DAYS only, and cancel_access()
+(the admin panel's "Cancel subscription") ends it at once for the next demo.
+
 The HTTP call to Razorpay uses httpx (already installed for Cloudinary) and the
 standard library's hmac, rather than the `razorpay` package: one REST call and
 one HMAC are all this needs, and it keeps the dependency list as it was.
@@ -35,6 +42,7 @@ from typing import Optional
 import httpx
 from pymongo import ReturnDocument
 
+from app.auth.dependencies import ADMIN_ROLE
 from app.config.settings import settings
 from app.models.funnel import safe_id
 from app.models.payment import STATUS_CREATED, STATUS_FAILED, STATUS_FAKE_DOOR, STATUS_PAID
@@ -67,6 +75,39 @@ def price_rupees() -> int:
     return settings.PAYWALL_PRICE_PAISE // 100
 
 
+# ------------------------------------------------------------------ mode and keys
+
+def _admin_test_keys() -> bool:
+    return bool(settings.RAZORPAY_TEST_KEY_ID and settings.RAZORPAY_TEST_KEY_SECRET)
+
+
+def mode_for(claims: Optional[dict]) -> str:
+    """The paywall mode for THIS account: PAYWALL_MODE, except that in live mode
+    an ADMIN account pays with the test keys (when they are set)."""
+    mode = settings.PAYWALL_MODE
+    if mode == "live" and claims and claims.get("role") == ADMIN_ROLE and _admin_test_keys():
+        return "test"
+    return mode
+
+
+def _is_admin_demo(mode: Optional[str]) -> bool:
+    """A "test" order while the app is live can only be an admin demo."""
+    return mode == "test" and settings.PAYWALL_MODE == "live"
+
+
+def unlock_days(mode: Optional[str]) -> int:
+    """Days a payment in this mode unlocks for: one day for an admin demo."""
+    return settings.ADMIN_DEMO_UNLOCK_DAYS if _is_admin_demo(mode) else settings.PAYWALL_UNLOCK_DAYS
+
+
+def _keys(mode: Optional[str]) -> tuple:
+    """(key id, key secret) for an order of this mode. A "test" order while the
+    app is live is an admin demo, so it uses the admin test keys."""
+    if _is_admin_demo(mode):
+        return settings.RAZORPAY_TEST_KEY_ID, settings.RAZORPAY_TEST_KEY_SECRET
+    return settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET
+
+
 # ------------------------------------------------------------------ entitlement
 
 async def has_real_payment(db, user_id: str) -> bool:
@@ -90,14 +131,21 @@ async def unlocked_until(db, user_id: str) -> Optional[datetime]:
     return until if until and until > now() else None
 
 
-async def grant(db, user_id: str) -> datetime:
-    """Give PAYWALL_UNLOCK_DAYS from now. Never shortens existing access, and a
-    repeated grant does not stack days on top of days."""
+async def grant(db, user_id: str, days: Optional[int] = None) -> datetime:
+    """Give `days` (default PAYWALL_UNLOCK_DAYS) from now. Never shortens existing
+    access, and a repeated grant does not stack days on top of days."""
     current = await unlocked_until(db, user_id)
-    target = now() + timedelta(days=settings.PAYWALL_UNLOCK_DAYS)
+    target = now() + timedelta(days=days or settings.PAYWALL_UNLOCK_DAYS)
     until = max(current, target) if current else target
     await db[USERS].update_one({"id": user_id}, {"$set": {"full_match_until": until}})
     return until
+
+
+async def cancel_access(db, user_id: str) -> None:
+    """End this account's access now, so the paywall shows again. Used by the
+    admin panel on the admin's OWN account to rerun a demo; payment rows are
+    kept as the record of what happened."""
+    await db[USERS].update_one({"id": user_id}, {"$unset": {"full_match_until": ""}})
 
 
 # ------------------------------------------------------------------ server events
@@ -121,7 +169,7 @@ async def _server_event(db, name: str, row: dict) -> None:
 
 # ------------------------------------------------------------------ orders
 
-def _row(user_id, order_id, status, session_id, channel) -> dict:
+def _row(user_id, order_id, status, session_id, channel, mode) -> dict:
     return {
         "user_id": user_id,
         "session_id": session_id if safe_id(session_id) else None,
@@ -129,7 +177,7 @@ def _row(user_id, order_id, status, session_id, channel) -> dict:
         "amount_paise": settings.PAYWALL_PRICE_PAISE,
         "currency": "INR",
         "status": status,
-        "mode": settings.PAYWALL_MODE,
+        "mode": mode,
         "channel": (channel or "")[:32] or None,
         "created_at": now(),
         "paid_at": None,
@@ -138,15 +186,17 @@ def _row(user_id, order_id, status, session_id, channel) -> dict:
 
 async def fake_door(db, user_id: str, session_id: Optional[str], channel: Optional[str]) -> datetime:
     """The pilot's 'Pay': records the intent, takes nothing, unlocks for free."""
-    row = _row(user_id, f"fake_{uuid.uuid4().hex}", STATUS_FAKE_DOOR, session_id, channel)
+    row = _row(user_id, f"fake_{uuid.uuid4().hex}", STATUS_FAKE_DOOR, session_id, channel, "fake_door")
     await db[PAYMENTS].insert_one(dict(row))
     await _server_event(db, "payment_started", row)
     return await grant(db, user_id)
 
 
-async def create_order(db, user_id: str, session_id: Optional[str], channel: Optional[str]) -> dict:
-    """Ask Razorpay for an order for OUR price. Notes carry ids only - never a
-    name, mobile or email."""
+async def create_order(db, user_id: str, session_id: Optional[str], channel: Optional[str],
+                       mode: str) -> dict:
+    """Ask Razorpay for an order for OUR price, with the keys for `mode` (see
+    mode_for). Notes carry ids only - never a name, mobile or email."""
+    key_id, key_secret = _keys(mode)
     receipt = f"pb_{uuid.uuid4().hex[:16]}"
     body = {
         "amount": settings.PAYWALL_PRICE_PAISE,
@@ -157,12 +207,12 @@ async def create_order(db, user_id: str, session_id: Optional[str], channel: Opt
     try:
         async with httpx.AsyncClient(timeout=RAZORPAY_TIMEOUT_SECONDS) as client:
             res = await client.post(RAZORPAY_ORDERS_URL, json=body,
-                                    auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+                                    auth=(key_id, key_secret))
     except httpx.HTTPError as exc:
         logger.error("Razorpay order request failed: %s", type(exc).__name__)
         raise PaymentsUnavailable() from None
     if res.status_code == 401:
-        logger.error("Razorpay refused our keys (401). Check RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET.")
+        logger.error("Razorpay refused our %s keys (401). Check the RAZORPAY_*KEY_ID / *KEY_SECRET values.", mode)
         raise PaymentsUnavailable()
     if res.status_code >= 400:
         # Razorpay's error body describes the request, not our secret; still, log the code only.
@@ -173,10 +223,10 @@ async def create_order(db, user_id: str, session_id: Optional[str], channel: Opt
         logger.error("Razorpay returned an unexpected order; not using it")
         raise PaymentsUnavailable()
 
-    row = _row(user_id, order["id"], STATUS_CREATED, session_id, channel)
+    row = _row(user_id, order["id"], STATUS_CREATED, session_id, channel, mode)
     await db[PAYMENTS].insert_one(dict(row))
     await _server_event(db, "payment_started", row)
-    return {"order_id": order["id"], "key_id": settings.RAZORPAY_KEY_ID,
+    return {"order_id": order["id"], "key_id": key_id,
             "amount": settings.PAYWALL_PRICE_PAISE, "currency": "INR"}
 
 
@@ -186,23 +236,30 @@ def _hmac_hex(secret: str, message: bytes) -> str:
     return hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()
 
 
-def checkout_signature_ok(order_id: str, payment_id: str, signature: str) -> bool:
-    """Razorpay's checkout signature: HMAC-SHA256("order_id|payment_id", key secret).
+def checkout_signature_ok(order_id: str, payment_id: str, signature: str, mode: Optional[str]) -> bool:
+    """Razorpay's checkout signature: HMAC-SHA256("order_id|payment_id", key secret),
+    with the secret of the keys the order was made with (its row's mode).
     compare_digest takes the same time whether the first or the last character
     differs, so the comparison itself gives an attacker no hints."""
-    if not (settings.RAZORPAY_KEY_SECRET and order_id and payment_id and signature):
+    secret = _keys(mode)[1]
+    if not (secret and order_id and payment_id and signature):
         return False
-    expected = _hmac_hex(settings.RAZORPAY_KEY_SECRET, f"{order_id}|{payment_id}".encode())
+    expected = _hmac_hex(secret, f"{order_id}|{payment_id}".encode())
     return hmac.compare_digest(expected, signature)
 
 
-def webhook_signature_ok(raw_body: bytes, signature: Optional[str]) -> bool:
-    """Webhook signature: HMAC-SHA256 of the RAW body bytes with the webhook
-    secret. It has to be the raw bytes: re-serialising parsed JSON changes
+def webhook_signer(raw_body: bytes, signature: Optional[str]) -> Optional[str]:
+    """Which webhook secret signed this body: "main" (RAZORPAY_WEBHOOK_SECRET),
+    "admin_test" (RAZORPAY_TEST_WEBHOOK_SECRET), or None for a bad signature.
+    HMAC-SHA256 of the RAW body bytes: re-serialising parsed JSON changes
     spacing and key order, and the signature would never match."""
-    if not (settings.RAZORPAY_WEBHOOK_SECRET and signature):
-        return False
-    return hmac.compare_digest(_hmac_hex(settings.RAZORPAY_WEBHOOK_SECRET, raw_body), signature)
+    if not signature:
+        return None
+    for name, secret in (("main", settings.RAZORPAY_WEBHOOK_SECRET),
+                         ("admin_test", settings.RAZORPAY_TEST_WEBHOOK_SECRET)):
+        if secret and hmac.compare_digest(_hmac_hex(secret, raw_body), signature):
+            return name
+    return None
 
 
 # ------------------------------------------------------------------ marking orders
@@ -223,7 +280,7 @@ async def mark_paid(db, order_id: str, payment_id: str) -> Optional[datetime]:
         return_document=ReturnDocument.AFTER,
     )
     if row:
-        until = await grant(db, row["user_id"])
+        until = await grant(db, row["user_id"], unlock_days(row.get("mode")))
         await _server_event(db, "payment_success", row)
         logger.info("Order marked paid (%s mode).", row.get("mode"))
         return until

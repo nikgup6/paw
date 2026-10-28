@@ -19,6 +19,9 @@ export const createOrder = () =>
 export const verifyPayment = ({ razorpay_order_id, razorpay_payment_id, razorpay_signature }) =>
   axios.post(`${BASE}/verify`, { razorpay_order_id, razorpay_payment_id, razorpay_signature }).then((r) => r.data);
 
+/** Admin only: ends the signed-in admin's own access so the paywall demo can run again. */
+export const cancelDemoAccess = () => axios.post(`${BASE}/cancel`).then((r) => r.data);
+
 /* Razorpay's checkout script, added to the page once, only when needed. Resolves
    with window.Razorpay, rejects if it cannot load (offline, blocked). */
 let loading = null;

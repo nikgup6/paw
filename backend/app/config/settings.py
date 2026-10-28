@@ -103,6 +103,18 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: Optional[str] = None
     RAZORPAY_KEY_SECRET: Optional[str] = None
     RAZORPAY_WEBHOOK_SECRET: Optional[str] = None
+    #: Admin demo keys. With PAYWALL_MODE=live, ADMIN accounts are sent through
+    #: these Razorpay TEST keys (pretend money) while everyone else pays live.
+    #: Blank = admins pay live like everyone else. The webhook secret is the one
+    #: set on the test-mode webhook in the Razorpay dashboard (optional: the
+    #: browser's /verify alone unlocks a demo payment).
+    RAZORPAY_TEST_KEY_ID: Optional[str] = None
+    RAZORPAY_TEST_KEY_SECRET: Optional[str] = None
+    RAZORPAY_TEST_WEBHOOK_SECRET: Optional[str] = None
+    #: How long an admin demo payment (test keys while live) unlocks the admin's
+    #: account. Short, so the paywall is back for the next demo; the admin
+    #: panel's "Cancel subscription" ends it at once.
+    ADMIN_DEMO_UNLOCK_DAYS: int = 1
 
     # ---- Pilot dashboard (GET /api/funnel/pilot-report). Read-only: these only
     # decide what the admin page shows, never what a visitor sees.
@@ -253,6 +265,8 @@ class Settings(BaseSettings):
                 problems.append(f"{name} must be an ISO date like 2026-10-20")
         if self.PAYWALL_UNLOCK_DAYS < 1:
             problems.append("PAYWALL_UNLOCK_DAYS must be at least 1")
+        if self.ADMIN_DEMO_UNLOCK_DAYS < 1:
+            problems.append("ADMIN_DEMO_UNLOCK_DAYS must be at least 1")
         if self.PAYWALL_MODE in ("test", "live"):
             if not (self.RAZORPAY_KEY_ID and self.RAZORPAY_KEY_SECRET):
                 problems.append(f"PAYWALL_MODE={self.PAYWALL_MODE} needs RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET")
@@ -260,6 +274,12 @@ class Settings(BaseSettings):
                 # A test key in live mode (or the reverse) would silently take no
                 # money, or real money while you think you are testing.
                 problems.append(f"PAYWALL_MODE={self.PAYWALL_MODE} needs a rzp_{self.PAYWALL_MODE}_ key id")
+        if self.RAZORPAY_TEST_KEY_ID or self.RAZORPAY_TEST_KEY_SECRET:
+            if not (self.RAZORPAY_TEST_KEY_ID and self.RAZORPAY_TEST_KEY_SECRET):
+                problems.append("RAZORPAY_TEST_KEY_ID and RAZORPAY_TEST_KEY_SECRET must be set together")
+            elif not self.RAZORPAY_TEST_KEY_ID.startswith("rzp_test_"):
+                # These are the admin demo keys; a live key here would charge admins real money.
+                problems.append("RAZORPAY_TEST_KEY_ID needs a rzp_test_ key id")
         if self.PAYWALL_MODE == "live" and not self.RAZORPAY_WEBHOOK_SECRET:
             problems.append("PAYWALL_MODE=live needs RAZORPAY_WEBHOOK_SECRET (payments made in a UPI app arrive by webhook)")
         if self.ENV == "production" and not self.cors_origins:

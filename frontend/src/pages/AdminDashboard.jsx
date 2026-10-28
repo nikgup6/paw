@@ -6,6 +6,7 @@ import FunnelReport from '../components/admin/FunnelReport';
 import PilotReport from '../components/admin/PilotReport';
 import OwnerSurveyTable from '../components/admin/OwnerSurveyTable';
 import CareTipsTable from '../components/admin/CareTipsTable';
+import DemoAccessCard from '../components/admin/DemoAccessCard';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -445,6 +446,7 @@ const AdminDashboard = () => {
 
         {activeTab === 'overview' && (
           <>
+            <DemoAccessCard />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '40px' }}>
               {[
                 { label: 'Total Users', val: stats?.users || 0 },

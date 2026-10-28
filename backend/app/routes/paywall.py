@@ -4,9 +4,11 @@
     POST /order    sign-in needed. fake_door: unlock free. test/live: a Razorpay order
     POST /verify   sign-in needed. Checks Razorpay's signature, then unlocks
     POST /webhook  Razorpay calls this. No sign-in; the signature is the proof
+    POST /cancel   admin only. Ends the admin's OWN access, to rerun a demo
 
-The MODE is decided here, on the server, from PAYWALL_MODE. The browser only
-ever asks. Access belongs to the account id inside the signed-in token - never
+The MODE is decided here, on the server, from PAYWALL_MODE (and the account's
+role: in live mode an ADMIN pays with the test keys, see pay.mode_for). The
+browser only ever asks. Access belongs to the account id inside the signed-in token - never
 to a mobile number, which nobody has verified yet.
 """
 import json
@@ -15,7 +17,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.auth.dependencies import optional_user, require_user
+from app.auth.dependencies import optional_user, require_admin, require_user
 from app.config.settings import settings
 from app.database.connection import get_database
 from app.models.payment import OrderIn, VerifyIn, STATUS_PAID
@@ -45,12 +47,12 @@ async def status(request: Request, claims: Optional[dict] = Depends(optional_use
     in. "unlocked" is only ever true for a signed-in account that has access
     (or for everyone when the paywall is off)."""
     await rl.enforce("paywall_status", rl.client_ip(request))
-    mode = settings.PAYWALL_MODE
+    mode = pay.mode_for(claims)
     until = await pay.unlocked_until(_db(), claims["sub"]) if (claims and mode != "off") else None
     return {
         "mode": mode,
         "price_rupees": pay.price_rupees(),
-        "unlock_days": settings.PAYWALL_UNLOCK_DAYS,
+        "unlock_days": pay.unlock_days(mode),
         "signed_in": bool(claims),
         "unlocked": mode == "off" or until is not None,
         "unlocked_until": _iso(until),
@@ -66,7 +68,7 @@ async def order(payload: OrderIn, request: Request, claims: dict = Depends(requi
     await rl.enforce("paywall_order_user", user_id, whose="on your account")
     await rl.enforce("paywall_order_ip", rl.client_ip(request))
     db = _db()
-    mode = settings.PAYWALL_MODE
+    mode = pay.mode_for(claims)
 
     if mode == "off":
         raise HTTPException(status_code=400, detail="There is nothing to pay for right now.")
@@ -78,7 +80,7 @@ async def order(payload: OrderIn, request: Request, claims: dict = Depends(requi
         until = await pay.fake_door(db, user_id, payload.session_id, payload.channel)
         return {"mode": mode, "unlocked": True, "unlocked_until": _iso(until)}
     try:
-        created = await pay.create_order(db, user_id, payload.session_id, payload.channel)
+        created = await pay.create_order(db, user_id, payload.session_id, payload.channel, mode)
     except pay.PaymentsUnavailable:
         # Deliberately not 401: to the frontend a 401 means "you are not signed in".
         raise HTTPException(status_code=503, detail="Payments aren't available right now. Please try again in a few minutes.")
@@ -95,20 +97,31 @@ async def verify(payload: VerifyIn, claims: dict = Depends(require_user)):
                                        payload.razorpay_signature)
     if not (order_id and payment_id and signature):
         raise HTTPException(status_code=400, detail="Some payment details are missing.")
-    if not pay.checkout_signature_ok(order_id, payment_id, signature):
-        logger.warning("Checkout signature mismatch on verify.")
-        raise HTTPException(status_code=400, detail=NOT_CONFIRMED)
 
+    # The row first: its mode says which key secret signed the checkout.
     db = _db()
     row = await pay.find_order(db, order_id)
     if not row or row.get("user_id") != user_id:
         # Same answer whether the order is unknown or someone else's.
         logger.warning("Verify for an order that is not this account's.")
         raise HTTPException(status_code=400, detail=NOT_CONFIRMED)
+    if not pay.checkout_signature_ok(order_id, payment_id, signature, row.get("mode")):
+        logger.warning("Checkout signature mismatch on verify.")
+        raise HTTPException(status_code=400, detail=NOT_CONFIRMED)
     until = await pay.mark_paid(db, order_id, payment_id)
     if not until:
         raise HTTPException(status_code=400, detail=NOT_CONFIRMED)
     return {"unlocked": True, "unlocked_until": _iso(until)}
+
+
+@router.post("/cancel")
+async def cancel(claims: dict = Depends(require_admin)):
+    """The admin panel's "Cancel subscription": the paywall shows again on this
+    admin account, so the payment demo can be run again. Only ever touches the
+    caller's own account (the id in the token), never anyone else's."""
+    await pay.cancel_access(_db(), claims["sub"])
+    logger.info("Admin cancelled their own access for a demo.")
+    return {"unlocked": False, "unlocked_until": None}
 
 
 @router.post("/webhook")
@@ -118,10 +131,11 @@ async def webhook(request: Request):
     Not rate-limited (Razorpay retries must always get through); the signature
     is the gate. 200 quickly after a valid signature, 400 on a bad one."""
     raw = await request.body()
-    if not settings.RAZORPAY_WEBHOOK_SECRET:
+    if not (settings.RAZORPAY_WEBHOOK_SECRET or settings.RAZORPAY_TEST_WEBHOOK_SECRET):
         logger.error("Webhook received but RAZORPAY_WEBHOOK_SECRET is not set; Razorpay will retry.")
         raise HTTPException(status_code=503, detail="Not configured.")
-    if not pay.webhook_signature_ok(raw, request.headers.get("x-razorpay-signature")):
+    signer = pay.webhook_signer(raw, request.headers.get("x-razorpay-signature"))
+    if not signer:
         logger.warning("Webhook with a bad or missing signature refused.")
         raise HTTPException(status_code=400, detail="Bad signature.")
 
@@ -139,6 +153,10 @@ async def webhook(request: Request):
     row = await pay.find_order(db, order_id)
     if not row:
         logger.info("Webhook %s for an order we did not create; ignored.", name)
+        return {"status": "ignored"}
+    if signer == "admin_test" and row.get("mode") != "test":
+        # The admin test webhook may only settle admin test orders, never a live one.
+        logger.warning("Test-mode webhook for a non-test order; ignored.")
         return {"status": "ignored"}
 
     if name in ("payment.captured", "order.paid"):
