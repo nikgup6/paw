@@ -162,11 +162,15 @@ const Home = () => {
   const findDog = (source) => track('find_dog_clicked', { source, has_account: !!token });
 
   // Lock scroll on the single-screen views; let the hero and the Top-5 grid scroll.
+  // The rough recommendation after "About you" lives inside friend_dashboard but
+  // is taller than a phone screen, so it scrolls too - otherwise its "Unlock my
+  // full match" button sits below the fold where nobody can reach it.
+  const roughShowing = subView === 'friend_dashboard' && dashboardTab === 'inline_quiz' && quizStage !== 'quiz';
   useEffect(() => {
-    const lock = isLoading || subView === 'friend_dashboard' || subView === 'breed_slider' || subView === 'breed_swipe';
+    const lock = isLoading || (subView === 'friend_dashboard' && !roughShowing) || subView === 'breed_slider' || subView === 'breed_swipe';
     document.body.style.overflow = lock ? 'hidden' : 'auto';
     return () => { document.body.style.overflow = 'auto'; };
-  }, [isLoading, subView]);
+  }, [isLoading, subView, roughShowing]);
 
   // Squeaky toys may show on the landing page and the results page, but not while the loading screen, the quiz,
   // the breed slider or the swipe cards are open (this also keeps the footer's toys out of the keyboard's way).
